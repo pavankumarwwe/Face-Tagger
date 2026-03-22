@@ -9,9 +9,9 @@ const fastcsv = require('fast-csv');
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'public')));
 
-const BASE_DIR = '/Users/user/Downloads/Face Tagger';
+const BASE_DIR = path.join(__dirname, '..');
 const CAST_FILE = path.join(BASE_DIR, 'movie_cast.csv');
 
 let currentFile = 'adhurs.csv';
@@ -148,7 +148,9 @@ app.post('/api/save', (req, res) => {
     res.json({ success: true });
 });
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server running at http://localhost:${PORT}`);
 });
+
+module.exports = app;
