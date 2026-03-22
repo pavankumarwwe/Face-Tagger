@@ -36,6 +36,14 @@ document.addEventListener('DOMContentLoaded', () => {
             if (data.files && data.files.length > 0) {
                 fileSelect.innerHTML = data.files.map(f => `<option value="${f}">${f}</option>`).join('');
                 if (data.currentFile) fileSelect.value = data.currentFile;
+                
+                const urlParams = new URLSearchParams(window.location.search);
+                const fileParam = urlParams.get('file');
+                if (fileParam && data.files.includes(fileParam)) {
+                    fileSelect.value = fileParam;
+                    // Trigger click after a tiny delay to ensure everything is ready
+                    setTimeout(() => loadBtn.click(), 50);
+                }
             }
         });
 
