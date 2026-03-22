@@ -19,13 +19,15 @@
                 
                 <h1 id="page-title" style="margin: 0; flex: 2; text-align: center; display: flex; align-items: center; justify-content: center;">CSV Manager</h1>
                 
-                <div style="flex: 1; display: flex; align-items: center; justify-content: flex-end; gap: 15px;">
-                    <a id="ref-btn" href="#" target="_blank" class="btn btn-secondary" style="display: none; align-items: center; justify-content: center; text-decoration: none;">Reference Cast Images</a>
-                    <div class="status-indicator" style="display: flex; align-items: center; justify-content: center; margin: 0; background: transparent; padding: 0; border: none; box-shadow: none;">
-                        <span id="save-status" style="line-height: normal; font-weight: 500; display: flex; align-items: center;">Ready</span>
-                        <div id="save-spinner" class="spinner hidden" style="margin-left: 8px;"></div>
+                <div style="flex: 1; display: flex; flex-direction: column; align-items: flex-end; justify-content: center; gap: 8px;">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <div class="status-indicator" style="display: flex; align-items: center; justify-content: center; margin: 0; background: transparent; padding: 0; border: none; box-shadow: none;">
+                            <span id="save-status" style="line-height: normal; font-weight: 500; display: flex; align-items: center;">Ready</span>
+                            <div id="save-spinner" class="spinner hidden" style="margin-left: 8px;"></div>
+                        </div>
+                        <button id="push-btn" class="btn" style="background-color: var(--success-color); color: white; margin: 0; display: inline-flex; align-items: center; justify-content: center; width: 140px; white-space: nowrap;">Push to Cloud</button>
                     </div>
-                    <button id="push-btn" class="btn" style="background-color: var(--success-color); color: white; margin: 0; display: inline-flex; align-items: center; justify-content: center;">Push to Cloud</button>
+                    <a id="ref-btn" href="#" target="_blank" class="btn btn-secondary" style="display: none; align-items: center; justify-content: center; text-decoration: none; width: 140px; white-space: nowrap;">Cast Images</a>
                 </div>
             </div>
 
