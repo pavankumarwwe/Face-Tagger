@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reference Cast Images</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #f8fafc;
+            --card-bg: #ffffff;
+            --card-border: #e2e8f0;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --accent: #4f46e5;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-main);
+            color: var(--text-main);
+            padding: 2rem 5%;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            color: var(--text-main);
+        }
+        
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-top: 3rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--card-border);
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+        }
+
+        h2 span {
+            background: var(--accent);
+            color: white;
+            padding: 0.2rem 0.6rem;
+            border-radius: 99px;
+            font-size: 0.85rem;
+            margin-left: 10px;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            transition: transform 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 20px rgba(0,0,0,0.08);
+            border-color: var(--accent);
+        }
+
+        .img-wrapper {
+            width: 100%;
+            height: 260px;
+            background: #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .img-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover .img-wrapper img {
+            transform: scale(1.05);
+        }
+
+        .name-label {
+            padding: 1.25rem 1rem;
+            font-weight: 700;
+            text-align: center;
+            font-size: 0.95rem;
+            word-wrap: break-word;
+            line-height: 1.3;
+        }
+    </style>
+</head>
+<body>
+    <h1 id="page-title">Reference Images</h1>
+    <p class="subtitle" id="subtitle-text">Loading...</p>
+
+    <h2 id="matched-heading" style="display: none;">Movie Cast <span id="matched-count">0</span></h2>
+    <div id="matched-grid" class="grid"></div>
+
+    <h2 id="remaining-heading" style="display: none;">All Other Actors <span id="remaining-count">0</span></h2>
+    <div id="remaining-grid" class="grid"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const movieName = urlParams.get('movie');
+
+            if (!movieName) {
+                document.getElementById('subtitle-text').textContent = 'No movie specified in URL.';
+                return;
+            }
+
+            document.getElementById('page-title').textContent = `Reference Directory: ${movieName}`;
+            document.getElementById('subtitle-text').textContent = 'Fetching and cross-referencing actors...';
+
+            try {
+                // Fetch actors
+                const actorsRes = await fetch('/api/actors');
+                const actorsData = await actorsRes.json();
+                const allImages = actorsData.actors || [];
+
+                // Fetch cast
+                const castRes = await fetch(`/api/cast?movie=${encodeURIComponent(movieName)}`);
+                const castData = await castRes.json();
+                const castMembers = castData.cast || [];
+
+                function normalize(str) {
+                    return str.toLowerCase().replace(/\.(jpg|jpeg|png|webp)$/, '').replace(/[^a-z0-9]/g, '');
+                }
+
+                const matchedImages = [];
+                const remainingImages = [];
+
+                if (castMembers.length === 0) {
+                    // No cast data, dump all into remaining
+                    allImages.forEach(img => remainingImages.push(img));
+                } else {
+                    const normCast = castMembers.map(c => normalize(c)).filter(c => c.length > 2);
+                    
+                    allImages.forEach(img => {
+                        const normImg = normalize(img);
+                        let isMatch = false;
+                        for (let nc of normCast) {
+                            if (normImg.includes(nc) || nc.includes(normImg)) {
+                                isMatch = true;
+                                break;
+                            }
+                        }
+                        if (isMatch) {
+                            matchedImages.push(img);
+                        } else {
+                            remainingImages.push(img);
+                        }
+                    });
+                }
+
+                function renderGrid(containerId, images) {
+                    const container = document.getElementById(containerId);
+                    container.innerHTML = images.map(img => {
+                        const displayName = img.replace(/\.(jpg|jpeg|png|webp)$/i, '');
+                        return `
+                            <div class="card">
+                                <div class="img-wrapper">
+                                    <a href="/faces/${encodeURIComponent(img)}" target="_blank" title="Click to view full image" style="width: 100%; height: 100%; display: flex;">
+                                        <img src="/faces/${encodeURIComponent(img)}" loading="lazy" alt="${displayName}">
+                                    </a>
+                                </div>
+                                <div class="name-label">${displayName}</div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+
+                document.getElementById('subtitle-text').textContent = `Cross-referenced against local dataset successfully.`;
+
+                if (matchedImages.length > 0) {
+                    document.getElementById('matched-heading').style.display = 'flex';
+                    document.getElementById('matched-count').textContent = matchedImages.length;
+                    renderGrid('matched-grid', matchedImages);
+                }
+
+                if (remainingImages.length > 0) {
+                    document.getElementById('remaining-heading').style.display = 'flex';
+                    document.getElementById('remaining-count').textContent = remainingImages.length;
+                    renderGrid('remaining-grid', remainingImages);
+                }
+
+            } catch (err) {
+                console.error(err);
+                document.getElementById('subtitle-text').textContent = 'An error occurred while loading data.';
+            }
+        });
+    </script>
+</body>
+</html>

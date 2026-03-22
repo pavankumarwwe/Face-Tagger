@@ -10,6 +10,7 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/faces', express.static(path.join(__dirname, '..', 'Actors Faces')));
 
 const BASE_DIR = path.join(__dirname, '..');
 const RAW_DIR = path.join(BASE_DIR, 'raw_movies');
@@ -105,6 +106,23 @@ app.get('/api/movies', async (req, res) => {
         
         res.json({ movies });
     });
+});
+
+app.get('/api/actors', (req, res) => {
+    const actorsDir = path.join(BASE_DIR, 'Actors Faces');
+    if (!fs.existsSync(actorsDir)) return res.json({ actors: [] });
+    fs.readdir(actorsDir, (err, files) => {
+        if (err) return res.status(500).json({ error: err.message });
+        const images = files.filter(f => f.match(/\.(jpg|jpeg|png|webp)$/i));
+        res.json({ actors: images });
+    });
+});
+
+app.get('/api/cast', async (req, res) => {
+    const { movie } = req.query;
+    if (!movie) return res.json({ cast: [] });
+    const cast = await loadCastOptions(movie);
+    res.json({ cast });
 });
 
 const MOVIE_ASSIGNMENTS_FILE = path.join(BASE_DIR, 'Movie_Assignments.csv');

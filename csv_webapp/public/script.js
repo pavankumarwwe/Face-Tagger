@@ -73,7 +73,15 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             currentSecretCode = code;
             currentFilename = data.currentFile;
-            pageTitle.textContent = `CSV Manager - ${data.currentFile}`;
+            const pureName = data.currentFile.replace('.csv', '').replace('_tagged', '').trim();
+            pageTitle.textContent = `CSV Manager - ${pureName}`;
+            
+            const refBtn = document.getElementById('ref-btn');
+            if (refBtn) {
+                refBtn.href = `/reference.html?movie=${encodeURIComponent(pureName)}`;
+                refBtn.style.display = 'inline-flex';
+            }
+
             globalRows = data.rows;
             globalCastOptions = data.castOptions;
             updateYoutubeLink(data.youtubeUrl);
