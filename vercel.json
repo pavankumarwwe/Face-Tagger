@@ -1,0 +1,18 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "csv_webapp/server.js",
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": ["*.csv", "csv_webapp/public/**"]
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/csv_webapp/server.js"
+    }
+  ]
+}
