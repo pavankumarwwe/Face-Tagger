@@ -21,6 +21,29 @@ function getUpdatedFile(filename) {
     return path.join(BASE_DIR, filename.replace('.csv', '_tagged.csv'));
 }
 
+const SECRETS_FILE = path.join(BASE_DIR, 'movie_secrets.csv');
+
+function verifySecret(filename, code) {
+    return new Promise((resolve) => {
+        if (!fs.existsSync(SECRETS_FILE)) return resolve(true);
+
+        let valid = false;
+        let foundMovie = false;
+        const targetFilename = filename.toLowerCase().replace('_tagged', '').trim();
+
+        fs.createReadStream(SECRETS_FILE)
+            .pipe(csvParser())
+            .on('data', (row) => {
+                if (row.filename && row.filename.toLowerCase().trim() === targetFilename) {
+                    foundMovie = true;
+                    if (row.secret_code === code) valid = true;
+                }
+            })
+            .on('end', () => resolve(foundMovie ? valid : false))
+            .on('error', () => resolve(false));
+    });
+}
+
 let rows = [];
 let castOptions = [];
 
@@ -110,7 +133,13 @@ function saveCSV() {
 }
 
 app.post('/api/load', async (req, res) => {
-    const filename = req.body.filename;
+    const { filename, secretCode } = req.body;
+    
+    const isAuthorized = await verifySecret(filename, secretCode);
+    if (!isAuthorized) {
+        return res.status(401).json({ error: 'Incorrect or missing secret code.' });
+    }
+
     currentFile = filename;
     currentMovieName = filename.replace('.csv', '').replace('_tagged', '').trim();
 
@@ -122,18 +151,15 @@ app.post('/api/load', async (req, res) => {
 });
 
 app.get('/api/data', async (req, res) => {
-    // Initial load
-    if (rows.length === 0) {
-        castOptions = await loadCastOptions(currentMovieName);
-        rows = await loadData(currentFile);
-    }
-    const youtubeUrl = await loadMovieUrl(currentMovieName);
-    res.json({ rows, castOptions, currentFile, youtubeUrl });
+    res.json({ requiresAuth: true });
 });
 
 app.post('/api/update', async (req, res) => {
-    const { arrayIndex, field, value, filename } = req.body;
+    const { arrayIndex, field, value, filename, secretCode } = req.body;
     
+    const isAuthorized = await verifySecret(filename, secretCode);
+    if (!isAuthorized) return res.status(401).json({ error: 'Unauthorized save attempt.' });
+
     // Cloud stateless fallback: If memory was wiped, reload the file
     if ((rows.length === 0 || currentFile !== filename) && filename) {
         currentFile = filename;
@@ -156,8 +182,11 @@ app.post('/api/save', (req, res) => {
 });
 
 app.post('/api/push', async (req, res) => {
-    const { filename } = req.body;
+    const { filename, secretCode } = req.body;
     if (!filename) return res.status(400).json({ error: 'No filename provided' });
+
+    const isAuthorized = await verifySecret(filename, secretCode);
+    if (!isAuthorized) return res.status(401).json({ error: 'Unauthorized push attempt.' });
 
     const token = process.env.GITHUB_TOKEN;
     if (!token) {

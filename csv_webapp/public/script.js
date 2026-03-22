@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const openMovieBtn = document.getElementById('open-movie-btn');
     const openMovieHelp = document.getElementById('open-movie-help');
 
+    let currentSecretCode = '';
     let globalRows = [];
     let globalCastOptions = [];
     let currentFilename = '';
@@ -42,16 +43,24 @@ document.addEventListener('DOMContentLoaded', () => {
         const filename = fileSelect.value;
         if (!filename) return;
         
+        const code = prompt(`Please enter the secret code for ${filename}:`);
+        if (code === null) return;
+        
         loadBtn.textContent = 'Loading...';
         loadBtn.disabled = true;
 
         fetch('/api/load', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ filename })
+            body: JSON.stringify({ filename, secretCode: code })
         })
         .then(res => res.json())
         .then(data => {
+            if (data.error) {
+                alert(data.error);
+                return;
+            }
+            currentSecretCode = code;
             currentFilename = data.currentFile;
             pageTitle.textContent = `CSV Manager - ${data.currentFile}`;
             globalRows = data.rows;
@@ -68,14 +77,12 @@ document.addEventListener('DOMContentLoaded', () => {
     fetch('/api/data')
         .then(res => res.json())
         .then(data => {
-            if (data.currentFile) {
-                currentFilename = data.currentFile;
-                pageTitle.textContent = `CSV Manager - ${data.currentFile}`;
+            if (data.requiresAuth) {
+                pageTitle.textContent = `Please Select Movie & Enter Code`;
+                globalRows = [];
+                renderTable();
+                return;
             }
-            globalRows = data.rows;
-            globalCastOptions = data.castOptions;
-            updateYoutubeLink(data.youtubeUrl);
-            renderTable();
         })
         .catch(err => {
             console.error('Error fetching data:', err);
@@ -221,7 +228,7 @@ document.addEventListener('DOMContentLoaded', () => {
             fetch('/api/update', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ arrayIndex, field, value, filename: currentFilename })
+                body: JSON.stringify({ arrayIndex, field, value, filename: currentFilename, secretCode: currentSecretCode })
             })
             .then(res => res.json())
             .then(data => {
@@ -254,7 +261,7 @@ document.addEventListener('DOMContentLoaded', () => {
             fetch('/api/push', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ filename: currentFilename })
+                body: JSON.stringify({ filename: currentFilename, secretCode: currentSecretCode })
             })
             .then(res => res.json())
             .then(data => {
