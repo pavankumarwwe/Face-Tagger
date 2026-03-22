@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV Data Editor</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="app-container">
+        <header>
+            <div class="header-content">
+                <h1 id="page-title">CSV Manager</h1>
+                <div class="file-loader">
+                    <select id="file-select"></select>
+                    <button id="load-file-btn" class="btn">Load</button>
+                    <a id="open-movie-btn" class="btn" target="_blank"
+                        style="display: none; text-decoration: none; margin-left: 10px;">Open Movie</a>
+                    <span id="open-movie-help"
+                        style="margin-left: 10px; color: #ef4444; font-size: 0.9em; display: none;">No youtube link
+                        available for this movie</span>
+                </div>
+            </div>
+            <div class="header-actions">
+                <div class="status-indicator">
+                    <span id="save-status">Ready</span>
+                    <div id="save-spinner" class="spinner hidden"></div>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <div class="table-wrapper">
+                <table id="data-table">
+                    <thead>
+                        <tr>
+                            <th>Start Time</th>
+                            <th>End Time</th>
+                            <th>Original Telugu</th>
+                            <th>Transliteration</th>
+                            <th>Actors</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
+                        <!-- Rows will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
