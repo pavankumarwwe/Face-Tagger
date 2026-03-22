@@ -131,8 +131,15 @@ app.get('/api/data', async (req, res) => {
     res.json({ rows, castOptions, currentFile, youtubeUrl });
 });
 
-app.post('/api/update', (req, res) => {
-    const { arrayIndex, field, value } = req.body;
+app.post('/api/update', async (req, res) => {
+    const { arrayIndex, field, value, filename } = req.body;
+    
+    // Cloud stateless fallback: If memory was wiped, reload the file
+    if ((rows.length === 0 || currentFile !== filename) && filename) {
+        currentFile = filename;
+        rows = await loadData(filename);
+    }
+
     if (rows[arrayIndex]) {
         rows[arrayIndex][field] = value;
         saveCSV();

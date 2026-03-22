@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let globalRows = [];
     let globalCastOptions = [];
+    let currentFilename = '';
 
     function extractActors(str) {
         if (!str) return [];
@@ -50,6 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
         })
         .then(res => res.json())
         .then(data => {
+            currentFilename = data.currentFile;
             pageTitle.textContent = `CSV Manager - ${data.currentFile}`;
             globalRows = data.rows;
             globalCastOptions = data.castOptions;
@@ -65,7 +67,10 @@ document.addEventListener('DOMContentLoaded', () => {
     fetch('/api/data')
         .then(res => res.json())
         .then(data => {
-            if (data.currentFile) pageTitle.textContent = `CSV Manager - ${data.currentFile}`;
+            if (data.currentFile) {
+                currentFilename = data.currentFile;
+                pageTitle.textContent = `CSV Manager - ${data.currentFile}`;
+            }
             globalRows = data.rows;
             globalCastOptions = data.castOptions;
             updateYoutubeLink(data.youtubeUrl);
@@ -215,7 +220,7 @@ document.addEventListener('DOMContentLoaded', () => {
             fetch('/api/update', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ arrayIndex, field, value })
+                body: JSON.stringify({ arrayIndex, field, value, filename: currentFilename })
             })
             .then(res => res.json())
             .then(data => {
