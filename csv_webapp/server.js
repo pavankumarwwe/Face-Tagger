@@ -12,13 +12,16 @@ app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 const BASE_DIR = path.join(__dirname, '..');
+const RAW_DIR = path.join(BASE_DIR, 'raw_movies');
+const TAGGED_DIR = path.join(BASE_DIR, 'tagged_movies');
 const CAST_FILE = path.join(BASE_DIR, 'movie_cast.csv');
 
 let currentFile = 'adhurs.csv';
 let currentMovieName = 'Adhurs';
 
 function getUpdatedFile(filename) {
-    return path.join(BASE_DIR, filename.replace('.csv', '_tagged.csv'));
+    if (!fs.existsSync(TAGGED_DIR)) fs.mkdirSync(TAGGED_DIR, { recursive: true });
+    return path.join(TAGGED_DIR, filename.replace('.csv', '_tagged.csv'));
 }
 
 const SECRETS_FILE = path.join(BASE_DIR, 'movie_secrets.csv');
@@ -68,43 +71,29 @@ function verifySecret(filename, code) {
 let rows = [];
 let castOptions = [];
 
-// API to list CSV files
 app.get('/api/files', async (req, res) => {
     const statuses = await getMovieStatuses();
-    fs.readdir(BASE_DIR, (err, files) => {
+    if (!fs.existsSync(RAW_DIR)) fs.mkdirSync(RAW_DIR, { recursive: true });
+    
+    fs.readdir(RAW_DIR, (err, files) => {
         if (err) return res.status(500).json({ error: err.message });
-        const csvFiles = files.filter(f =>
-            f.endsWith('.csv') &&
-            f !== 'movie_cast.csv' &&
-            f !== 'movie_secrets.csv' &&
-            f !== 'movie_status.csv' &&
-            !f.toLowerCase().includes('movie_assignments') &&
-            !f.endsWith('_tagged.csv') &&
-            !f.endsWith('_transliterated.csv') &&
-            (!statuses[f] || statuses[f].status !== 'Complete')
-        );
+        const csvFiles = files.filter(f => f.endsWith('.csv') && (!statuses[f] || statuses[f].status !== 'Complete'));
         res.json({ files: csvFiles, currentFile });
     });
 });
 
 app.get('/api/movies', async (req, res) => {
     const statuses = await getMovieStatuses();
-    fs.readdir(BASE_DIR, (err, files) => {
+    if (!fs.existsSync(RAW_DIR)) fs.mkdirSync(RAW_DIR, { recursive: true });
+
+    fs.readdir(RAW_DIR, (err, files) => {
         if (err) return res.status(500).json({ error: err.message });
-        const csvFiles = files.filter(f =>
-            f.endsWith('.csv') &&
-            f !== 'movie_cast.csv' &&
-            f !== 'movie_secrets.csv' &&
-            f !== 'movie_status.csv' &&
-            !f.toLowerCase().includes('movie_assignments') &&
-            !f.endsWith('_tagged.csv') &&
-            !f.endsWith('_transliterated.csv')
-        );
+        const csvFiles = files.filter(f => f.endsWith('.csv'));
         
         csvFiles.sort((a, b) => a.localeCompare(b));
         
         const movies = csvFiles.map(f => {
-            const displayName = f.replace('.csv', '').replace('_tagged','').replace(/_/g, ' ');
+            const displayName = f.replace('.csv', '').trim();
             const st = statuses[f] || {};
             return {
                 filename: f,
@@ -162,7 +151,7 @@ function loadCastOptions(movieName) {
 function loadData(filename) {
     return new Promise((resolve) => {
         const updatedPath = getUpdatedFile(filename);
-        const fileToLoad = fs.existsSync(updatedPath) ? updatedPath : path.join(BASE_DIR, filename);
+        const fileToLoad = fs.existsSync(updatedPath) ? updatedPath : path.join(RAW_DIR, filename);
         const loadedRows = [];
 
         if (!fs.existsSync(fileToLoad)) return resolve([]);
@@ -289,7 +278,7 @@ app.post('/api/push', async (req, res) => {
         });
 
         const base64Content = Buffer.from(fileContent).toString('base64');
-        const githubPath = filename.replace('.csv', '_tagged.csv');
+        const githubPath = `tagged_movies/${filename.replace('.csv', '_tagged.csv')}`;
         const apiUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${githubPath}`;
 
         let sha = null;
