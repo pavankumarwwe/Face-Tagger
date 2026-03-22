@@ -155,6 +155,81 @@ app.post('/api/save', (req, res) => {
     res.json({ success: true });
 });
 
+app.post('/api/push', async (req, res) => {
+    const { filename } = req.body;
+    if (!filename) return res.status(400).json({ error: 'No filename provided' });
+
+    const token = process.env.GITHUB_TOKEN;
+    if (!token) {
+        return res.status(500).json({ error: 'GITHUB_TOKEN environment variable is not set on the server.' });
+    }
+
+    try {
+        const repoOwner = 'pavankumarwwe';
+        const repoName = 'Face-Tagger';
+        
+        // Ensure rows are loaded 
+        if ((rows.length === 0 || currentFile !== filename) && filename) {
+            currentFile = filename;
+            rows = await loadData(filename);
+        }
+
+        if (rows.length === 0) {
+            return res.status(400).json({ error: 'No data found to push.' });
+        }
+
+        const fileContent = await new Promise((resolve, reject) => {
+            fastcsv.writeToString(rows, { headers: true })
+                .then(str => resolve(str))
+                .catch(err => reject(err));
+        });
+
+        const base64Content = Buffer.from(fileContent).toString('base64');
+        const githubPath = filename.replace('.csv', '_tagged.csv');
+        const apiUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${githubPath}`;
+
+        let sha = null;
+        const getRes = await fetch(apiUrl, {
+            headers: {
+                'Authorization': `token ${token}`,
+                'Accept': 'application/vnd.github.v3+json',
+                'User-Agent': 'Face-Tagger-App'
+            }
+        });
+        
+        if (getRes.ok) {
+            const getData = await getRes.json();
+            sha = getData.sha;
+        }
+
+        const body = {
+            message: `Update ${githubPath} via web UI`,
+            content: base64Content
+        };
+        if (sha) body.sha = sha;
+
+        const putRes = await fetch(apiUrl, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `token ${token}`,
+                'Accept': 'application/vnd.github.v3+json',
+                'User-Agent': 'Face-Tagger-App',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(body)
+        });
+
+        if (putRes.ok) {
+            res.json({ success: true });
+        } else {
+            const errorData = await putRes.json();
+            res.status(500).json({ error: errorData.message || 'GitHub API Error' });
+        }
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server running at http://localhost:${PORT}`);

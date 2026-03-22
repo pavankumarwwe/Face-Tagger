@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const fileSelect = document.getElementById('file-select');
     const loadBtn = document.getElementById('load-file-btn');
     const pageTitle = document.getElementById('page-title');
+    const pushBtn = document.getElementById('push-btn');
     const openMovieBtn = document.getElementById('open-movie-btn');
     const openMovieHelp = document.getElementById('open-movie-help');
 
@@ -240,6 +241,38 @@ document.addEventListener('DOMContentLoaded', () => {
                 saveSpinner.classList.add('hidden');
             });
         }, 150);
+    }
+
+    if (pushBtn) {
+        pushBtn.addEventListener('click', () => {
+            if (!currentFilename) return alert('Please load a file first.');
+            
+            const ogText = pushBtn.textContent;
+            pushBtn.textContent = 'Pushing to GitHub...';
+            pushBtn.disabled = true;
+
+            fetch('/api/push', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filename: currentFilename })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Successfully pushed latest changes to GitHub!');
+                } else {
+                    alert('Failed to push: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('Network error while pushing to GitHub.');
+            })
+            .finally(() => {
+                pushBtn.textContent = ogText;
+                pushBtn.disabled = false;
+            });
+        });
     }
 
     function escapeHtml(unsafe) {
