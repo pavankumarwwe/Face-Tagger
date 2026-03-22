@@ -7,20 +7,26 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
-            --card-bg: rgba(255, 255, 255, 0.05);
-            --card-border: rgba(255, 255, 255, 0.1);
-            --accent: #6366f1;
-            --accent-hover: #818cf8;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
+            /* Light theme */
+            --bg-main: #f8fafc;
+            --card-bg: #ffffff;
+            --card-border: #e2e8f0;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --accent: #4f46e5;
+            --accent-hover: #4338ca;
+            
+            /* Status Colors */
+            --status-not-started: #94a3b8; /* Gray */
+            --status-in-progress: #f59e0b; /* Orange/Yellow */
+            --status-complete: #10b981; /* Green */
         }
 
         body {
             margin: 0;
             padding: 0;
             font-family: 'Inter', sans-serif;
-            background: var(--bg-gradient);
+            background: var(--bg-main);
             color: var(--text-main);
             min-height: 100vh;
             display: flex;
@@ -30,26 +36,34 @@
 
         header {
             text-align: center;
-            padding: 4rem 2rem 2rem;
-            animation: fadeInDown 0.8s ease-out;
+            padding: 3rem 2rem 1rem;
+            animation: fadeInDown 0.6s ease-out;
+            width: 100%;
+            max-width: 1200px;
         }
 
         h1 {
-            font-size: 3.5rem;
+            font-size: 2.75rem;
             font-weight: 800;
             margin: 0;
-            background: linear-gradient(to right, #a855f7, #6366f1, #3b82f6);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: var(--text-main);
             letter-spacing: -1px;
         }
 
-        p.subtitle {
-            font-size: 1.25rem;
-            color: var(--text-muted);
-            margin-top: 1rem;
-            max-width: 600px;
+        .help-box {
+            background: white;
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1.5rem auto 0;
+            max-width: 800px;
+            text-align: left;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            animation: fadeInDown 0.8s ease-out;
         }
+
+        .help-box h3 { margin-top: 0; color: var(--accent); }
+        .help-box ul { margin: 0; padding-left: 1.5rem; color: var(--text-muted); line-height: 1.6; font-size: 0.95rem; }
 
         .container {
             width: 100%;
@@ -60,8 +74,9 @@
 
         .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 2rem;
+            /* Reduced tile size */
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 1.5rem;
             animation: fadeInUp 0.8s ease-out forwards;
             opacity: 0;
         }
@@ -69,67 +84,76 @@
         .movie-card {
             background: var(--card-bg);
             border: 1px solid var(--card-border);
-            border-radius: 16px;
-            padding: 2rem;
+            border-radius: 12px;
+            padding: 1.5rem;
             text-decoration: none;
             color: var(--text-main);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
+            transition: all 0.2s ease-in-out;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            min-height: 160px;
-        }
-
-        .movie-card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: radial-gradient(circle at top right, rgba(99, 102, 241, 0.15), transparent 60%);
-            opacity: 0;
-            transition: opacity 0.3s ease;
+            min-height: 130px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            position: relative;
         }
 
         .movie-card:hover {
-            transform: translateY(-8px) scale(1.02);
-            border-color: rgba(99, 102, 241, 0.5);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.3), 0 0 20px rgba(99, 102, 241, 0.2);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 20px rgba(0,0,0,0.08);
+            border-color: var(--accent);
         }
 
-        .movie-card:hover::before {
-            opacity: 1;
+        .movie-card.status-complete {
+            opacity: 0.6;
+            cursor: not-allowed;
+            pointer-events: none; /* Disables clicking */
+        }
+        
+        .movie-card.status-complete:hover {
+            transform: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            border-color: var(--card-border);
         }
 
         .movie-card h2 {
-            margin: 0 0 1rem 0;
-            font-size: 1.5rem;
+            margin: 0 0 0.5rem 0;
+            font-size: 1.25rem;
             font-weight: 600;
-            z-index: 1;
             text-transform: capitalize;
+            line-height: 1.3;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 0.35rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: white;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
         }
 
-        .movie-card .action {
+        .badge-Not { background-color: var(--status-not-started); }
+        .badge-In { background-color: var(--status-in-progress); }
+        .badge-Complete { background-color: var(--status-complete); }
+
+        .action {
             display: inline-flex;
             align-items: center;
             color: var(--accent);
             font-weight: 500;
-            font-size: 1rem;
-            z-index: 1;
+            font-size: 0.9rem;
             transition: color 0.2s;
+            margin-top: 1rem;
         }
 
-        .movie-card:hover .action {
-            color: var(--accent-hover);
-        }
-
-        .movie-card .action svg {
-            margin-left: 8px;
-            width: 20px;
-            height: 20px;
-            transition: transform 0.3s ease;
+        .action svg {
+            margin-left: 6px;
+            width: 16px;
+            height: 16px;
+            transition: transform 0.2s ease;
         }
 
         .movie-card:hover .action svg {
@@ -149,39 +173,57 @@
         .loader {
             text-align: center;
             color: var(--text-muted);
-            font-size: 1.25rem;
-            padding: 4rem;
+            font-size: 1.1rem;
+            padding: 3rem;
         }
     </style>
 </head>
 <body>
     <header>
         <h1>Face-Tagger Portal</h1>
-        <p class="subtitle">Select a movie dataset to review and edit actor tags. Fully secured and backed by cloud syncing.</p>
+        
+        <div class="help-box">
+            <h3>📝 How to use this platform</h3>
+            <ul>
+                <li><strong>Select a Movie:</strong> Click any "Not Started" or "In Progress" movie below to open the editor.</li>
+                <li><strong>Edit Actors:</strong> Once loaded, click any actor's name to modify or correct the tags. </li>
+                <li><strong>Auto-save:</strong> All your changes are automatically saved to the database in real-time as you type.</li>
+                <li><strong>Push to Cloud:</strong> When you are completely done editing, click the green <em>Push to Cloud</em> button to permanently save the CSV across GitHub.</li>
+                <li><strong>Status:</strong> Movies marked as <em>Complete</em> are locked securely and cannot be edited further.</li>
+            </ul>
+        </div>
     </header>
 
     <div class="container">
-        <div id="loading" class="loader">Loading secure database...</div>
+        <div id="loading" class="loader">Loading movie database...</div>
         <div id="grid" class="grid"></div>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            fetch('/api/files')
+            fetch('/api/movies')
                 .then(res => res.json())
                 .then(data => {
                     const grid = document.getElementById('grid');
                     const loading = document.getElementById('loading');
                     
-                    if (data.files && data.files.length > 0) {
+                    if (data.movies && data.movies.length > 0) {
                         loading.style.display = 'none';
-                        grid.innerHTML = data.files.map((file, i) => {
-                            const displayName = file.replace('.csv', '').replace('_tagged','').replace(/_/g, ' ');
+                        grid.innerHTML = data.movies.map((movie, i) => {
+                            const isComplete = movie.status === 'Complete';
+                            // Extract just the first word for CSS resolution: "Not", "In", "Complete"
+                            const badgeClass = 'badge-' + movie.status.split(' ')[0];
+                            
                             return `
-                                <a href="editor.html?file=${encodeURIComponent(file)}" class="movie-card" style="animation-delay: ${Math.min(i * 0.1, 1)}s">
-                                    <h2>${displayName}</h2>
-                                    <div class="action">
-                                        Open Secured Editor
+                                <a href="${isComplete ? '#' : 'editor.html?file=' + encodeURIComponent(movie.filename)}" 
+                                   class="movie-card ${isComplete ? 'status-complete' : ''}" 
+                                   style="animation-delay: ${Math.min(i * 0.03, 1)}s">
+                                    <div>
+                                        <div class="status-badge ${badgeClass}">${movie.status}</div>
+                                        <h2>${movie.displayName}</h2>
+                                    </div>
+                                    <div class="action" style="${isComplete ? 'display:none' : ''}">
+                                        Open Editor
                                         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
                                         </svg>

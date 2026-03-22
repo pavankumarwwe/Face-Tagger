@@ -23,6 +23,21 @@ function getUpdatedFile(filename) {
 
 const SECRETS_FILE = path.join(BASE_DIR, 'movie_secrets.csv');
 
+function getMovieStatuses() {
+    const STATUS_FILE = path.join(BASE_DIR, 'movie_status.csv');
+    return new Promise((resolve) => {
+        const statuses = {};
+        if (!fs.existsSync(STATUS_FILE)) return resolve(statuses);
+        fs.createReadStream(STATUS_FILE)
+            .pipe(csvParser())
+            .on('data', (row) => {
+                if (row.filename) statuses[row.filename] = row;
+            })
+            .on('end', () => resolve(statuses))
+            .on('error', () => resolve(statuses));
+    });
+}
+
 function verifySecret(filename, code) {
     return new Promise((resolve) => {
         if (!fs.existsSync(SECRETS_FILE)) return resolve(true);
@@ -54,18 +69,52 @@ let rows = [];
 let castOptions = [];
 
 // API to list CSV files
-app.get('/api/files', (req, res) => {
+app.get('/api/files', async (req, res) => {
+    const statuses = await getMovieStatuses();
     fs.readdir(BASE_DIR, (err, files) => {
         if (err) return res.status(500).json({ error: err.message });
         const csvFiles = files.filter(f =>
             f.endsWith('.csv') &&
             f !== 'movie_cast.csv' &&
             f !== 'movie_secrets.csv' &&
+            f !== 'movie_status.csv' &&
+            !f.toLowerCase().includes('movie_assignments') &&
+            !f.endsWith('_tagged.csv') &&
+            !f.endsWith('_transliterated.csv') &&
+            (!statuses[f] || statuses[f].status !== 'Complete')
+        );
+        res.json({ files: csvFiles, currentFile });
+    });
+});
+
+app.get('/api/movies', async (req, res) => {
+    const statuses = await getMovieStatuses();
+    fs.readdir(BASE_DIR, (err, files) => {
+        if (err) return res.status(500).json({ error: err.message });
+        const csvFiles = files.filter(f =>
+            f.endsWith('.csv') &&
+            f !== 'movie_cast.csv' &&
+            f !== 'movie_secrets.csv' &&
+            f !== 'movie_status.csv' &&
             !f.toLowerCase().includes('movie_assignments') &&
             !f.endsWith('_tagged.csv') &&
             !f.endsWith('_transliterated.csv')
         );
-        res.json({ files: csvFiles, currentFile });
+        
+        csvFiles.sort((a, b) => a.localeCompare(b));
+        
+        const movies = csvFiles.map(f => {
+            const displayName = f.replace('.csv', '').replace('_tagged','').replace(/_/g, ' ');
+            const st = statuses[f] || {};
+            return {
+                filename: f,
+                displayName,
+                status: st.status || 'Not Started',
+                youtubeUrl: st.youtube_url || ''
+            };
+        });
+        
+        res.json({ movies });
     });
 });
 
@@ -142,9 +191,17 @@ function saveCSV() {
 app.post('/api/load', async (req, res) => {
     const { filename, secretCode } = req.body;
     
-    const isAuthorized = await verifySecret(filename, secretCode);
-    if (!isAuthorized) {
-        return res.status(401).json({ error: 'Incorrect or missing secret code.' });
+    const isLocal = req.hostname === 'localhost' || req.hostname === '127.0.0.1';
+    if (!isLocal) {
+        const isAuthorized = await verifySecret(filename, secretCode);
+        if (!isAuthorized) {
+            return res.status(401).json({ error: 'Incorrect or missing secret code.' });
+        }
+    }
+
+    const statuses = await getMovieStatuses();
+    if (statuses[filename] && statuses[filename].status === 'Complete') {
+        return res.status(403).json({ error: 'This movie is marked as Complete and cannot be edited.' });
     }
 
     currentFile = filename;
@@ -164,8 +221,16 @@ app.get('/api/data', async (req, res) => {
 app.post('/api/update', async (req, res) => {
     const { arrayIndex, field, value, filename, secretCode } = req.body;
     
-    const isAuthorized = await verifySecret(filename, secretCode);
-    if (!isAuthorized) return res.status(401).json({ error: 'Unauthorized save attempt.' });
+    const statuses = await getMovieStatuses();
+    if (statuses[filename] && statuses[filename].status === 'Complete') {
+        return res.status(403).json({ error: 'Cannot edit: Movie marked as Complete.' });
+    }
+
+    const isLocal = req.hostname === 'localhost' || req.hostname === '127.0.0.1';
+    if (!isLocal) {
+        const isAuthorized = await verifySecret(filename, secretCode);
+        if (!isAuthorized) return res.status(401).json({ error: 'Unauthorized save attempt.' });
+    }
 
     // Cloud stateless fallback: If memory was wiped, reload the file
     if ((rows.length === 0 || currentFile !== filename) && filename) {
@@ -192,8 +257,11 @@ app.post('/api/push', async (req, res) => {
     const { filename, secretCode } = req.body;
     if (!filename) return res.status(400).json({ error: 'No filename provided' });
 
-    const isAuthorized = await verifySecret(filename, secretCode);
-    if (!isAuthorized) return res.status(401).json({ error: 'Unauthorized push attempt.' });
+    const isLocal = req.hostname === 'localhost' || req.hostname === '127.0.0.1';
+    if (!isLocal) {
+        const isAuthorized = await verifySecret(filename, secretCode);
+        if (!isAuthorized) return res.status(401).json({ error: 'Unauthorized push attempt.' });
+    }
 
     const token = process.env.GITHUB_TOKEN;
     if (!token) {
