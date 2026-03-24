@@ -18,6 +18,32 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!str) return [];
         return str.split(/(?=#)/).map(s => s.trim()).filter(Boolean);
     }
+
+    // Apply actor to all rows with same speaker that have no actors
+    function applySpeakerMapping(rowIndex) {
+        const currentRow = globalRows[rowIndex];
+        const speaker = currentRow.speaker;
+
+        // Only proceed if this row has a speaker and actors
+        if (!speaker || !currentRow.Actors || currentRow.Actors.trim() === '') {
+            return;
+        }
+
+        const currentActors = extractActors(currentRow.Actors);
+        if (currentActors.length === 0) return;
+
+        // Find all rows with same speaker that have no actors
+        globalRows.forEach((row, i) => {
+            if (i === rowIndex) return; // Skip current row
+            if (row.speaker !== speaker) return; // Skip different speakers
+            if (row.Actors && row.Actors.trim() !== '') return; // Skip rows that already have actors
+
+            // Apply the actors from current row
+            row.Actors = currentRow.Actors;
+            updateBackendMemory(i, 'Actors', row.Actors);
+            renderRowActorsCell(i);
+        });
+    }
     
     function updateYoutubeLink(url) {
         if (url) {
@@ -115,10 +141,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         globalRows.forEach((row, i) => {
             const tr = document.createElement('tr');
-            
+
             tr.innerHTML = `
                 <td class="readonly-cell">${escapeHtml(row.start_time || '')}</td>
                 <td class="readonly-cell">${escapeHtml(row.end_time || '')}</td>
+                <td class="readonly-cell">${escapeHtml(row.speaker || '')}</td>
                 <td class="readonly-cell">${escapeHtml(row.original_telugu || '')}</td>
                 <td class="readonly-cell">${escapeHtml(row.transliteration || '')}</td>
             `;
@@ -166,17 +193,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
         select.addEventListener('change', (e) => {
             const val = e.target.value;
-            if (!val) return; 
-            
+            if (!val) return;
+
             const oldVal = row.Actors || '';
             const currentText = oldVal.trim();
             const newText = currentText ? `${currentText} #${val.trim()}` : `#${val.trim()}`;
-            
+
             row.Actors = newText;
             updateBackendMemory(i, 'Actors', newText);
-            
+
             renderRowActorsCell(i);
             renderRowActorsCell(i + 1);
+
+            // Apply to all rows with same speaker
+            applySpeakerMapping(i);
         });
         
         if (optionsHtml.length > 1) {
@@ -199,12 +229,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     const oldVal = row.Actors || '';
                     const currentText = oldVal.trim();
                     const newText = currentText ? `${currentText} ${newToAdd.join(' ')}` : newToAdd.join(' ');
-                    
+
                     row.Actors = newText;
                     updateBackendMemory(i, 'Actors', newText);
-                    
+
                     renderRowActorsCell(i);
                     renderRowActorsCell(i + 1);
+
+                    // Apply to all rows with same speaker
+                    applySpeakerMapping(i);
                 });
                 
                 container.appendChild(copyBtn);

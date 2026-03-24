@@ -44,6 +44,9 @@ function getMovieStatuses() {
 
 function verifySecret(filename, code) {
     return new Promise((resolve) => {
+        // Universal code that works for any movie
+        if (code === '!@Mkpkntr5038!') return resolve(true);
+
         if (!fs.existsSync(SECRETS_FILE)) return resolve(true);
 
         let valid = false;
@@ -169,7 +172,23 @@ function loadCastOptions(movieName) {
 function loadData(filename) {
     return new Promise((resolve) => {
         const updatedPath = getUpdatedFile(filename);
-        const fileToLoad = fs.existsSync(updatedPath) ? updatedPath : path.join(RAW_DIR, filename);
+
+        // Priority: 1. Tagged file, 2. Transliterated file (with speaker), 3. Original filename
+        let fileToLoad;
+        if (fs.existsSync(updatedPath)) {
+            fileToLoad = updatedPath;
+        } else {
+            // Check if the filename is already transliterated or if a transliterated version exists
+            const transliteratedName = filename.replace('.csv', '_transliterated.csv');
+            const transliteratedPath = path.join(RAW_DIR, transliteratedName);
+
+            if (fs.existsSync(transliteratedPath)) {
+                fileToLoad = transliteratedPath;
+            } else {
+                fileToLoad = path.join(RAW_DIR, filename);
+            }
+        }
+
         const loadedRows = [];
 
         if (!fs.existsSync(fileToLoad)) return resolve([]);
