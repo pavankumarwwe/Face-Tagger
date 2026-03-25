@@ -161,7 +161,7 @@ app.get('/api/movies', async (req, res) => {
         csvFiles.sort((a, b) => a.localeCompare(b));
         
         const movies = csvFiles.map(f => {
-            const displayName = f.replace('.csv', '').trim();
+            const displayName = f.replace('.csv', '').replace('_transliterated', '').trim();
             const st = statuses[f] || {};
             return {
                 filename: f,

@@ -4,7 +4,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Face-Tagger CSV Data Editor - Tag actors in movie subtitles">
+    <meta name="theme-color" content="#4f46e5">
     <title>CSV Data Editor</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon.svg">
+    <link rel="apple-touch-icon" href="favicon.svg">
+
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
@@ -63,8 +72,35 @@
         <div class="youtube-modal-content">
             <div class="youtube-modal-header" id="player-header">
                 <h3 id="youtube-modal-title">Movie Player</h3>
+                <div class="playback-controls">
+                    <button id="seek-back-btn" class="control-btn" title="Backward 10s">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/>
+                        </svg>
+                    </button>
+                    <button id="play-pause-btn" class="control-btn play-pause-toggle" title="Play/Pause">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path id="play-pause-path" d="M8 5v14l11-7z"/>
+                        </svg>
+                    </button>
+                    <button id="seek-fwd-btn" class="control-btn" title="Forward 10s">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M13 19l7-7-7-7M5 19l7-7-7-7"/>
+                        </svg>
+                    </button>
+                    <button id="mute-btn" class="control-btn" title="Mute/Unmute">
+                        <svg id="volume-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                        </svg>
+                        <svg id="mute-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: none;">
+                            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                            <line x1="23" y1="9" x2="17" y2="15"/>
+                            <line x1="17" y1="9" x2="23" y2="15"/>
+                        </svg>
+                    </button>
+                </div>
                 <div class="modal-controls">
-                    <button id="position-toggle" title="Change position">⇄</button>
                     <button class="modal-close" id="close-youtube-modal" title="Close player">&times;</button>
                 </div>
             </div>
@@ -75,6 +111,24 @@
                         <span id="video-current-time">0:00</span>
                         <span>/</span>
                         <span id="video-duration">0:00</span>
+                    </div>
+                    <div class="video-controls-overlay">
+                        <button id="seek-backward" class="seek-btn" title="Backward 10s">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 5v6l4 4"/>
+                                <circle cx="12" cy="12" r="10"/>
+                                <path d="M8 9l-3 3 3 3"/>
+                            </svg>
+                            <span>10</span>
+                        </button>
+                        <button id="seek-forward" class="seek-btn" title="Forward 10s">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 5v6l4 4"/>
+                                <circle cx="12" cy="12" r="10"/>
+                                <path d="M16 9l3 3-3 3"/>
+                            </svg>
+                            <span>10</span>
+                        </button>
                     </div>
                 </div>
             </div>

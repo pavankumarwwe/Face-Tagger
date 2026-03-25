@@ -12,13 +12,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const youtubeModal = document.getElementById('youtube-modal');
     const youtubePlayerDiv = document.getElementById('youtube-player');
     const closeYoutubeModal = document.getElementById('close-youtube-modal');
-    const positionToggle = document.getElementById('position-toggle');
     const playerHeader = document.getElementById('player-header');
     const videoCurrentTime = document.getElementById('video-current-time');
     const videoDuration = document.getElementById('video-duration');
+    const seekBackwardBtn = document.getElementById('seek-backward');
+    const seekForwardBtn = document.getElementById('seek-forward');
+    const playPauseBtn = document.getElementById('play-pause-btn');
+    const playPausePath = document.getElementById('play-pause-path');
+    const muteBtn = document.getElementById('mute-btn');
+    const volumeIcon = document.getElementById('volume-icon');
+    const muteIcon = document.getElementById('mute-icon');
+    const seekBackBtn = document.getElementById('seek-back-btn');
+    const seekFwdBtn = document.getElementById('seek-fwd-btn');
 
     let ytPlayer = null;
     let timeUpdateInterval = null;
+    let currentVideoType = null; // 'youtube' or 'googledrive'
+    let isPlaying = false;
+    let isMuted = false;
+    let playerReady = false;
 
     // Close dropdowns when clicking outside
     document.addEventListener('click', (e) => {
@@ -114,10 +126,33 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Load YouTube IFrame API
-    const tag = document.createElement('script');
-    tag.src = 'https://www.youtube.com/iframe_api';
-    const firstScriptTag = document.getElementsByTagName('script')[0];
-    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+    let youtubeAPIReady = false;
+    window.onYouTubeIframeAPIReady = function() {
+        console.log('YouTube IFrame API loaded successfully');
+        youtubeAPIReady = true;
+    };
+
+    if (!window.YT) {
+        const tag = document.createElement('script');
+        tag.src = 'https://www.youtube.com/iframe_api';
+        const firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+    } else {
+        youtubeAPIReady = true;
+    }
+
+    // Detect video source type
+    function getVideoSourceType(url) {
+        if (!url) return null;
+
+        if (url.includes('youtube.com') || url.includes('youtu.be')) {
+            return 'youtube';
+        } else if (url.includes('drive.google.com')) {
+            return 'googledrive';
+        }
+
+        return null;
+    }
 
     // Extract YouTube video ID from URL
     function getYoutubeVideoId(url) {
@@ -140,6 +175,31 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         return videoId;
+    }
+
+    // Extract Google Drive file ID from URL
+    function getGoogleDriveFileId(url) {
+        if (!url) return '';
+
+        let fileId = '';
+
+        // Format: https://drive.google.com/file/d/FILE_ID/view
+        if (url.includes('/file/d/')) {
+            const match = url.match(/\/file\/d\/([^\/]+)/);
+            if (match) fileId = match[1];
+        }
+        // Format: https://drive.google.com/open?id=FILE_ID
+        else if (url.includes('open?id=')) {
+            const urlParams = new URLSearchParams(url.split('?')[1]);
+            fileId = urlParams.get('id') || '';
+        }
+
+        return fileId;
+    }
+
+    // Get Google Drive embed URL
+    function getGoogleDriveEmbedUrl(fileId) {
+        return `https://drive.google.com/file/d/${fileId}/preview`;
     }
 
     // Format seconds to MM:SS or H:MM:SS
@@ -172,8 +232,156 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Update play/pause icon
+    function updatePlayPauseIcon() {
+        if (!playPausePath) return;
+
+        if (isPlaying) {
+            // Show pause icon (two bars)
+            playPausePath.setAttribute('d', 'M6 4h4v16H6V4zm8 0h4v16h-4V4z');
+            if (playPauseBtn) playPauseBtn.classList.add('playing');
+        } else {
+            // Show play icon (triangle)
+            playPausePath.setAttribute('d', 'M8 5v14l11-7z');
+            if (playPauseBtn) playPauseBtn.classList.remove('playing');
+        }
+    }
+
+    // Update mute icon
+    function updateMuteIcon() {
+        if (isMuted) {
+            if (volumeIcon) volumeIcon.style.display = 'none';
+            if (muteIcon) muteIcon.style.display = 'block';
+        } else {
+            if (volumeIcon) volumeIcon.style.display = 'block';
+            if (muteIcon) muteIcon.style.display = 'none';
+        }
+    }
+
+    // Seek video forward or backward
+    function seekVideo(seconds) {
+        if (!playerReady || currentVideoType !== 'youtube' || !ytPlayer) {
+            console.log('Player not ready for seeking');
+            return;
+        }
+
+        try {
+            if (typeof ytPlayer.getCurrentTime === 'function' && typeof ytPlayer.seekTo === 'function') {
+                const currentTime = ytPlayer.getCurrentTime();
+                const newTime = Math.max(0, currentTime + seconds);
+                ytPlayer.seekTo(newTime, true);
+                updateTimeDisplay();
+                console.log(`Seeked to ${newTime}s`);
+            }
+        } catch (e) {
+            console.error('Error seeking video:', e);
+        }
+    }
+
+    // Play/Pause functionality
+    function togglePlayPause() {
+        if (!playerReady || currentVideoType !== 'youtube' || !ytPlayer) {
+            console.log('Player not ready for play/pause');
+            return;
+        }
+
+        try {
+            if (typeof ytPlayer.getPlayerState === 'function' &&
+                typeof ytPlayer.playVideo === 'function' &&
+                typeof ytPlayer.pauseVideo === 'function') {
+                const state = ytPlayer.getPlayerState();
+                console.log('Current player state:', state);
+                if (state === 1) { // Playing
+                    ytPlayer.pauseVideo();
+                    console.log('Paused video');
+                } else { // Paused or other
+                    ytPlayer.playVideo();
+                    console.log('Playing video');
+                }
+            }
+        } catch (e) {
+            console.error('Error toggling play/pause:', e);
+        }
+    }
+
+    // Mute/Unmute functionality
+    function toggleMute() {
+        if (!playerReady || currentVideoType !== 'youtube' || !ytPlayer) {
+            console.log('Player not ready for mute/unmute');
+            return;
+        }
+
+        try {
+            if (typeof ytPlayer.isMuted === 'function' &&
+                typeof ytPlayer.mute === 'function' &&
+                typeof ytPlayer.unMute === 'function') {
+                const currentMuteState = ytPlayer.isMuted();
+                console.log('Current mute state:', currentMuteState);
+                if (currentMuteState) {
+                    ytPlayer.unMute();
+                    isMuted = false;
+                    console.log('Unmuted');
+                } else {
+                    ytPlayer.mute();
+                    isMuted = true;
+                    console.log('Muted');
+                }
+                updateMuteIcon();
+            }
+        } catch (e) {
+            console.error('Error toggling mute:', e);
+        }
+    }
+
+    // Header playback controls event listeners
+    if (playPauseBtn) {
+        playPauseBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            togglePlayPause();
+        });
+    }
+
+    if (muteBtn) {
+        muteBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleMute();
+        });
+    }
+
+    if (seekBackBtn) {
+        seekBackBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            seekVideo(-10);
+        });
+    }
+
+    if (seekFwdBtn) {
+        seekFwdBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            seekVideo(10);
+        });
+    }
+
+    // Bottom overlay seek button event listeners
+    if (seekBackwardBtn) {
+        seekBackwardBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            seekVideo(-10);
+        });
+    }
+
+    if (seekForwardBtn) {
+        seekForwardBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            seekVideo(10);
+        });
+    }
+
     // Initialize YouTube player
     function initYoutubePlayer(videoId) {
+        currentVideoType = 'youtube';
+        playerReady = false;
+
         // Clear existing interval
         if (timeUpdateInterval) {
             clearInterval(timeUpdateInterval);
@@ -186,9 +394,24 @@ document.addEventListener('DOMContentLoaded', () => {
             ytPlayer = null;
         }
 
+        // Clear player div
+        youtubePlayerDiv.innerHTML = '';
+
+        // Update modal title
+        const modalTitle = document.getElementById('youtube-modal-title');
+        if (modalTitle) modalTitle.textContent = 'YouTube Player';
+
+        // Show time overlay and seek controls for YouTube
+        const timeOverlay = document.querySelector('.video-time-overlay');
+        if (timeOverlay) timeOverlay.style.display = 'block';
+
+        const controlsOverlay = document.querySelector('.video-controls-overlay');
+        if (controlsOverlay) controlsOverlay.style.display = 'flex';
+
         // Wait for YT API to be available
         const checkYT = () => {
-            if (typeof window.YT !== 'undefined' && window.YT.Player) {
+            if (youtubeAPIReady && typeof window.YT !== 'undefined' && window.YT.Player) {
+                console.log('Creating YouTube player...');
                 window.YT.ready(() => {
                     ytPlayer = new window.YT.Player('youtube-player', {
                         videoId: videoId,
@@ -199,13 +422,35 @@ document.addEventListener('DOMContentLoaded', () => {
                         },
                         events: {
                             onReady: (event) => {
+                                console.log('YouTube player ready');
+                                playerReady = true;
+
                                 // Start time update interval
                                 timeUpdateInterval = setInterval(updateTimeDisplay, 500);
                                 updateTimeDisplay();
+
+                                // Initialize button states
+                                try {
+                                    isPlaying = false;
+                                    isMuted = ytPlayer.isMuted && ytPlayer.isMuted();
+                                    updatePlayPauseIcon();
+                                    updateMuteIcon();
+                                } catch (e) {
+                                    console.error('Error initializing button states:', e);
+                                }
                             },
                             onStateChange: (event) => {
                                 // Update time whenever state changes
                                 updateTimeDisplay();
+
+                                // Update play/pause icon based on state
+                                // YT.PlayerState: UNSTARTED=-1, ENDED=0, PLAYING=1, PAUSED=2, BUFFERING=3, CUED=5
+                                if (event.data === 1) { // Playing
+                                    isPlaying = true;
+                                } else if (event.data === 2 || event.data === 0) { // Paused or Ended
+                                    isPlaying = false;
+                                }
+                                updatePlayPauseIcon();
                             }
                         }
                     });
@@ -219,21 +464,77 @@ document.addEventListener('DOMContentLoaded', () => {
         checkYT();
     }
 
-    // Open YouTube floating player
+    // Initialize Google Drive player
+    function initGoogleDrivePlayer(fileId) {
+        currentVideoType = 'googledrive';
+
+        // Clear existing interval
+        if (timeUpdateInterval) {
+            clearInterval(timeUpdateInterval);
+            timeUpdateInterval = null;
+        }
+
+        // Destroy existing YT player
+        if (ytPlayer) {
+            ytPlayer.destroy();
+            ytPlayer = null;
+        }
+
+        // Update modal title
+        const modalTitle = document.getElementById('youtube-modal-title');
+        if (modalTitle) modalTitle.textContent = 'Google Drive Player';
+
+        // Hide all controls for Google Drive (no API access)
+        const timeOverlay = document.querySelector('.video-time-overlay');
+        if (timeOverlay) timeOverlay.style.display = 'none';
+
+        const controlsOverlay = document.querySelector('.video-controls-overlay');
+        if (controlsOverlay) controlsOverlay.style.display = 'none';
+
+        const playbackControls = document.querySelector('.playback-controls');
+        if (playbackControls) playbackControls.style.display = 'none';
+
+        // Create iframe for Google Drive
+        const embedUrl = getGoogleDriveEmbedUrl(fileId);
+        youtubePlayerDiv.innerHTML = `
+            <iframe
+                src="${embedUrl}"
+                width="100%"
+                height="100%"
+                frameborder="0"
+                allow="autoplay"
+                style="width: 100%; height: 100%;">
+            </iframe>
+        `;
+    }
+
+    // Open video floating player
     if (openMovieBtn) {
         openMovieBtn.addEventListener('click', (e) => {
             e.preventDefault();
             if (currentYoutubeUrl) {
-                const videoId = getYoutubeVideoId(currentYoutubeUrl);
-                if (videoId) {
-                    youtubeModal.style.display = 'block';
-                    initYoutubePlayer(videoId);
+                const sourceType = getVideoSourceType(currentYoutubeUrl);
+
+                if (sourceType === 'youtube') {
+                    const videoId = getYoutubeVideoId(currentYoutubeUrl);
+                    if (videoId) {
+                        youtubeModal.style.display = 'block';
+                        initYoutubePlayer(videoId);
+                    }
+                } else if (sourceType === 'googledrive') {
+                    const fileId = getGoogleDriveFileId(currentYoutubeUrl);
+                    if (fileId) {
+                        youtubeModal.style.display = 'block';
+                        initGoogleDrivePlayer(fileId);
+                    }
+                } else {
+                    alert('Unsupported video source. Please use YouTube or Google Drive links.');
                 }
             }
         });
     }
 
-    // Close YouTube player
+    // Close video player
     if (closeYoutubeModal) {
         closeYoutubeModal.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -247,18 +548,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 clearInterval(timeUpdateInterval);
                 timeUpdateInterval = null;
             }
-        });
-    }
 
-    // Position toggle (cycle through positions)
-    let currentPosition = 0;
-    const positions = ['position-top-right', 'position-top-left', 'position-bottom-right', 'position-bottom-left'];
+            // Reset player state
+            playerReady = false;
+            currentVideoType = null;
+            isPlaying = false;
+            isMuted = false;
 
-    if (positionToggle) {
-        positionToggle.addEventListener('click', (e) => {
-            e.stopPropagation();
-            currentPosition = (currentPosition + 1) % positions.length;
-            youtubeModal.className = 'youtube-modal ' + positions[currentPosition];
+            // Clear player div
+            youtubePlayerDiv.innerHTML = '';
         });
     }
 
@@ -271,19 +569,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (playerHeader) {
         playerHeader.addEventListener('mousedown', (e) => {
-            if (e.target.tagName === 'BUTTON') return; // Don't drag when clicking buttons
+            // Don't drag when clicking buttons, SVGs, or control elements
+            if (e.target.tagName === 'BUTTON' || e.target.tagName === 'SVG' ||
+                e.target.tagName === 'PATH' || e.target.tagName === 'POLYGON' ||
+                e.target.tagName === 'LINE' || e.target.closest('.playback-controls') ||
+                e.target.closest('.modal-controls')) {
+                return;
+            }
 
             isDragging = true;
+            e.preventDefault(); // Prevent text selection
             initialX = e.clientX - youtubeModal.offsetLeft;
             initialY = e.clientY - youtubeModal.offsetTop;
 
             // Remove position class when dragging
             youtubeModal.className = 'youtube-modal';
+
+            // Disable text selection on body during drag
+            document.body.style.userSelect = 'none';
         });
 
         document.addEventListener('mousemove', (e) => {
             if (isDragging) {
                 e.preventDefault();
+                e.stopPropagation();
+
                 currentX = e.clientX - initialX;
                 currentY = e.clientY - initialY;
 
@@ -295,7 +605,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         document.addEventListener('mouseup', () => {
-            isDragging = false;
+            if (isDragging) {
+                isDragging = false;
+                // Re-enable text selection
+                document.body.style.userSelect = '';
+            }
         });
     }
 
@@ -312,6 +626,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 clearInterval(timeUpdateInterval);
                 timeUpdateInterval = null;
             }
+
+            // Reset player state
+            playerReady = false;
+            currentVideoType = null;
+            isPlaying = false;
+            isMuted = false;
+
+            // Clear player div
+            youtubePlayerDiv.innerHTML = '';
         }
     });
 
@@ -319,7 +642,7 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(res => res.json())
         .then(data => {
             if (data.files && data.files.length > 0) {
-                fileSelect.innerHTML = data.files.map(f => `<option value="${f}">${f}</option>`).join('');
+                fileSelect.innerHTML = data.files.map(f => `<option value="${f}">${f.replace('_transliterated', '')}</option>`).join('');
                 if (data.currentFile) fileSelect.value = data.currentFile;
                 
                 const urlParams = new URLSearchParams(window.location.search);
@@ -364,7 +687,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             currentSecretCode = code;
             currentFilename = data.currentFile;
-            const pureName = data.currentFile.replace('.csv', '').replace('_tagged', '').trim();
+            const pureName = data.currentFile.replace('.csv', '').replace('_tagged', '').replace('_transliterated', '').trim();
             pageTitle.textContent = `CSV Manager - ${pureName}`;
             
             const refBtn = document.getElementById('ref-btn');

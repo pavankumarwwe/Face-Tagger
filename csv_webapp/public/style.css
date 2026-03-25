@@ -505,6 +505,10 @@ select:focus {
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
     z-index: 10001;
     transition: all 0.3s ease;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
 .youtube-modal.minimized {
@@ -544,15 +548,64 @@ select:focus {
     font-weight: 600;
     color: white;
     user-select: none;
+    flex-shrink: 0;
+}
+
+.playback-controls {
+    display: flex !important;
+    gap: 0.5rem;
+    align-items: center;
+    flex: 1;
+    justify-content: center;
+    cursor: default;
+    visibility: visible;
+}
+
+.control-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    padding: 0;
+}
+
+.control-btn:hover {
+    background: rgba(255, 255, 255, 0.35);
+    transform: scale(1.05);
+}
+
+.control-btn:active {
+    transform: scale(0.95);
+}
+
+.control-btn svg {
+    pointer-events: none;
+    transition: transform 0.2s ease;
+}
+
+.control-btn svg path {
+    transition: d 0.3s ease;
+}
+
+.control-btn.playing svg {
+    transform: scale(1);
 }
 
 .youtube-modal-header .modal-controls {
     display: flex;
     gap: 0.5rem;
     align-items: center;
+    flex-shrink: 0;
 }
 
-.youtube-modal-header button {
+.youtube-modal-header .modal-close {
     background: rgba(255, 255, 255, 0.2);
     border: none;
     color: white;
@@ -568,7 +621,7 @@ select:focus {
     transition: background 0.2s;
 }
 
-.youtube-modal-header button:hover {
+.youtube-modal-header .modal-close:hover {
     background: rgba(255, 255, 255, 0.3);
 }
 
@@ -610,6 +663,59 @@ select:focus {
 
 .video-time-overlay span {
     margin: 0 0.2rem;
+}
+
+.video-controls-overlay {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 1rem;
+    z-index: 10;
+}
+
+.seek-btn {
+    background: rgba(0, 0, 0, 0.75);
+    color: white;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(4px);
+    padding: 0;
+    position: relative;
+}
+
+.seek-btn:hover {
+    background: rgba(37, 99, 235, 0.9);
+    border-color: rgba(255, 255, 255, 0.6);
+    transform: scale(1.1);
+}
+
+.seek-btn svg {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0.4;
+}
+
+.seek-btn span {
+    font-size: 0.7rem;
+    font-weight: 700;
+    position: relative;
+    z-index: 1;
+}
+
+.seek-btn:active {
+    transform: scale(0.95);
 }
 
 /* Position variants */
