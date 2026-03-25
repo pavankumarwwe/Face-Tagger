@@ -438,37 +438,33 @@
         });
 
         // Push to Cloud
-        document.getElementById('push-btn').addEventListener('click', async () => {
-            const confirmed = confirm('Push movie cast changes to GitHub?\n\nThis will update the movie_cast.csv file in the repository.');
+        document.getElementById('push-btn').addEventListener('click', () => {
+            const btn = document.getElementById('push-btn');
+            const ogText = btn.textContent;
+            btn.textContent = 'Pushing to GitHub...';
+            btn.disabled = true;
 
-            if (!confirmed) return;
-
-            try {
-                const btn = document.getElementById('push-btn');
-                btn.textContent = 'Pushing...';
-                btn.disabled = true;
-
-                const response = await fetch('/api/push-cast', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({})
-                });
-
-                const data = await response.json();
-
+            fetch('/api/push-cast', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({})
+            })
+            .then(res => res.json())
+            .then(data => {
                 if (data.success) {
-                    alert('✅ Successfully pushed cast changes to GitHub!');
+                    alert('Successfully pushed cast changes to GitHub!');
                 } else {
-                    alert('Error: ' + (data.error || 'Unknown error'));
+                    alert('Failed to push: ' + (data.error || 'Unknown error'));
                 }
-            } catch (err) {
-                console.error('Push error:', err);
-                alert('Error pushing to GitHub');
-            } finally {
-                const btn = document.getElementById('push-btn');
-                btn.textContent = 'Push to Cloud';
+            })
+            .catch(err => {
+                console.error(err);
+                alert('Network error while pushing to GitHub.');
+            })
+            .finally(() => {
+                btn.textContent = ogText;
                 btn.disabled = false;
-            }
+            });
         });
 
         // Manage Actors

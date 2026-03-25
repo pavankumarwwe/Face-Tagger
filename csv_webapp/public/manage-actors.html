@@ -381,44 +381,36 @@
         }
 
         // Push actors to cloud
-        document.getElementById('push-actors-btn').addEventListener('click', async () => {
-            const password = prompt('⚠️ Enter password to push actor database to GitHub:');
-
+        document.getElementById('push-actors-btn').addEventListener('click', () => {
+            const password = prompt('Enter password to push actor database to GitHub:');
             if (!password) return;
 
-            if (password !== '!@Mkpkntr5038!') {
-                alert('❌ Incorrect password');
-                return;
-            }
+            const btn = document.getElementById('push-actors-btn');
+            const ogText = btn.textContent;
+            btn.textContent = 'Pushing to GitHub...';
+            btn.disabled = true;
 
-            const confirmed = confirm('Push all actor photos to GitHub?\n\nThis will sync the entire Actors Faces folder.');
-            if (!confirmed) return;
-
-            try {
-                const btn = document.getElementById('push-actors-btn');
-                btn.textContent = 'Pushing...';
-                btn.disabled = true;
-
-                const response = await fetch('/api/push-actors', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ secretCode: password })
-                });
-
-                const data = await response.json();
-
+            fetch('/api/push-actors', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ secretCode: password })
+            })
+            .then(res => res.json())
+            .then(data => {
                 if (data.success) {
-                    alert('✅ Actor database pushed to GitHub!');
+                    alert('Successfully pushed actor database to GitHub!');
                 } else {
-                    alert('Error: ' + (data.error || 'Unknown error'));
+                    alert('Failed to push: ' + (data.error || 'Unknown error'));
                 }
-            } catch (err) {
-                alert('Error pushing to GitHub');
-            } finally {
-                const btn = document.getElementById('push-actors-btn');
-                btn.textContent = 'Push Actors to Cloud';
+            })
+            .catch(err => {
+                console.error(err);
+                alert('Network error while pushing to GitHub.');
+            })
+            .finally(() => {
+                btn.textContent = ogText;
                 btn.disabled = false;
-            }
+            });
         });
 
         // Load actors on page load

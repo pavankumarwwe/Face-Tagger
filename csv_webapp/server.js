@@ -935,38 +935,96 @@ app.post('/api/push-actors', async (req, res) => {
         return res.status(401).json({ error: 'Incorrect password' });
     }
 
+    const token = process.env.GITHUB_TOKEN;
+    if (!token) {
+        return res.status(500).json({ error: 'GITHUB_TOKEN not configured' });
+    }
+
     try {
-        const { exec } = require('child_process');
-        const util = require('util');
-        const execPromise = util.promisify(exec);
+        const repoOwner = 'pavankumarwwe';
+        const repoName = 'Face-Tagger';
+        const actorsDir = path.join(__dirname, '..', 'Actors Faces');
 
-        // Change to repository root
-        const repoRoot = path.join(__dirname, '..');
+        // Read all files in Actors Faces directory
+        const files = fs.readdirSync(actorsDir).filter(f => {
+            const ext = path.extname(f).toLowerCase();
+            return ['.jpg', '.jpeg', '.png', '.webp'].includes(ext);
+        });
 
-        // Execute git commands
-        const commands = [
-            `cd "${repoRoot}" && git add "Actors Faces/"`,
-            `cd "${repoRoot}" && git commit -m "Update actor database via Manage Actors page" || echo "No changes to commit"`,
-            `cd "${repoRoot}" && git push origin main`
-        ];
+        console.log(`📤 Pushing ${files.length} actor images to GitHub...`);
 
-        for (const cmd of commands) {
+        let successCount = 0;
+        let errorCount = 0;
+
+        // Push each file to GitHub
+        for (const fileName of files) {
             try {
-                const { stdout, stderr } = await execPromise(cmd);
-                console.log('Git output:', stdout);
-                if (stderr && !stderr.includes('No changes')) {
-                    console.error('Git error:', stderr);
+                const filePath = path.join(actorsDir, fileName);
+                const fileContent = fs.readFileSync(filePath);
+                const base64Content = Buffer.from(fileContent).toString('base64');
+                const githubPath = `Actors Faces/${fileName}`;
+                const apiUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${encodeURIComponent(githubPath)}`;
+
+                // Get current file SHA if it exists
+                let sha = null;
+                const getRes = await fetch(apiUrl, {
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Accept': 'application/vnd.github.v3+json',
+                        'User-Agent': 'Face-Tagger-App'
+                    }
+                });
+
+                if (getRes.ok) {
+                    const getData = await getRes.json();
+                    sha = getData.sha;
                 }
-            } catch (err) {
-                // Ignore "no changes to commit" errors
-                if (!err.message.includes('nothing to commit')) {
-                    throw err;
+
+                // Push to GitHub
+                const body = {
+                    message: `Update actor: ${fileName}`,
+                    content: base64Content
+                };
+                if (sha) body.sha = sha;
+
+                const putRes = await fetch(apiUrl, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Accept': 'application/vnd.github.v3+json',
+                        'User-Agent': 'Face-Tagger-App',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(body)
+                });
+
+                if (putRes.ok) {
+                    successCount++;
+                    console.log(`  ✓ ${fileName}`);
+                } else {
+                    errorCount++;
+                    console.error(`  ✗ ${fileName}: ${putRes.statusText}`);
                 }
+
+                // Small delay to avoid rate limiting
+                await new Promise(resolve => setTimeout(resolve, 100));
+
+            } catch (fileErr) {
+                errorCount++;
+                console.error(`  ✗ ${fileName}:`, fileErr.message);
             }
         }
 
-        console.log('✅ Pushed actor database to GitHub');
-        res.json({ success: true });
+        console.log(`✅ Pushed ${successCount}/${files.length} actor images to GitHub`);
+
+        if (errorCount > 0) {
+            res.json({
+                success: true,
+                message: `Pushed ${successCount} files, ${errorCount} errors`
+            });
+        } else {
+            res.json({ success: true });
+        }
 
     } catch (err) {
         console.error('Error pushing actors:', err);
