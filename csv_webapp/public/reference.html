@@ -280,6 +280,10 @@
                 const castData = await castRes.json();
                 const castMembers = castData.cast || [];
 
+                console.log('🎬 Movie:', movieName);
+                console.log('👥 Cast members from API:', castMembers);
+                console.log('🖼️ All actor images:', allImages.length);
+
                 function normalize(str) {
                     return str.toLowerCase().replace(/\.(jpg|jpeg|png|webp)$/, '').replace(/[^a-z0-9]/g, '');
                 }
@@ -526,35 +530,45 @@
         });
 
         // Push to Cloud
-        document.getElementById('push-btn').addEventListener('click', () => {
-            const btn = document.getElementById('push-btn');
-            const ogText = btn.textContent;
-            btn.textContent = 'Pushing to GitHub...';
-            btn.disabled = true;
+        const pushBtn = document.getElementById('push-btn');
+        if (pushBtn) {
+            pushBtn.addEventListener('click', () => {
+                console.log('🚀 Push to Cloud button clicked');
+                const btn = document.getElementById('push-btn');
+                const ogText = btn.textContent;
+                btn.textContent = 'Pushing to GitHub...';
+                btn.disabled = true;
 
-            fetch('/api/push-cast', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({})
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    alert('Successfully pushed cast changes to GitHub!');
-                    window.location.reload(); // Reload to show final saved state
-                } else {
-                    alert('Failed to push: ' + (data.error || 'Unknown error'));
+                fetch('/api/push-cast', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                })
+                .then(res => {
+                    console.log('📡 Push response status:', res.status);
+                    return res.json();
+                })
+                .then(data => {
+                    console.log('📡 Push response data:', data);
+                    if (data.success) {
+                        alert('Successfully pushed cast changes to GitHub!');
+                        window.location.reload(); // Reload to show final saved state
+                    } else {
+                        alert('Failed to push: ' + (data.error || 'Unknown error'));
+                        btn.textContent = ogText;
+                        btn.disabled = false;
+                    }
+                })
+                .catch(err => {
+                    console.error('❌ Push error:', err);
+                    alert('Network error while pushing to GitHub.');
                     btn.textContent = ogText;
                     btn.disabled = false;
-                }
-            })
-            .catch(err => {
-                console.error(err);
-                alert('Network error while pushing to GitHub.');
-                btn.textContent = ogText;
-                btn.disabled = false;
+                });
             });
-        });
+        } else {
+            console.error('❌ Push button not found!');
+        }
     </script>
 </body>
 </html>

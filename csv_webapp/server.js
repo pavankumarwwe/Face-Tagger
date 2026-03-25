@@ -192,7 +192,9 @@ app.get('/api/actors', (req, res) => {
 app.get('/api/cast', async (req, res) => {
     const { movie } = req.query;
     if (!movie) return res.json({ cast: [] });
+    console.log(`📡 Fetching cast for movie: "${movie}"`);
     const cast = await loadCastOptions(movie);
+    console.log(`📡 Returning ${cast.length} cast members:`, cast);
     res.json({ cast });
 });
 
@@ -221,29 +223,36 @@ function loadCastOptions(movieName) {
         let options = [];
         if (!fs.existsSync(CAST_FILE)) return resolve([]);
 
+        const normalizedMovieName = movieName.toLowerCase().trim();
+
         fs.createReadStream(CAST_FILE)
             .pipe(csvParser())
             .on('data', (row) => {
-                // simple substring match or exact match
-                if (row['Movie Name'] && movieName.toLowerCase().includes(row['Movie Name'].toLowerCase())) {
-                    if (row['Cast']) {
-                        options = row['Cast'].split(',').map(c => c.trim()).filter(Boolean);
+                // Exact match on normalized movie names
+                if (row['Movie Name']) {
+                    const rowMovieName = row['Movie Name'].toLowerCase().trim();
+                    if (rowMovieName === normalizedMovieName) {
+                        if (row['Cast']) {
+                            options = row['Cast'].split(',').map(c => c.trim()).filter(Boolean);
+                        }
                     }
                 }
             })
             .on('end', () => {
-                // Apply pending changes for this movie
-                const changes = pendingCastChanges.get(movieName);
-                if (changes) {
-                    // Apply additions
-                    for (const actor of changes.added) {
-                        if (!options.some(a => a.toLowerCase() === actor.toLowerCase())) {
-                            options.push(actor);
+                // Apply pending changes for this movie (check all variations)
+                for (const [pendingMovie, changes] of pendingCastChanges.entries()) {
+                    if (pendingMovie.toLowerCase().trim() === normalizedMovieName) {
+                        // Apply additions
+                        for (const actor of changes.added) {
+                            if (!options.some(a => a.toLowerCase() === actor.toLowerCase())) {
+                                options.push(actor);
+                            }
                         }
-                    }
-                    // Apply removals
-                    for (const actor of changes.removed) {
-                        options = options.filter(a => a.toLowerCase() !== actor.toLowerCase());
+                        // Apply removals
+                        for (const actor of changes.removed) {
+                            options = options.filter(a => a.toLowerCase() !== actor.toLowerCase());
+                        }
+                        break;
                     }
                 }
                 resolve(options);
