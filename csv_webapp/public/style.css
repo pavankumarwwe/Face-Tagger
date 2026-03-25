@@ -493,3 +493,150 @@ select:focus {
     color: var(--accent-color);
     font-weight: 600;
 }
+
+/* YouTube Floating Player Styles */
+.youtube-modal {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    width: 480px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    z-index: 10001;
+    transition: all 0.3s ease;
+}
+
+.youtube-modal.minimized {
+    width: 60px;
+    height: 60px;
+}
+
+.youtube-modal.minimized .youtube-modal-body {
+    display: none;
+}
+
+.youtube-modal.minimized .youtube-modal-header h3 {
+    display: none;
+}
+
+.youtube-modal-content {
+    background: white;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+}
+
+.youtube-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border-color);
+    cursor: move;
+    background: linear-gradient(135deg, var(--accent-color) 0%, #1d4ed8 100%);
+    border-radius: 12px 12px 0 0;
+}
+
+.youtube-modal-header h3 {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: white;
+    user-select: none;
+}
+
+.youtube-modal-header .modal-controls {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.youtube-modal-header button {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.youtube-modal-header button:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.youtube-modal-body {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.youtube-player-wrapper {
+    position: relative;
+    background: #000;
+    border-radius: 0 0 12px 12px;
+    overflow: hidden;
+    aspect-ratio: 16 / 9;
+}
+
+.youtube-player-wrapper #youtube-player {
+    width: 100%;
+    height: 100%;
+}
+
+.video-time-overlay {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.75);
+    color: white;
+    padding: 0.4rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    font-family: 'Courier New', monospace;
+    z-index: 10;
+    pointer-events: none;
+    backdrop-filter: blur(4px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.video-time-overlay span {
+    margin: 0 0.2rem;
+}
+
+/* Position variants */
+.youtube-modal.position-top-right {
+    top: 80px;
+    right: 20px;
+    left: auto;
+    bottom: auto;
+}
+
+.youtube-modal.position-top-left {
+    top: 80px;
+    left: 20px;
+    right: auto;
+    bottom: auto;
+}
+
+.youtube-modal.position-bottom-right {
+    bottom: 20px;
+    right: 20px;
+    top: auto;
+    left: auto;
+}
+
+.youtube-modal.position-bottom-left {
+    bottom: 20px;
+    left: 20px;
+    top: auto;
+    right: auto;
+}

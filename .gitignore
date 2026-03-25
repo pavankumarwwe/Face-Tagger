@@ -1,0 +1,29 @@
+# Sensitive files - DO NOT COMMIT
+movie_secrets.csv
+Movie_Assignments.csv
+
+# Node modules
+node_modules/
+csv_webapp/node_modules/
+
+# Environment variables
+.env
+.env.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*
+
+# Temporary files
+*.tmp
+.cache/

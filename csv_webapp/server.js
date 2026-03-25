@@ -9,8 +9,22 @@ const fastcsv = require('fast-csv');
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
-app.use(express.static(path.join(__dirname, 'public')));
+
+// Security: Prevent access to sensitive files
+app.use(express.static(path.join(__dirname, 'public'), {
+    setHeaders: (res, filepath) => {
+        // Prevent access to CSV files from public directory
+        if (filepath.endsWith('.csv')) {
+            res.status(403).send('Forbidden');
+        }
+    }
+}));
 app.use('/faces', express.static(path.join(__dirname, '..', 'Actors Faces')));
+
+// Rate limiting: Track failed attempts per movie
+const failedAttempts = new Map(); // key: "IP:filename", value: { count, blockedUntil }
+const MAX_ATTEMPTS = 20;
+const BLOCK_DURATION = 60 * 60 * 1000; // 1 hour in milliseconds
 
 const BASE_DIR = path.join(__dirname, '..');
 const RAW_DIR = path.join(BASE_DIR, 'raw_movies');
@@ -40,6 +54,56 @@ function getMovieStatuses() {
             .on('end', () => resolve(statuses))
             .on('error', () => resolve(statuses));
     });
+}
+
+// Rate limiting helpers
+function getRateLimitKey(ip, filename) {
+    return `${ip}:${filename}`;
+}
+
+function isBlocked(ip, filename) {
+    const key = getRateLimitKey(ip, filename);
+    const attempt = failedAttempts.get(key);
+    if (!attempt) return false;
+
+    if (attempt.blockedUntil && Date.now() < attempt.blockedUntil) {
+        return true;
+    }
+
+    // Reset if block period has passed
+    if (attempt.blockedUntil && Date.now() >= attempt.blockedUntil) {
+        failedAttempts.delete(key);
+        return false;
+    }
+
+    return false;
+}
+
+function recordFailedAttempt(ip, filename) {
+    const key = getRateLimitKey(ip, filename);
+    const attempt = failedAttempts.get(key) || { count: 0, blockedUntil: null };
+    attempt.count += 1;
+
+    if (attempt.count >= MAX_ATTEMPTS) {
+        attempt.blockedUntil = Date.now() + BLOCK_DURATION;
+        console.log(`🚫 IP ${ip} blocked from "${filename}" until ${new Date(attempt.blockedUntil).toLocaleString()}`);
+    }
+
+    failedAttempts.set(key, attempt);
+}
+
+function resetAttempts(ip, filename) {
+    const key = getRateLimitKey(ip, filename);
+    failedAttempts.delete(key);
+}
+
+function getBlockedTimeRemaining(ip, filename) {
+    const key = getRateLimitKey(ip, filename);
+    const attempt = failedAttempts.get(key);
+    if (!attempt || !attempt.blockedUntil) return 0;
+
+    const remaining = attempt.blockedUntil - Date.now();
+    return remaining > 0 ? Math.ceil(remaining / 60000) : 0; // Return minutes
 }
 
 function verifySecret(filename, code) {
@@ -260,13 +324,36 @@ function saveCSV() {
 
 app.post('/api/load', async (req, res) => {
     const { filename, secretCode } = req.body;
-    
+    const clientIp = req.ip || req.connection.remoteAddress;
+
     const isLocal = req.hostname === 'localhost' || req.hostname === '127.0.0.1';
     if (!isLocal) {
+        // Check if IP is blocked for this specific movie
+        if (isBlocked(clientIp, filename)) {
+            const minutesRemaining = getBlockedTimeRemaining(clientIp, filename);
+            return res.status(429).json({
+                error: `Too many failed attempts for "${filename}". Please try again in ${minutesRemaining} minutes.`,
+                blockedFor: minutesRemaining
+            });
+        }
+
         const isAuthorized = await verifySecret(filename, secretCode);
         if (!isAuthorized) {
-            return res.status(401).json({ error: 'Incorrect or missing secret code.' });
+            recordFailedAttempt(clientIp, filename);
+            const key = getRateLimitKey(clientIp, filename);
+            const attempt = failedAttempts.get(key);
+            const attemptsLeft = MAX_ATTEMPTS - attempt.count;
+
+            console.log(`❌ Failed attempt from ${clientIp} for "${filename}". Attempts left: ${attemptsLeft}`);
+
+            return res.status(401).json({
+                error: 'Incorrect or missing secret code.',
+                attemptsLeft: attemptsLeft > 0 ? attemptsLeft : 0
+            });
         }
+
+        // Reset attempts on successful login for this movie
+        resetAttempts(clientIp, filename);
     }
 
     const statuses = await getMovieStatuses();

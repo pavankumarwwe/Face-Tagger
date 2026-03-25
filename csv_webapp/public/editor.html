@@ -32,7 +32,7 @@
                 <div class="file-loader" style="display: flex; justify-content: center; align-items: center; gap: 10px;">
                     <select id="file-select" style="height: 38px;"></select>
                     <button id="load-file-btn" class="btn" style="height: 38px;">Load</button>
-                    <a id="open-movie-btn" class="btn" target="_blank" style="display: none; text-decoration: none; height: 38px; align-items: center;">Open Movie</a>
+                    <a id="open-movie-btn" class="btn" href="#" style="display: none; text-decoration: none; height: 38px; align-items: center;">Open Movie</a>
                 </div>
                 <span id="open-movie-help" style="position: absolute; right: 0; color: #ef4444; font-size: 0.9rem; line-height: 1.2; display: none;">No youtube link available for this movie</span>
             </div>
@@ -56,6 +56,29 @@
                 </table>
             </div>
         </main>
+    </div>
+
+    <!-- YouTube Player Modal -->
+    <div id="youtube-modal" class="youtube-modal position-top-right" style="display: none;">
+        <div class="youtube-modal-content">
+            <div class="youtube-modal-header" id="player-header">
+                <h3 id="youtube-modal-title">Movie Player</h3>
+                <div class="modal-controls">
+                    <button id="position-toggle" title="Change position">⇄</button>
+                    <button class="modal-close" id="close-youtube-modal" title="Close player">&times;</button>
+                </div>
+            </div>
+            <div class="youtube-modal-body">
+                <div class="youtube-player-wrapper">
+                    <div id="youtube-player"></div>
+                    <div class="video-time-overlay">
+                        <span id="video-current-time">0:00</span>
+                        <span>/</span>
+                        <span id="video-duration">0:00</span>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="script.js"></script>
