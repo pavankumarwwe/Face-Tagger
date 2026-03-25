@@ -116,10 +116,13 @@
         }
 
         .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr auto;
+            display: flex;
             gap: 1rem;
-            align-items: end;
+            align-items: flex-end;
+        }
+
+        .form-row .form-group {
+            flex: 1;
         }
 
         .actor-list {
@@ -184,7 +187,8 @@
     <div class="header-section">
         <h1>Manage Actors Database</h1>
         <div style="display: flex; gap: 1rem;">
-            <a href="/" class="btn btn-secondary">← Home</a>
+            <a href="javascript:history.back()" class="btn btn-secondary">← Back</a>
+            <a href="/" class="btn btn-secondary">Home</a>
             <button id="push-actors-btn" class="btn btn-success">Push Actors to Cloud</button>
         </div>
     </div>
@@ -193,15 +197,15 @@
     <div class="card">
         <h2>Add New Actor</h2>
         <div class="form-row">
-            <div class="form-group" style="margin: 0;">
+            <div class="form-group">
                 <label>Actor Name</label>
                 <input type="text" id="new-actor-name" placeholder="Enter actor name...">
             </div>
-            <div class="form-group" style="margin: 0;">
+            <div class="form-group">
                 <label>Photo</label>
                 <input type="file" id="actor-photo" accept="image/*">
             </div>
-            <button id="upload-btn" class="btn" style="margin-bottom: 1.5rem;">Upload</button>
+            <button id="upload-btn" class="btn" style="height: 48px; margin-bottom: 1.5rem;">Upload</button>
         </div>
     </div>
 
@@ -230,6 +234,16 @@
             }
         }
 
+        // Try multiple image extensions
+        function tryImageExtensions(img, actorName, extensions = ['jpeg', 'jpg', 'png', 'webp'], index = 0) {
+            if (index >= extensions.length) {
+                img.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="50" height="50"><rect fill="%23e2e8f0" width="50" height="50"/><text x="25" y="30" text-anchor="middle" fill="%2364748b" font-size="12">?</text></svg>';
+                return;
+            }
+            img.onerror = () => tryImageExtensions(img, actorName, extensions, index + 1);
+            img.src = `/faces/${actorName}.${extensions[index]}`;
+        }
+
         // Render actors
         function renderActors(actors) {
             const list = document.getElementById('actor-list');
@@ -238,9 +252,8 @@
             list.innerHTML = actors.map(actor => `
                 <div class="actor-item">
                     <div class="actor-info">
-                        <img src="/faces/${actor}.jpeg"
-                             onerror="this.onerror=null; this.src='/faces/${actor}.jpg';"
-                             class="actor-photo"
+                        <img class="actor-photo"
+                             data-actor="${actor}"
                              alt="${actor}">
                         <span style="font-weight: 600;">${actor}</span>
                     </div>
@@ -250,6 +263,11 @@
                     </div>
                 </div>
             `).join('');
+
+            // Load images with fallback
+            list.querySelectorAll('.actor-photo').forEach(img => {
+                tryImageExtensions(img, img.dataset.actor);
+            });
         }
 
         // Search actors

@@ -247,6 +247,18 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
+            // Try multiple image extensions
+            window.tryImageExtensions = function(img, actorFile, extensions = ['jpeg', 'jpg', 'png', 'webp'], index = 0) {
+                if (index >= extensions.length) {
+                    img.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="260"><rect fill="%23e2e8f0" width="200" height="260"/><text x="100" y="130" text-anchor="middle" fill="%2364748b" font-size="20">No Image</text></svg>';
+                    return;
+                }
+
+                const baseName = actorFile.replace(/\.(jpg|jpeg|png|webp)$/i, '');
+                img.onerror = () => window.tryImageExtensions(img, actorFile, extensions, index + 1);
+                img.src = `/faces/${baseName}.${extensions[index]}`;
+            };
+
             const urlParams = new URLSearchParams(window.location.search);
             const movieName = urlParams.get('movie');
 
