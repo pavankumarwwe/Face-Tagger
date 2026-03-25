@@ -15,8 +15,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const playerHeader = document.getElementById('player-header');
     const videoCurrentTime = document.getElementById('video-current-time');
     const videoDuration = document.getElementById('video-duration');
-    const seekBackwardBtn = document.getElementById('seek-backward');
-    const seekForwardBtn = document.getElementById('seek-forward');
     const playPauseBtn = document.getElementById('play-pause-btn');
     const playPausePath = document.getElementById('play-pause-path');
     const muteBtn = document.getElementById('mute-btn');
@@ -362,21 +360,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Bottom overlay seek button event listeners
-    if (seekBackwardBtn) {
-        seekBackwardBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            seekVideo(-10);
-        });
-    }
-
-    if (seekForwardBtn) {
-        seekForwardBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            seekVideo(10);
-        });
-    }
-
     // Initialize YouTube player
     function initYoutubePlayer(videoId) {
         currentVideoType = 'youtube';
@@ -401,12 +384,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const modalTitle = document.getElementById('youtube-modal-title');
         if (modalTitle) modalTitle.textContent = 'YouTube Player';
 
-        // Show time overlay and seek controls for YouTube
+        // Show time overlay and controls for YouTube
         const timeOverlay = document.querySelector('.video-time-overlay');
         if (timeOverlay) timeOverlay.style.display = 'block';
 
-        const controlsOverlay = document.querySelector('.video-controls-overlay');
-        if (controlsOverlay) controlsOverlay.style.display = 'flex';
+        const playbackControls = document.querySelector('.playback-controls');
+        if (playbackControls) playbackControls.classList.remove('hidden');
 
         // Wait for YT API to be available
         const checkYT = () => {
@@ -488,11 +471,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const timeOverlay = document.querySelector('.video-time-overlay');
         if (timeOverlay) timeOverlay.style.display = 'none';
 
-        const controlsOverlay = document.querySelector('.video-controls-overlay');
-        if (controlsOverlay) controlsOverlay.style.display = 'none';
-
         const playbackControls = document.querySelector('.playback-controls');
-        if (playbackControls) playbackControls.style.display = 'none';
+        if (playbackControls) playbackControls.classList.add('hidden');
 
         // Create iframe for Google Drive
         const embedUrl = getGoogleDriveEmbedUrl(fileId);
