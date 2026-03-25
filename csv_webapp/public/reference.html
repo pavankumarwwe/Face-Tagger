@@ -386,9 +386,57 @@
                     const data = await response.json();
 
                     if (data.success) {
-                        console.log(`✅ Added ${actorName} to cast`);
-                        // Reload the page to show updated cast
-                        window.location.reload();
+                        console.log(`✅ Added ${actorName} to cast (pending save)`);
+
+                        // Find actor in remaining grid and move to matched grid
+                        const actorCard = document.querySelector(`#remaining-grid .card[data-actor="${actorName}"]`);
+                        if (actorCard) {
+                            // Find the image filename
+                            const imgElement = actorCard.querySelector('img');
+                            const imgSrc = imgElement ? imgElement.src : '';
+                            const filename = imgSrc.split('/').pop();
+
+                            // Remove from remaining grid
+                            actorCard.remove();
+
+                            // Add to matched grid
+                            const matchedGrid = document.getElementById('matched-grid');
+                            const newCard = document.createElement('div');
+                            newCard.className = 'card';
+                            newCard.setAttribute('data-actor', actorName);
+                            newCard.innerHTML = `
+                                <div class="img-wrapper">
+                                    <img src="/faces/${encodeURIComponent(filename)}" loading="lazy" alt="${actorName}">
+                                    <div class="img-overlay"></div>
+                                    <button class="action-btn remove"
+                                            data-actor="${actorName}"
+                                            data-action="remove"
+                                            title="Remove from cast">
+                                        −
+                                    </button>
+                                </div>
+                                <div class="name-label">${actorName}</div>
+                            `;
+                            matchedGrid.appendChild(newCard);
+
+                            // Add event listener to new button
+                            newCard.querySelector('.action-btn').addEventListener('click', (e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                removeFromCast(actorName);
+                            });
+
+                            // Update counts
+                            const matchedCount = matchedGrid.children.length;
+                            const remainingCount = document.getElementById('remaining-grid').children.length;
+                            document.getElementById('matched-count').textContent = matchedCount;
+                            document.getElementById('remaining-count').textContent = remainingCount;
+
+                            // Show matched heading if hidden
+                            if (matchedCount > 0) {
+                                document.getElementById('matched-heading').style.display = 'flex';
+                            }
+                        }
                     } else {
                         alert('Error: ' + data.error);
                     }
@@ -416,9 +464,57 @@
                     const data = await response.json();
 
                     if (data.success) {
-                        console.log(`✅ Removed ${actorName} from cast`);
-                        // Reload the page to show updated cast
-                        window.location.reload();
+                        console.log(`✅ Removed ${actorName} from cast (pending save)`);
+
+                        // Find actor in matched grid and move to remaining grid
+                        const actorCard = document.querySelector(`#matched-grid .card[data-actor="${actorName}"]`);
+                        if (actorCard) {
+                            // Find the image filename
+                            const imgElement = actorCard.querySelector('img');
+                            const imgSrc = imgElement ? imgElement.src : '';
+                            const filename = imgSrc.split('/').pop();
+
+                            // Remove from matched grid
+                            actorCard.remove();
+
+                            // Add to remaining grid
+                            const remainingGrid = document.getElementById('remaining-grid');
+                            const newCard = document.createElement('div');
+                            newCard.className = 'card';
+                            newCard.setAttribute('data-actor', actorName);
+                            newCard.innerHTML = `
+                                <div class="img-wrapper">
+                                    <img src="/faces/${encodeURIComponent(filename)}" loading="lazy" alt="${actorName}">
+                                    <div class="img-overlay"></div>
+                                    <button class="action-btn add"
+                                            data-actor="${actorName}"
+                                            data-action="add"
+                                            title="Add to cast">
+                                        +
+                                    </button>
+                                </div>
+                                <div class="name-label">${actorName}</div>
+                            `;
+                            remainingGrid.appendChild(newCard);
+
+                            // Add event listener to new button
+                            newCard.querySelector('.action-btn').addEventListener('click', (e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                addToCast(actorName);
+                            });
+
+                            // Update counts
+                            const matchedCount = document.getElementById('matched-grid').children.length;
+                            const remainingCount = remainingGrid.children.length;
+                            document.getElementById('matched-count').textContent = matchedCount;
+                            document.getElementById('remaining-count').textContent = remainingCount;
+
+                            // Show remaining heading if hidden
+                            if (remainingCount > 0) {
+                                document.getElementById('remaining-heading').style.display = 'flex';
+                            }
+                        }
                     } else {
                         alert('Error: ' + data.error);
                     }
@@ -445,15 +541,16 @@
             .then(data => {
                 if (data.success) {
                     alert('Successfully pushed cast changes to GitHub!');
+                    window.location.reload(); // Reload to show final saved state
                 } else {
                     alert('Failed to push: ' + (data.error || 'Unknown error'));
+                    btn.textContent = ogText;
+                    btn.disabled = false;
                 }
             })
             .catch(err => {
                 console.error(err);
                 alert('Network error while pushing to GitHub.');
-            })
-            .finally(() => {
                 btn.textContent = ogText;
                 btn.disabled = false;
             });

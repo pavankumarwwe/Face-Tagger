@@ -26,6 +26,10 @@ const failedAttempts = new Map(); // key: "IP:filename", value: { count, blocked
 const MAX_ATTEMPTS = 20;
 const BLOCK_DURATION = 60 * 60 * 1000; // 1 hour in milliseconds
 
+// Pending cast changes (in-memory storage until pushed to cloud)
+// Structure: { movieName: { added: Set(), removed: Set() } }
+const pendingCastChanges = new Map();
+
 const BASE_DIR = path.join(__dirname, '..');
 const RAW_DIR = path.join(BASE_DIR, 'raw_movies');
 const TAGGED_DIR = path.join(BASE_DIR, 'tagged_movies');
@@ -211,7 +215,7 @@ function loadMovieUrl(movieName) {
     });
 }
 
-// Helper to load cast
+// Helper to load cast (with pending changes applied)
 function loadCastOptions(movieName) {
     return new Promise((resolve) => {
         let options = [];
@@ -227,7 +231,23 @@ function loadCastOptions(movieName) {
                     }
                 }
             })
-            .on('end', () => resolve(options))
+            .on('end', () => {
+                // Apply pending changes for this movie
+                const changes = pendingCastChanges.get(movieName);
+                if (changes) {
+                    // Apply additions
+                    for (const actor of changes.added) {
+                        if (!options.some(a => a.toLowerCase() === actor.toLowerCase())) {
+                            options.push(actor);
+                        }
+                    }
+                    // Apply removals
+                    for (const actor of changes.removed) {
+                        options = options.filter(a => a.toLowerCase() !== actor.toLowerCase());
+                    }
+                }
+                resolve(options);
+            })
             .on('error', () => resolve([]));
     });
 }
@@ -446,59 +466,24 @@ app.post('/api/add-to-movie-cast', async (req, res) => {
     }
 
     try {
-        // Read current movie_cast.csv
-        const castRows = [];
-        if (fs.existsSync(CAST_FILE)) {
-            await new Promise((resolve, reject) => {
-                fs.createReadStream(CAST_FILE)
-                    .pipe(csvParser())
-                    .on('data', (row) => castRows.push(row))
-                    .on('end', resolve)
-                    .on('error', reject);
-            });
+        // Initialize pending changes for this movie if needed
+        if (!pendingCastChanges.has(movieName)) {
+            pendingCastChanges.set(movieName, { added: new Set(), removed: new Set() });
         }
 
-        // Find the movie row
-        let movieRow = castRows.find(r => r['Movie Name'] && r['Movie Name'].toLowerCase().trim() === movieName.toLowerCase().trim());
+        const changes = pendingCastChanges.get(movieName);
 
-        if (movieRow) {
-            // Parse existing cast
-            const currentCast = movieRow['Cast'] ? movieRow['Cast'].split(',').map(a => a.trim()) : [];
-
-            // Check if actor already exists
-            const actorExists = currentCast.some(a => a.toLowerCase() === actorName.toLowerCase());
-
-            if (!actorExists) {
-                currentCast.push(actorName);
-                movieRow['Cast'] = currentCast.join(', ');
-
-                await new Promise((resolve, reject) => {
-                    fastcsv.writeToPath(CAST_FILE, castRows, { headers: true })
-                        .on('error', reject)
-                        .on('finish', resolve);
-                });
-
-                console.log(`✅ Added ${actorName} to ${movieName} cast`);
-                return res.json({ success: true });
-            } else {
-                return res.json({ success: true, message: 'Actor already in cast' });
-            }
+        // If this actor was marked for removal, just unmark it
+        if (changes.removed.has(actorName)) {
+            changes.removed.delete(actorName);
         } else {
-            // Movie not found - create new entry
-            castRows.push({
-                'Movie Name': movieName,
-                'Cast': actorName
-            });
-
-            await new Promise((resolve, reject) => {
-                fastcsv.writeToPath(CAST_FILE, castRows, { headers: true })
-                    .on('error', reject)
-                    .on('finish', resolve);
-            });
-
-            console.log(`✅ Created new movie entry and added ${actorName}`);
-            return res.json({ success: true });
+            // Otherwise, mark it for addition
+            changes.added.add(actorName);
         }
+
+        console.log(`📝 Queued: Add ${actorName} to ${movieName} (will save on push)`);
+        return res.json({ success: true });
+
     } catch (err) {
         console.error('Error adding to cast:', err);
         return res.status(500).json({ error: err.message });
@@ -514,36 +499,24 @@ app.post('/api/remove-from-movie-cast', async (req, res) => {
     }
 
     try {
-        const castRows = [];
-        if (fs.existsSync(CAST_FILE)) {
-            await new Promise((resolve, reject) => {
-                fs.createReadStream(CAST_FILE)
-                    .pipe(csvParser())
-                    .on('data', (row) => castRows.push(row))
-                    .on('end', resolve)
-                    .on('error', reject);
-            });
+        // Initialize pending changes for this movie if needed
+        if (!pendingCastChanges.has(movieName)) {
+            pendingCastChanges.set(movieName, { added: new Set(), removed: new Set() });
         }
 
-        const movieRow = castRows.find(r => r['Movie Name'] && r['Movie Name'].toLowerCase().trim() === movieName.toLowerCase().trim());
+        const changes = pendingCastChanges.get(movieName);
 
-        if (movieRow) {
-            const currentCast = movieRow['Cast'] ? movieRow['Cast'].split(',').map(a => a.trim()) : [];
-            const updatedCast = currentCast.filter(a => a.toLowerCase() !== actorName.toLowerCase());
-
-            movieRow['Cast'] = updatedCast.join(', ');
-
-            await new Promise((resolve, reject) => {
-                fastcsv.writeToPath(CAST_FILE, castRows, { headers: true })
-                    .on('error', reject)
-                    .on('finish', resolve);
-            });
-
-            console.log(`✅ Removed ${actorName} from ${movieName} cast`);
-            return res.json({ success: true });
+        // If this actor was marked for addition, just unmark it
+        if (changes.added.has(actorName)) {
+            changes.added.delete(actorName);
         } else {
-            return res.status(404).json({ error: 'Movie not found' });
+            // Otherwise, mark it for removal
+            changes.removed.add(actorName);
         }
+
+        console.log(`📝 Queued: Remove ${actorName} from ${movieName} (will save on push)`);
+        return res.json({ success: true });
+
     } catch (err) {
         console.error('Error removing from cast:', err);
         return res.status(500).json({ error: err.message });
@@ -558,6 +531,65 @@ app.post('/api/push-cast', async (req, res) => {
     }
 
     try {
+        // First, apply all pending changes to the CSV file
+        if (pendingCastChanges.size > 0) {
+            console.log(`📝 Applying ${pendingCastChanges.size} pending movie cast changes...`);
+
+            // Read current movie_cast.csv
+            const castRows = [];
+            if (fs.existsSync(CAST_FILE)) {
+                await new Promise((resolve, reject) => {
+                    fs.createReadStream(CAST_FILE)
+                        .pipe(csvParser())
+                        .on('data', (row) => castRows.push(row))
+                        .on('end', resolve)
+                        .on('error', reject);
+                });
+            }
+
+            // Apply all pending changes
+            for (const [movieName, changes] of pendingCastChanges.entries()) {
+                let movieRow = castRows.find(r => r['Movie Name'] && r['Movie Name'].toLowerCase().trim() === movieName.toLowerCase().trim());
+
+                if (!movieRow) {
+                    // Create new movie entry
+                    movieRow = { 'Movie Name': movieName, 'Cast': '' };
+                    castRows.push(movieRow);
+                }
+
+                // Get current cast
+                let currentCast = movieRow['Cast'] ? movieRow['Cast'].split(',').map(a => a.trim()).filter(a => a) : [];
+
+                // Apply additions
+                for (const actor of changes.added) {
+                    if (!currentCast.some(a => a.toLowerCase() === actor.toLowerCase())) {
+                        currentCast.push(actor);
+                        console.log(`  ✓ Added ${actor} to ${movieName}`);
+                    }
+                }
+
+                // Apply removals
+                for (const actor of changes.removed) {
+                    currentCast = currentCast.filter(a => a.toLowerCase() !== actor.toLowerCase());
+                    console.log(`  ✓ Removed ${actor} from ${movieName}`);
+                }
+
+                // Update the row
+                movieRow['Cast'] = currentCast.join(', ');
+            }
+
+            // Write updated CSV
+            await new Promise((resolve, reject) => {
+                fastcsv.writeToPath(CAST_FILE, castRows, { headers: true })
+                    .on('error', reject)
+                    .on('finish', resolve);
+            });
+
+            // Clear pending changes after successful save
+            pendingCastChanges.clear();
+            console.log('✅ All pending changes saved to movie_cast.csv');
+        }
+
         const repoOwner = 'pavankumarwwe';
         const repoName = 'Face-Tagger';
 
