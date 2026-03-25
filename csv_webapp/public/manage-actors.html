@@ -307,6 +307,7 @@
                     alert(`✅ ${name} added successfully!`);
                     document.getElementById('new-actor-name').value = '';
                     document.getElementById('actor-photo').value = '';
+                    localStorage.setItem('actorsModified', 'true');
                     loadActors();
                 } else {
                     alert('Error: ' + data.error);
@@ -340,6 +341,7 @@
 
                 if (data.success) {
                     alert(`✅ Renamed to ${newName}`);
+                    localStorage.setItem('actorsModified', 'true');
                     loadActors();
                 } else {
                     alert('Error: ' + data.error);
@@ -368,6 +370,7 @@
 
                 if (data.success) {
                     alert(`✅ ${actorName} deleted`);
+                    localStorage.setItem('actorsModified', 'true');
                     loadActors();
                 } else {
                     alert('Error: ' + data.error);

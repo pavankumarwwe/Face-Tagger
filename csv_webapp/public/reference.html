@@ -247,6 +247,13 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
+            // Check if actors were modified in manage-actors page
+            if (localStorage.getItem('actorsModified') === 'true') {
+                localStorage.removeItem('actorsModified');
+                window.location.reload();
+                return;
+            }
+
             // Try multiple image extensions
             window.tryImageExtensions = function(img, actorFile, extensions = ['jpeg', 'jpg', 'png', 'webp'], index = 0) {
                 if (index >= extensions.length) {
