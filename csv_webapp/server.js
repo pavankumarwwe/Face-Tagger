@@ -5,6 +5,36 @@ const fs = require('fs');
 const path = require('path');
 const csvParser = require('csv-parser');
 const fastcsv = require('fast-csv');
+const multer = require('multer');
+
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const actorsDir = path.join(__dirname, '..', 'Actors Faces');
+        if (!fs.existsSync(actorsDir)) fs.mkdirSync(actorsDir, { recursive: true });
+        cb(null, actorsDir);
+    },
+    filename: (req, file, cb) => {
+        const actorName = req.body.actorName || 'Unknown';
+        const ext = path.extname(file.originalname);
+        cb(null, `${actorName}${ext}`);
+    }
+});
+
+const upload = multer({
+    storage: storage,
+    fileFilter: (req, file, cb) => {
+        const allowedTypes = /jpeg|jpg|png|webp/;
+        const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+        const mimetype = allowedTypes.test(file.mimetype);
+        if (mimetype && extname) {
+            return cb(null, true);
+        } else {
+            cb(new Error('Only image files are allowed!'));
+        }
+    },
+    limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
+});
 
 const app = express();
 app.use(cors());
@@ -449,6 +479,371 @@ app.post('/api/save', (req, res) => {
     res.json({ success: true });
 });
 
+// Add actor to movie cast (from reference page - no auth required)
+app.post('/api/add-to-movie-cast', async (req, res) => {
+    const { movieName, actorName } = req.body;
+
+    if (!movieName || !actorName) {
+        return res.status(400).json({ error: 'Movie name and actor name required' });
+    }
+
+    try {
+        // Read current movie_cast.csv
+        const castRows = [];
+        if (fs.existsSync(CAST_FILE)) {
+            await new Promise((resolve, reject) => {
+                fs.createReadStream(CAST_FILE)
+                    .pipe(csvParser())
+                    .on('data', (row) => castRows.push(row))
+                    .on('end', resolve)
+                    .on('error', reject);
+            });
+        }
+
+        // Find the movie row
+        let movieRow = castRows.find(r => r['Movie Name'] && r['Movie Name'].toLowerCase().trim() === movieName.toLowerCase().trim());
+
+        if (movieRow) {
+            // Parse existing cast
+            const currentCast = movieRow['Cast'] ? movieRow['Cast'].split(',').map(a => a.trim()) : [];
+
+            // Check if actor already exists
+            const actorExists = currentCast.some(a => a.toLowerCase() === actorName.toLowerCase());
+
+            if (!actorExists) {
+                currentCast.push(actorName);
+                movieRow['Cast'] = currentCast.join(', ');
+
+                await new Promise((resolve, reject) => {
+                    fastcsv.writeToPath(CAST_FILE, castRows, { headers: true })
+                        .on('error', reject)
+                        .on('finish', resolve);
+                });
+
+                console.log(`✅ Added ${actorName} to ${movieName} cast`);
+                return res.json({ success: true });
+            } else {
+                return res.json({ success: true, message: 'Actor already in cast' });
+            }
+        } else {
+            // Movie not found - create new entry
+            castRows.push({
+                'Movie Name': movieName,
+                'Cast': actorName
+            });
+
+            await new Promise((resolve, reject) => {
+                fastcsv.writeToPath(CAST_FILE, castRows, { headers: true })
+                    .on('error', reject)
+                    .on('finish', resolve);
+            });
+
+            console.log(`✅ Created new movie entry and added ${actorName}`);
+            return res.json({ success: true });
+        }
+    } catch (err) {
+        console.error('Error adding to cast:', err);
+        return res.status(500).json({ error: err.message });
+    }
+});
+
+// Remove actor from movie cast
+app.post('/api/remove-from-movie-cast', async (req, res) => {
+    const { movieName, actorName } = req.body;
+
+    if (!movieName || !actorName) {
+        return res.status(400).json({ error: 'Movie name and actor name required' });
+    }
+
+    try {
+        const castRows = [];
+        if (fs.existsSync(CAST_FILE)) {
+            await new Promise((resolve, reject) => {
+                fs.createReadStream(CAST_FILE)
+                    .pipe(csvParser())
+                    .on('data', (row) => castRows.push(row))
+                    .on('end', resolve)
+                    .on('error', reject);
+            });
+        }
+
+        const movieRow = castRows.find(r => r['Movie Name'] && r['Movie Name'].toLowerCase().trim() === movieName.toLowerCase().trim());
+
+        if (movieRow) {
+            const currentCast = movieRow['Cast'] ? movieRow['Cast'].split(',').map(a => a.trim()) : [];
+            const updatedCast = currentCast.filter(a => a.toLowerCase() !== actorName.toLowerCase());
+
+            movieRow['Cast'] = updatedCast.join(', ');
+
+            await new Promise((resolve, reject) => {
+                fastcsv.writeToPath(CAST_FILE, castRows, { headers: true })
+                    .on('error', reject)
+                    .on('finish', resolve);
+            });
+
+            console.log(`✅ Removed ${actorName} from ${movieName} cast`);
+            return res.json({ success: true });
+        } else {
+            return res.status(404).json({ error: 'Movie not found' });
+        }
+    } catch (err) {
+        console.error('Error removing from cast:', err);
+        return res.status(500).json({ error: err.message });
+    }
+});
+
+// Push movie_cast.csv to GitHub
+app.post('/api/push-cast', async (req, res) => {
+    const token = process.env.GITHUB_TOKEN;
+    if (!token) {
+        return res.status(500).json({ error: 'GITHUB_TOKEN not configured' });
+    }
+
+    try {
+        const repoOwner = 'pavankumarwwe';
+        const repoName = 'Face-Tagger';
+
+        // Read movie_cast.csv
+        const fileContent = fs.readFileSync(CAST_FILE, 'utf8');
+        const base64Content = Buffer.from(fileContent).toString('base64');
+        const githubPath = 'movie_cast.csv';
+        const apiUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${githubPath}`;
+
+        // Get current file SHA
+        let sha = null;
+        const getRes = await fetch(apiUrl, {
+            headers: {
+                'Authorization': `token ${token}`,
+                'Accept': 'application/vnd.github.v3+json',
+                'User-Agent': 'Face-Tagger-App'
+            }
+        });
+
+        if (getRes.ok) {
+            const getData = await getRes.json();
+            sha = getData.sha;
+        }
+
+        // Push to GitHub
+        const body = {
+            message: `Update movie cast via Cast Images page`,
+            content: base64Content
+        };
+        if (sha) body.sha = sha;
+
+        const putRes = await fetch(apiUrl, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `token ${token}`,
+                'Accept': 'application/vnd.github.v3+json',
+                'User-Agent': 'Face-Tagger-App',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(body)
+        });
+
+        if (putRes.ok) {
+            console.log('✅ Pushed movie_cast.csv to GitHub');
+            res.json({ success: true });
+        } else {
+            const errorData = await putRes.json();
+            res.status(500).json({ error: errorData.message || 'GitHub API Error' });
+        }
+    } catch (err) {
+        console.error('Push error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Add actor to movie cast (from editor - with auth)
+app.post('/api/add-to-cast', async (req, res) => {
+    const { movieName, actorName, secretCode, filename } = req.body;
+
+    const isLocal = req.hostname === 'localhost' || req.hostname === '127.0.0.1';
+    if (!isLocal) {
+        const isAuthorized = await verifySecret(filename, secretCode);
+        if (!isAuthorized) return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    if (!movieName || !actorName) {
+        return res.status(400).json({ error: 'Movie name and actor name required' });
+    }
+
+    try {
+        // Read current movie_cast.csv
+        const castRows = [];
+        if (fs.existsSync(CAST_FILE)) {
+            await new Promise((resolve, reject) => {
+                fs.createReadStream(CAST_FILE)
+                    .pipe(csvParser())
+                    .on('data', (row) => castRows.push(row))
+                    .on('end', resolve)
+                    .on('error', reject);
+            });
+        }
+
+        // Find the movie row
+        let movieRow = castRows.find(r => r['Movie Name'] && r['Movie Name'].toLowerCase().trim() === movieName.toLowerCase().trim());
+
+        if (movieRow) {
+            // Parse existing cast
+            const currentCast = movieRow['Cast'] ? movieRow['Cast'].split(',').map(a => a.trim()) : [];
+
+            // Check if actor already exists (case-insensitive)
+            const actorExists = currentCast.some(a => a.toLowerCase() === actorName.toLowerCase());
+
+            if (!actorExists) {
+                // Add new actor
+                currentCast.push(actorName);
+                movieRow['Cast'] = currentCast.join(', ');
+
+                // Write back to CSV
+                await new Promise((resolve, reject) => {
+                    fastcsv.writeToPath(CAST_FILE, castRows, { headers: true })
+                        .on('error', reject)
+                        .on('finish', resolve);
+                });
+
+                console.log(`✅ Added ${actorName} to ${movieName} cast`);
+
+                // Reload cast options
+                const updatedCast = await loadCastOptions(movieName);
+                return res.json({ success: true, cast: updatedCast });
+            } else {
+                // Actor already in cast
+                return res.json({ success: true, cast: currentCast, message: 'Actor already in cast' });
+            }
+        } else {
+            // Movie not found - create new entry
+            castRows.push({
+                'Movie Name': movieName,
+                'Cast': actorName
+            });
+
+            await new Promise((resolve, reject) => {
+                fastcsv.writeToPath(CAST_FILE, castRows, { headers: true })
+                    .on('error', reject)
+                    .on('finish', resolve);
+            });
+
+            console.log(`✅ Created new movie entry and added ${actorName} to ${movieName}`);
+
+            const updatedCast = await loadCastOptions(movieName);
+            return res.json({ success: true, cast: updatedCast });
+        }
+    } catch (err) {
+        console.error('Error adding to cast:', err);
+        return res.status(500).json({ error: err.message });
+    }
+});
+
+// Upload actor photo
+app.post('/api/upload-actor', upload.single('photo'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: 'No file uploaded' });
+        }
+
+        const actorName = req.body.actorName;
+        console.log(`✅ Uploaded photo for ${actorName}`);
+
+        res.json({
+            success: true,
+            filename: req.file.filename,
+            path: `/faces/${req.file.filename}`
+        });
+    } catch (err) {
+        console.error('Error uploading actor photo:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Rename actor
+app.post('/api/rename-actor', async (req, res) => {
+    const { oldName, newName, secretCode } = req.body;
+
+    const isLocal = req.hostname === 'localhost' || req.hostname === '127.0.0.1';
+    if (!isLocal) {
+        if (!secretCode || secretCode !== '!@Mkpkntr5038!') {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+    }
+
+    if (!oldName || !newName) {
+        return res.status(400).json({ error: 'Old name and new name required' });
+    }
+
+    try {
+        const actorsDir = path.join(BASE_DIR, 'Actors Faces');
+
+        // Find the old file
+        const files = fs.readdirSync(actorsDir);
+        const oldFile = files.find(f => {
+            const nameWithoutExt = f.replace(/\.(jpg|jpeg|png|webp)$/i, '');
+            return nameWithoutExt === oldName;
+        });
+
+        if (!oldFile) {
+            return res.status(404).json({ error: 'Actor photo not found' });
+        }
+
+        const ext = path.extname(oldFile);
+        const oldPath = path.join(actorsDir, oldFile);
+        const newPath = path.join(actorsDir, `${newName}${ext}`);
+
+        // Rename the file
+        fs.renameSync(oldPath, newPath);
+
+        console.log(`✅ Renamed actor from ${oldName} to ${newName}`);
+
+        res.json({ success: true, newFilename: `${newName}${ext}` });
+    } catch (err) {
+        console.error('Error renaming actor:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Delete actor photo
+app.post('/api/delete-actor', async (req, res) => {
+    const { actorName, secretCode } = req.body;
+
+    const isLocal = req.hostname === 'localhost' || req.hostname === '127.0.0.1';
+    if (!isLocal) {
+        if (!secretCode || secretCode !== '!@Mkpkntr5038!') {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+    }
+
+    if (!actorName) {
+        return res.status(400).json({ error: 'Actor name required' });
+    }
+
+    try {
+        const actorsDir = path.join(BASE_DIR, 'Actors Faces');
+
+        // Find the file
+        const files = fs.readdirSync(actorsDir);
+        const actorFile = files.find(f => {
+            const nameWithoutExt = f.replace(/\.(jpg|jpeg|png|webp)$/i, '');
+            return nameWithoutExt === actorName;
+        });
+
+        if (!actorFile) {
+            return res.status(404).json({ error: 'Actor photo not found' });
+        }
+
+        const filePath = path.join(actorsDir, actorFile);
+        fs.unlinkSync(filePath);
+
+        console.log(`✅ Deleted actor photo: ${actorName}`);
+
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Error deleting actor:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.post('/api/push', async (req, res) => {
     const { filename, secretCode } = req.body;
     if (!filename) return res.status(400).json({ error: 'No filename provided' });
@@ -527,6 +922,54 @@ app.post('/api/push', async (req, res) => {
             res.status(500).json({ error: errorData.message || 'GitHub API Error' });
         }
     } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Push actors to GitHub (with password)
+app.post('/api/push-actors', async (req, res) => {
+    const { secretCode } = req.body;
+
+    // Verify password
+    if (secretCode !== '!@Mkpkntr5038!') {
+        return res.status(401).json({ error: 'Incorrect password' });
+    }
+
+    try {
+        const { exec } = require('child_process');
+        const util = require('util');
+        const execPromise = util.promisify(exec);
+
+        // Change to repository root
+        const repoRoot = path.join(__dirname, '..');
+
+        // Execute git commands
+        const commands = [
+            `cd "${repoRoot}" && git add "Actors Faces/"`,
+            `cd "${repoRoot}" && git commit -m "Update actor database via Manage Actors page" || echo "No changes to commit"`,
+            `cd "${repoRoot}" && git push origin main`
+        ];
+
+        for (const cmd of commands) {
+            try {
+                const { stdout, stderr } = await execPromise(cmd);
+                console.log('Git output:', stdout);
+                if (stderr && !stderr.includes('No changes')) {
+                    console.error('Git error:', stderr);
+                }
+            } catch (err) {
+                // Ignore "no changes to commit" errors
+                if (!err.message.includes('nothing to commit')) {
+                    throw err;
+                }
+            }
+        }
+
+        console.log('✅ Pushed actor database to GitHub');
+        res.json({ success: true });
+
+    } catch (err) {
+        console.error('Error pushing actors:', err);
         res.status(500).json({ error: err.message });
     }
 });

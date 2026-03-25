@@ -1122,7 +1122,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Add actor to a specific row (from "Select Actor from All Actors" modal)
-    function addActorToRow(rowIndex, actorName) {
+    async function addActorToRow(rowIndex, actorName) {
         const row = globalRows[rowIndex];
         const oldVal = row.Actors || '';
         const currentText = oldVal.trim();
@@ -1136,6 +1136,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Apply to all rows with same speaker (auto-fill same speakers)
         applySpeakerMapping(rowIndex);
+
+        // Add actor to movie cast if not already there
+        try {
+            const movieName = currentFilename.replace('.csv', '').replace('_tagged', '').replace('_transliterated', '').trim();
+
+            const response = await fetch('/api/add-to-cast', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    movieName: movieName,
+                    actorName: actorName,
+                    secretCode: currentSecretCode,
+                    filename: currentFilename
+                })
+            });
+
+            const data = await response.json();
+            if (data.success && data.cast) {
+                // Update global cast options
+                globalCastOptions = data.cast;
+                console.log(`✅ ${actorName} added to movie cast`);
+
+                // Re-render all rows to show updated dropdown
+                globalRows.forEach((_, i) => renderRowActorsCell(i));
+            }
+        } catch (err) {
+            console.error('Error adding to cast:', err);
+        }
     }
 
     // Reassign all rows with a speaker to a new actor
@@ -1164,4 +1192,5 @@ document.addEventListener('DOMContentLoaded', () => {
             rowsToUpdate.forEach(i => renderRowActorsCell(i));
         }
     }
+
 });

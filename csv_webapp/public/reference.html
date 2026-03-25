@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reference Cast Images</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -108,11 +112,132 @@
             word-wrap: break-word;
             line-height: 1.3;
         }
+
+        /* Header with buttons */
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);
+        }
+
+        .btn:hover {
+            background: #4338ca;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(79, 70, 229, 0.3);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--accent);
+            border: 1px solid var(--accent);
+        }
+
+        .btn-secondary:hover {
+            background: #eff6ff;
+        }
+
+        .btn-success {
+            background: #059669;
+        }
+
+        .btn-success:hover {
+            background: #047857;
+        }
+
+        /* Hover button on images */
+        .action-btn {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255, 255, 255, 0.95);
+            color: var(--accent);
+            font-size: 2rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+
+        .action-btn.remove {
+            background: rgba(239, 68, 68, 0.95);
+            color: white;
+        }
+
+        .action-btn.add {
+            background: rgba(5, 150, 105, 0.95);
+            color: white;
+        }
+
+        .card:hover .action-btn {
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .action-btn:hover {
+            transform: translate(-50%, -50%) scale(1.1) !important;
+        }
+
+        .action-btn:active {
+            transform: translate(-50%, -50%) scale(0.95) !important;
+        }
+
+        /* Overlay background on hover */
+        .img-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0);
+            transition: background 0.3s ease;
+            pointer-events: none;
+        }
+
+        .card:hover .img-overlay {
+            background: rgba(0, 0, 0, 0.3);
+        }
     </style>
 </head>
 <body>
-    <h1 id="page-title">Reference Images</h1>
-    <p class="subtitle" id="subtitle-text">Loading...</p>
+    <div class="header-section">
+        <div>
+            <h1 id="page-title">Reference Images</h1>
+            <p class="subtitle" id="subtitle-text">Loading...</p>
+        </div>
+        <div class="header-buttons">
+            <a href="/" class="btn btn-secondary">← Home</a>
+            <button id="manage-actors-btn" class="btn" style="background: #7c3aed;">Manage Actors</button>
+            <button id="push-btn" class="btn btn-success">Push to Cloud</button>
+        </div>
+    </div>
 
     <h2 id="matched-heading" style="display: none;">Movie Cast <span id="matched-count">0</span></h2>
     <div id="matched-grid" class="grid"></div>
@@ -174,21 +299,46 @@
                     });
                 }
 
-                function renderGrid(containerId, images) {
+                function renderGrid(containerId, images, isMovieCast = false) {
                     const container = document.getElementById(containerId);
                     container.innerHTML = images.map(img => {
                         const displayName = img.replace(/\.(jpg|jpeg|png|webp)$/i, '');
+                        const buttonClass = isMovieCast ? 'remove' : 'add';
+                        const buttonSymbol = isMovieCast ? '−' : '+';
+                        const buttonTitle = isMovieCast ? 'Remove from cast' : 'Add to cast';
+
                         return `
-                            <div class="card">
+                            <div class="card" data-actor="${displayName}">
                                 <div class="img-wrapper">
-                                    <a href="/faces/${encodeURIComponent(img)}" target="_blank" title="Click to view full image" style="width: 100%; height: 100%; display: flex;">
-                                        <img src="/faces/${encodeURIComponent(img)}" loading="lazy" alt="${displayName}">
-                                    </a>
+                                    <img src="/faces/${encodeURIComponent(img)}" loading="lazy" alt="${displayName}">
+                                    <div class="img-overlay"></div>
+                                    <button class="action-btn ${buttonClass}"
+                                            data-actor="${displayName}"
+                                            data-action="${isMovieCast ? 'remove' : 'add'}"
+                                            title="${buttonTitle}">
+                                        ${buttonSymbol}
+                                    </button>
                                 </div>
                                 <div class="name-label">${displayName}</div>
                             </div>
                         `;
                     }).join('');
+
+                    // Add event listeners to action buttons
+                    container.querySelectorAll('.action-btn').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            const actor = btn.dataset.actor;
+                            const action = btn.dataset.action;
+
+                            if (action === 'add') {
+                                addToCast(actor);
+                            } else {
+                                removeFromCast(actor);
+                            }
+                        });
+                    });
                 }
 
                 document.getElementById('subtitle-text').textContent = `Cross-referenced against local dataset successfully.`;
@@ -196,19 +346,115 @@
                 if (matchedImages.length > 0) {
                     document.getElementById('matched-heading').style.display = 'flex';
                     document.getElementById('matched-count').textContent = matchedImages.length;
-                    renderGrid('matched-grid', matchedImages);
+                    renderGrid('matched-grid', matchedImages, true);
                 }
 
                 if (remainingImages.length > 0) {
                     document.getElementById('remaining-heading').style.display = 'flex';
                     document.getElementById('remaining-count').textContent = remainingImages.length;
-                    renderGrid('remaining-grid', remainingImages);
+                    renderGrid('remaining-grid', remainingImages, false);
                 }
 
             } catch (err) {
                 console.error(err);
                 document.getElementById('subtitle-text').textContent = 'An error occurred while loading data.';
             }
+
+            // Add to cast
+            async function addToCast(actorName) {
+                try {
+                    const response = await fetch('/api/add-to-movie-cast', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            movieName,
+                            actorName
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        console.log(`✅ Added ${actorName} to cast`);
+                        // Reload the page to show updated cast
+                        window.location.reload();
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                } catch (err) {
+                    console.error('Error adding to cast:', err);
+                    alert('Error adding to cast');
+                }
+            }
+
+            // Remove from cast
+            async function removeFromCast(actorName) {
+                const confirmed = confirm(`Remove ${actorName} from the movie cast?`);
+                if (!confirmed) return;
+
+                try {
+                    const response = await fetch('/api/remove-from-movie-cast', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            movieName,
+                            actorName
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        console.log(`✅ Removed ${actorName} from cast`);
+                        // Reload the page to show updated cast
+                        window.location.reload();
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                } catch (err) {
+                    console.error('Error removing from cast:', err);
+                    alert('Error removing from cast');
+                }
+            }
+        });
+
+        // Push to Cloud
+        document.getElementById('push-btn').addEventListener('click', async () => {
+            const confirmed = confirm('Push movie cast changes to GitHub?\n\nThis will update the movie_cast.csv file in the repository.');
+
+            if (!confirmed) return;
+
+            try {
+                const btn = document.getElementById('push-btn');
+                btn.textContent = 'Pushing...';
+                btn.disabled = true;
+
+                const response = await fetch('/api/push-cast', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert('✅ Successfully pushed cast changes to GitHub!');
+                } else {
+                    alert('Error: ' + (data.error || 'Unknown error'));
+                }
+            } catch (err) {
+                console.error('Push error:', err);
+                alert('Error pushing to GitHub');
+            } finally {
+                const btn = document.getElementById('push-btn');
+                btn.textContent = 'Push to Cloud';
+                btn.disabled = false;
+            }
+        });
+
+        // Manage Actors
+        document.getElementById('manage-actors-btn').addEventListener('click', () => {
+            window.location.href = '/manage-actors.html';
         });
     </script>
 </body>
