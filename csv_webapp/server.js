@@ -121,6 +121,18 @@ app.get('/api/actors', (req, res) => {
     });
 });
 
+app.get('/api/all-actors', (req, res) => {
+    const actorsDir = path.join(BASE_DIR, 'Actors Faces');
+    if (!fs.existsSync(actorsDir)) return res.json({ actors: [] });
+    fs.readdir(actorsDir, (err, files) => {
+        if (err) return res.status(500).json({ error: err.message });
+        const images = files.filter(f => f.match(/\.(jpg|jpeg|png|webp)$/i));
+        // Extract actor names from filenames (remove extension)
+        const actorNames = images.map(f => f.replace(/\.(jpg|jpeg|png|webp)$/i, '')).sort();
+        res.json({ actors: actorNames });
+    });
+});
+
 app.get('/api/cast', async (req, res) => {
     const { movie } = req.query;
     if (!movie) return res.json({ cast: [] });
@@ -168,15 +180,40 @@ function loadCastOptions(movieName) {
     });
 }
 
+// Normalize actor name for deduplication (remove dots, extra spaces)
+function normalizeActorName(name) {
+    return name.replace(/\./g, '').replace(/\s+/g, ' ').trim().toLowerCase();
+}
+
+// Helper to load all available actors from Actors Faces folder
+function loadAllActors() {
+    return new Promise((resolve) => {
+        const actorsDir = path.join(BASE_DIR, 'Actors Faces');
+        if (!fs.existsSync(actorsDir)) return resolve([]);
+
+        fs.readdir(actorsDir, (err, files) => {
+            if (err) return resolve([]);
+            const images = files.filter(f => f.match(/\.(jpg|jpeg|png|webp)$/i));
+            const actorNames = images.map(f => f.replace(/\.(jpg|jpeg|png|webp)$/i, '')).sort();
+            resolve(actorNames);
+        });
+    });
+}
+
 // Helper to load data
+// Returns { rows, actualFilename } where actualFilename is the base name of the file that was actually loaded
 function loadData(filename) {
     return new Promise((resolve) => {
         const updatedPath = getUpdatedFile(filename);
 
         // Priority: 1. Tagged file, 2. Transliterated file (with speaker), 3. Original filename
         let fileToLoad;
+        let actualFilename = filename;
+
         if (fs.existsSync(updatedPath)) {
             fileToLoad = updatedPath;
+            // Extract the actual filename from the tagged path
+            actualFilename = path.basename(updatedPath).replace('_tagged.csv', '.csv');
         } else {
             // Check if the filename is already transliterated or if a transliterated version exists
             const transliteratedName = filename.replace('.csv', '_transliterated.csv');
@@ -184,14 +221,16 @@ function loadData(filename) {
 
             if (fs.existsSync(transliteratedPath)) {
                 fileToLoad = transliteratedPath;
+                actualFilename = transliteratedName;
             } else {
                 fileToLoad = path.join(RAW_DIR, filename);
+                actualFilename = filename;
             }
         }
 
         const loadedRows = [];
 
-        if (!fs.existsSync(fileToLoad)) return resolve([]);
+        if (!fs.existsSync(fileToLoad)) return resolve({ rows: [], actualFilename: filename });
 
         fs.createReadStream(fileToLoad)
             .pipe(csvParser())
@@ -201,17 +240,22 @@ function loadData(filename) {
                 delete row.cast_member;
                 loadedRows.push(row);
             })
-            .on('end', () => resolve(loadedRows))
-            .on('error', () => resolve([]));
+            .on('end', () => resolve({ rows: loadedRows, actualFilename }))
+            .on('error', () => resolve({ rows: [], actualFilename: filename }));
     });
 }
 
 // Save CSV
 function saveCSV() {
     const updatedPath = getUpdatedFile(currentFile);
+    console.log('💾 Saving CSV...');
+    console.log('  currentFile:', currentFile);
+    console.log('  updatedPath:', updatedPath);
+    console.log('  rows count:', rows.length);
+    console.log('  first row Actors:', rows[0]?.Actors);
     fastcsv.writeToPath(updatedPath, rows, { headers: true })
         .on('error', err => console.error('Error writing CSV', err))
-        .on('finish', () => console.log('Saved to', updatedPath));
+        .on('finish', () => console.log('✅ Saved to', updatedPath));
 }
 
 app.post('/api/load', async (req, res) => {
@@ -230,14 +274,46 @@ app.post('/api/load', async (req, res) => {
         return res.status(403).json({ error: 'This movie is marked as Complete and cannot be edited.' });
     }
 
-    currentFile = filename;
-    currentMovieName = filename.replace('.csv', '').replace('_tagged', '').trim();
+    const loadResult = await loadData(filename);
+    rows = loadResult.rows;
+    currentFile = loadResult.actualFilename;
+    currentMovieName = currentFile.replace('.csv', '').replace('_tagged', '').replace('_transliterated', '').trim();
 
-    rows = await loadData(filename);
-    castOptions = await loadCastOptions(currentMovieName); // Changed from loadCast to loadCastOptions
+    castOptions = await loadCastOptions(currentMovieName);
+    const allActors = await loadAllActors();
+
+    // Deduplicate actors: combine cast + all actors, keep first occurrence
+    const seenNormalized = new Map();
+    const deduplicatedCast = [];
+    const deduplicatedAll = [];
+
+    // Process cast options first (they take priority)
+    castOptions.forEach(actor => {
+        const normalized = normalizeActorName(actor);
+        if (!seenNormalized.has(normalized)) {
+            seenNormalized.set(normalized, actor);
+            deduplicatedCast.push(actor);
+        }
+    });
+
+    // Process all actors, skip if already in cast
+    allActors.forEach(actor => {
+        const normalized = normalizeActorName(actor);
+        if (!seenNormalized.has(normalized)) {
+            seenNormalized.set(normalized, actor);
+            deduplicatedAll.push(actor);
+        }
+    });
+
     const youtubeUrl = await loadMovieUrl(currentMovieName);
 
-    res.json({ rows, castOptions, currentFile, youtubeUrl });
+    res.json({
+        rows,
+        castOptions: deduplicatedCast,
+        allActors: deduplicatedAll,
+        currentFile,
+        youtubeUrl
+    });
 });
 
 app.get('/api/data', async (req, res) => {
@@ -246,7 +322,9 @@ app.get('/api/data', async (req, res) => {
 
 app.post('/api/update', async (req, res) => {
     const { arrayIndex, field, value, filename, secretCode } = req.body;
-    
+
+    console.log('📝 Update request:', { arrayIndex, field, value: value?.substring(0, 50), filename });
+
     const statuses = await getMovieStatuses();
     if (statuses[filename] && statuses[filename].status === 'Complete') {
         return res.status(403).json({ error: 'Cannot edit: Movie marked as Complete.' });
@@ -260,12 +338,17 @@ app.post('/api/update', async (req, res) => {
 
     // Cloud stateless fallback: If memory was wiped, reload the file
     if ((rows.length === 0 || currentFile !== filename) && filename) {
-        currentFile = filename;
-        rows = await loadData(filename);
+        console.log('🔄 Reloading file due to memory wipe. currentFile:', currentFile, 'filename:', filename);
+        const loadResult = await loadData(filename);
+        rows = loadResult.rows;
+        currentFile = loadResult.actualFilename;
+        console.log('✅ Reloaded. New currentFile:', currentFile, 'rows count:', rows.length);
     }
 
     if (rows[arrayIndex]) {
+        console.log(`  Before update: rows[${arrayIndex}][${field}] =`, rows[arrayIndex][field]);
         rows[arrayIndex][field] = value;
+        console.log(`  After update: rows[${arrayIndex}][${field}] =`, rows[arrayIndex][field]);
         saveCSV();
         res.json({ success: true });
     } else {
@@ -298,10 +381,11 @@ app.post('/api/push', async (req, res) => {
         const repoOwner = 'pavankumarwwe';
         const repoName = 'Face-Tagger';
         
-        // Ensure rows are loaded 
+        // Ensure rows are loaded
         if ((rows.length === 0 || currentFile !== filename) && filename) {
-            currentFile = filename;
-            rows = await loadData(filename);
+            const loadResult = await loadData(filename);
+            rows = loadResult.rows;
+            currentFile = loadResult.actualFilename;
         }
 
         if (rows.length === 0) {
