@@ -284,8 +284,100 @@
                 console.log('👥 Cast members from API:', castMembers);
                 console.log('🖼️ All actor images:', allImages.length);
 
-                function normalize(str) {
-                    return str.toLowerCase().replace(/\.(jpg|jpeg|png|webp)$/, '').replace(/[^a-z0-9]/g, '');
+                // Tokenize name into words (removes dots, splits on spaces/special chars)
+                function tokenize(str) {
+                    return str.toLowerCase()
+                        .replace(/\.(jpg|jpeg|png|webp)$/i, '')
+                        .replace(/\./g, ' ')  // Replace dots with spaces
+                        .split(/[^a-z0-9]+/)
+                        .filter(token => token.length > 0);
+                }
+
+                // Calculate Levenshtein distance for fuzzy string matching
+                function levenshtein(a, b) {
+                    const matrix = [];
+                    for (let i = 0; i <= b.length; i++) {
+                        matrix[i] = [i];
+                    }
+                    for (let j = 0; j <= a.length; j++) {
+                        matrix[0][j] = j;
+                    }
+                    for (let i = 1; i <= b.length; i++) {
+                        for (let j = 1; j <= a.length; j++) {
+                            if (b.charAt(i - 1) === a.charAt(j - 1)) {
+                                matrix[i][j] = matrix[i - 1][j - 1];
+                            } else {
+                                matrix[i][j] = Math.min(
+                                    matrix[i - 1][j - 1] + 1,
+                                    matrix[i][j - 1] + 1,
+                                    matrix[i - 1][j] + 1
+                                );
+                            }
+                        }
+                    }
+                    return matrix[b.length][a.length];
+                }
+
+                // Calculate similarity ratio (0-1, where 1 is identical)
+                function similarity(a, b) {
+                    const longer = a.length > b.length ? a : b;
+                    const shorter = a.length > b.length ? b : a;
+                    if (longer.length === 0) return 1.0;
+                    const distance = levenshtein(longer, shorter);
+                    return (longer.length - distance) / longer.length;
+                }
+
+                // Smart fuzzy matching that handles spacing variations but rejects extra words
+                function fuzzyMatch(castName, imageName) {
+                    // Remove file extension from image name
+                    imageName = imageName.replace(/\.(jpg|jpeg|png|webp)$/i, '');
+
+                    // Tokenize both names
+                    const castTokens = tokenize(castName);
+                    const imageTokens = tokenize(imageName);
+
+                    // Reject if token count difference is too large (indicates extra words)
+                    const tokenDiff = Math.abs(castTokens.length - imageTokens.length);
+                    if (tokenDiff > 1) {
+                        return false;  // Too many extra words
+                    }
+
+                    // For similar token counts, use fuzzy string matching on full normalized names
+                    const castNorm = castTokens.join('');
+                    const imageNorm = imageTokens.join('');
+
+                    // Calculate similarity
+                    const sim = similarity(castNorm, imageNorm);
+
+                    // Require high similarity (0.85 = 85% similar, allows minor typos)
+                    if (sim >= 0.85) {
+                        return true;
+                    }
+
+                    // Alternative: Check if all cast tokens have close matches in image tokens
+                    if (castTokens.length === imageTokens.length) {
+                        let matchCount = 0;
+                        const usedImageTokens = new Set();
+
+                        for (const castToken of castTokens) {
+                            for (let i = 0; i < imageTokens.length; i++) {
+                                if (usedImageTokens.has(i)) continue;
+                                const tokenSim = similarity(castToken, imageTokens[i]);
+                                if (tokenSim >= 0.8) {  // Allow minor typos per token
+                                    matchCount++;
+                                    usedImageTokens.add(i);
+                                    break;
+                                }
+                            }
+                        }
+
+                        // All tokens should have matches
+                        if (matchCount === castTokens.length) {
+                            return true;
+                        }
+                    }
+
+                    return false;
                 }
 
                 const matchedImages = [];
@@ -295,14 +387,12 @@
                     // No cast data, dump all into remaining
                     allImages.forEach(img => remainingImages.push(img));
                 } else {
-                    const normCast = castMembers.map(c => normalize(c)).filter(c => c.length > 2);
-                    
                     allImages.forEach(img => {
-                        const normImg = normalize(img);
                         let isMatch = false;
-                        for (let nc of normCast) {
-                            if (normImg.includes(nc) || nc.includes(normImg)) {
+                        for (const castMember of castMembers) {
+                            if (fuzzyMatch(castMember, img)) {
                                 isMatch = true;
+                                console.log(`✓ Matched: "${castMember}" ↔ "${img}"`);
                                 break;
                             }
                         }
