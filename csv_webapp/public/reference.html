@@ -622,39 +622,68 @@
         // Push to Cloud
         const pushBtn = document.getElementById('push-btn');
         if (pushBtn) {
-            pushBtn.addEventListener('click', () => {
+            pushBtn.addEventListener('click', async () => {
                 console.log('🚀 Push to Cloud button clicked');
+
+                // Check if running on localhost
+                const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                let secretCode = '';
+
+                // Prompt for password if not local
+                if (!isLocal) {
+                    secretCode = prompt(`Enter the secret code for "${movieName}" to push changes to cloud:`);
+                    if (!secretCode) {
+                        console.log('❌ User cancelled push');
+                        return; // User cancelled
+                    }
+                }
+
                 const btn = document.getElementById('push-btn');
                 const ogText = btn.textContent;
                 btn.textContent = 'Pushing to GitHub...';
                 btn.disabled = true;
 
-                fetch('/api/push-cast', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({})
-                })
-                .then(res => {
-                    console.log('📡 Push response status:', res.status);
-                    return res.json();
-                })
-                .then(data => {
+                try {
+                    const response = await fetch('/api/push-cast', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            movieName: movieName,
+                            secretCode: secretCode
+                        })
+                    });
+
+                    console.log('📡 Push response status:', response.status);
+                    const data = await response.json();
                     console.log('📡 Push response data:', data);
+
                     if (data.success) {
                         alert('Successfully pushed cast changes to GitHub!');
                         window.location.reload(); // Reload to show final saved state
+                    } else if (response.status === 401) {
+                        // Unauthorized - show attempts left if available
+                        const attemptsMsg = data.attemptsLeft !== undefined
+                            ? `\n\nAttempts remaining: ${data.attemptsLeft}`
+                            : '';
+                        alert('Authentication failed: ' + (data.error || 'Incorrect secret code') + attemptsMsg);
+                        btn.textContent = ogText;
+                        btn.disabled = false;
+                    } else if (response.status === 429) {
+                        // Too many attempts
+                        alert('Too many failed attempts. ' + (data.error || 'Please try again later.'));
+                        btn.textContent = ogText;
+                        btn.disabled = false;
                     } else {
                         alert('Failed to push: ' + (data.error || 'Unknown error'));
                         btn.textContent = ogText;
                         btn.disabled = false;
                     }
-                })
-                .catch(err => {
+                } catch (err) {
                     console.error('❌ Push error:', err);
                     alert('Network error while pushing to GitHub.');
                     btn.textContent = ogText;
                     btn.disabled = false;
-                });
+                }
             });
         } else {
             console.error('❌ Push button not found!');

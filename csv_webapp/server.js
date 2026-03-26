@@ -534,6 +534,49 @@ app.post('/api/remove-from-movie-cast', async (req, res) => {
 
 // Push movie_cast.csv to GitHub
 app.post('/api/push-cast', async (req, res) => {
+    const { movieName, secretCode } = req.body;
+
+    // Require movie name to verify password
+    if (!movieName) {
+        return res.status(400).json({ error: 'Movie name is required for authentication' });
+    }
+
+    // Check password (skip for localhost)
+    const isLocal = req.hostname === 'localhost' || req.hostname === '127.0.0.1';
+    if (!isLocal) {
+        const clientIp = req.ip || req.connection.remoteAddress;
+
+        // Construct filename for verification
+        const filename = movieName.toLowerCase().replace(/\s+/g, '_') + '.csv';
+
+        // Check if IP is blocked for this movie
+        if (isBlocked(clientIp, filename)) {
+            const minutesRemaining = getBlockedTimeRemaining(clientIp, filename);
+            return res.status(429).json({
+                error: `Too many failed attempts. Please try again in ${minutesRemaining} minutes.`,
+                blockedFor: minutesRemaining
+            });
+        }
+
+        const isAuthorized = await verifySecret(filename, secretCode);
+        if (!isAuthorized) {
+            recordFailedAttempt(clientIp, filename);
+            const key = getRateLimitKey(clientIp, filename);
+            const attempt = failedAttempts.get(key);
+            const attemptsLeft = MAX_ATTEMPTS - (attempt?.count || 0);
+
+            console.log(`❌ Failed push attempt from ${clientIp} for "${movieName}". Attempts left: ${attemptsLeft}`);
+
+            return res.status(401).json({
+                error: 'Incorrect or missing secret code.',
+                attemptsLeft: attemptsLeft > 0 ? attemptsLeft : 0
+            });
+        }
+
+        // Reset attempts on successful authentication
+        resetAttempts(clientIp, filename);
+    }
+
     const token = process.env.GITHUB_TOKEN;
     if (!token) {
         return res.status(500).json({ error: 'GITHUB_TOKEN not configured' });
