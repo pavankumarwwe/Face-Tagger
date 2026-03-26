@@ -113,116 +113,9 @@
             line-height: 1.3;
         }
 
-        /* Header with buttons */
+        /* Header */
         .header-section {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
             margin-bottom: 2rem;
-        }
-
-        .header-buttons {
-            display: flex;
-            gap: 1rem;
-        }
-
-        .btn {
-            background: var(--accent);
-            color: white;
-            border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 0.95rem;
-            transition: all 0.2s;
-            box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);
-        }
-
-        .btn:hover {
-            background: #4338ca;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(79, 70, 229, 0.3);
-        }
-
-        .btn-secondary {
-            background: white;
-            color: var(--accent);
-            border: 1px solid var(--accent);
-        }
-
-        .btn-secondary:hover {
-            background: #eff6ff;
-        }
-
-        .btn-success {
-            background: #059669;
-        }
-
-        .btn-success:hover {
-            background: #047857;
-        }
-
-        /* Hover button on images */
-        .action-btn {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) scale(0);
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            border: none;
-            background: rgba(255, 255, 255, 0.95);
-            color: var(--accent);
-            font-size: 2rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-            z-index: 10;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            line-height: 1;
-        }
-
-        .action-btn.remove {
-            background: rgba(239, 68, 68, 0.95);
-            color: white;
-        }
-
-        .action-btn.add {
-            background: rgba(5, 150, 105, 0.95);
-            color: white;
-        }
-
-        .card:hover .action-btn {
-            transform: translate(-50%, -50%) scale(1);
-        }
-
-        .action-btn:hover {
-            transform: translate(-50%, -50%) scale(1.1) !important;
-        }
-
-        .action-btn:active {
-            transform: translate(-50%, -50%) scale(0.95) !important;
-        }
-
-        /* Overlay background on hover */
-        .img-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0);
-            transition: background 0.3s ease;
-            pointer-events: none;
-        }
-
-        .card:hover .img-overlay {
-            background: rgba(0, 0, 0, 0.3);
         }
     </style>
 </head>
@@ -231,9 +124,6 @@
         <div>
             <h1 id="page-title">Reference Images</h1>
             <p class="subtitle" id="subtitle-text">Loading...</p>
-        </div>
-        <div class="header-buttons">
-            <button id="push-btn" class="btn btn-success">Push to Cloud</button>
         </div>
     </div>
 
@@ -407,42 +297,16 @@
                     const container = document.getElementById(containerId);
                     container.innerHTML = images.map(img => {
                         const displayName = img.replace(/\.(jpg|jpeg|png|webp)$/i, '');
-                        const buttonClass = isMovieCast ? 'remove' : 'add';
-                        const buttonSymbol = isMovieCast ? '−' : '+';
-                        const buttonTitle = isMovieCast ? 'Remove from cast' : 'Add to cast';
 
                         return `
                             <div class="card" data-actor="${displayName}">
                                 <div class="img-wrapper">
                                     <img src="/faces/${encodeURIComponent(img)}" loading="lazy" alt="${displayName}">
-                                    <div class="img-overlay"></div>
-                                    <button class="action-btn ${buttonClass}"
-                                            data-actor="${displayName}"
-                                            data-action="${isMovieCast ? 'remove' : 'add'}"
-                                            title="${buttonTitle}">
-                                        ${buttonSymbol}
-                                    </button>
                                 </div>
                                 <div class="name-label">${displayName}</div>
                             </div>
                         `;
                     }).join('');
-
-                    // Add event listeners to action buttons
-                    container.querySelectorAll('.action-btn').forEach(btn => {
-                        btn.addEventListener('click', (e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            const actor = btn.dataset.actor;
-                            const action = btn.dataset.action;
-
-                            if (action === 'add') {
-                                addToCast(actor);
-                            } else {
-                                removeFromCast(actor);
-                            }
-                        });
-                    });
                 }
 
                 document.getElementById('subtitle-text').textContent = `Cross-referenced against local dataset successfully.`;
@@ -462,229 +326,6 @@
             } catch (err) {
                 console.error(err);
                 document.getElementById('subtitle-text').textContent = 'An error occurred while loading data.';
-            }
-
-            // Add to cast
-            async function addToCast(actorName) {
-                try {
-                    const response = await fetch('/api/add-to-movie-cast', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            movieName,
-                            actorName
-                        })
-                    });
-
-                    const data = await response.json();
-
-                    if (data.success) {
-                        console.log(`✅ Added ${actorName} to cast (pending save)`);
-
-                        // Find actor in remaining grid and move to matched grid
-                        const actorCard = document.querySelector(`#remaining-grid .card[data-actor="${actorName}"]`);
-                        if (actorCard) {
-                            // Find the image filename
-                            const imgElement = actorCard.querySelector('img');
-                            const imgSrc = imgElement ? imgElement.src : '';
-                            const filename = imgSrc.split('/').pop();
-
-                            // Remove from remaining grid
-                            actorCard.remove();
-
-                            // Add to matched grid
-                            const matchedGrid = document.getElementById('matched-grid');
-                            const newCard = document.createElement('div');
-                            newCard.className = 'card';
-                            newCard.setAttribute('data-actor', actorName);
-                            newCard.innerHTML = `
-                                <div class="img-wrapper">
-                                    <img src="/faces/${encodeURIComponent(filename)}" loading="lazy" alt="${actorName}">
-                                    <div class="img-overlay"></div>
-                                    <button class="action-btn remove"
-                                            data-actor="${actorName}"
-                                            data-action="remove"
-                                            title="Remove from cast">
-                                        −
-                                    </button>
-                                </div>
-                                <div class="name-label">${actorName}</div>
-                            `;
-                            matchedGrid.appendChild(newCard);
-
-                            // Add event listener to new button
-                            newCard.querySelector('.action-btn').addEventListener('click', (e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                removeFromCast(actorName);
-                            });
-
-                            // Update counts
-                            const matchedCount = matchedGrid.children.length;
-                            const remainingCount = document.getElementById('remaining-grid').children.length;
-                            document.getElementById('matched-count').textContent = matchedCount;
-                            document.getElementById('remaining-count').textContent = remainingCount;
-
-                            // Show matched heading if hidden
-                            if (matchedCount > 0) {
-                                document.getElementById('matched-heading').style.display = 'flex';
-                            }
-                        }
-                    } else {
-                        alert('Error: ' + data.error);
-                    }
-                } catch (err) {
-                    console.error('Error adding to cast:', err);
-                    alert('Error adding to cast');
-                }
-            }
-
-            // Remove from cast
-            async function removeFromCast(actorName) {
-                const confirmed = confirm(`Remove ${actorName} from the movie cast?`);
-                if (!confirmed) return;
-
-                try {
-                    const response = await fetch('/api/remove-from-movie-cast', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            movieName,
-                            actorName
-                        })
-                    });
-
-                    const data = await response.json();
-
-                    if (data.success) {
-                        console.log(`✅ Removed ${actorName} from cast (pending save)`);
-
-                        // Find actor in matched grid and move to remaining grid
-                        const actorCard = document.querySelector(`#matched-grid .card[data-actor="${actorName}"]`);
-                        if (actorCard) {
-                            // Find the image filename
-                            const imgElement = actorCard.querySelector('img');
-                            const imgSrc = imgElement ? imgElement.src : '';
-                            const filename = imgSrc.split('/').pop();
-
-                            // Remove from matched grid
-                            actorCard.remove();
-
-                            // Add to remaining grid
-                            const remainingGrid = document.getElementById('remaining-grid');
-                            const newCard = document.createElement('div');
-                            newCard.className = 'card';
-                            newCard.setAttribute('data-actor', actorName);
-                            newCard.innerHTML = `
-                                <div class="img-wrapper">
-                                    <img src="/faces/${encodeURIComponent(filename)}" loading="lazy" alt="${actorName}">
-                                    <div class="img-overlay"></div>
-                                    <button class="action-btn add"
-                                            data-actor="${actorName}"
-                                            data-action="add"
-                                            title="Add to cast">
-                                        +
-                                    </button>
-                                </div>
-                                <div class="name-label">${actorName}</div>
-                            `;
-                            remainingGrid.appendChild(newCard);
-
-                            // Add event listener to new button
-                            newCard.querySelector('.action-btn').addEventListener('click', (e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                addToCast(actorName);
-                            });
-
-                            // Update counts
-                            const matchedCount = document.getElementById('matched-grid').children.length;
-                            const remainingCount = remainingGrid.children.length;
-                            document.getElementById('matched-count').textContent = matchedCount;
-                            document.getElementById('remaining-count').textContent = remainingCount;
-
-                            // Show remaining heading if hidden
-                            if (remainingCount > 0) {
-                                document.getElementById('remaining-heading').style.display = 'flex';
-                            }
-                        }
-                    } else {
-                        alert('Error: ' + data.error);
-                    }
-                } catch (err) {
-                    console.error('Error removing from cast:', err);
-                    alert('Error removing from cast');
-                }
-            }
-
-            // Push to Cloud - MOVED INSIDE DOMContentLoaded
-            const pushBtn = document.getElementById('push-btn');
-            if (pushBtn) {
-                pushBtn.addEventListener('click', async () => {
-                    console.log('🚀 Push to Cloud button clicked');
-
-                    // Check if running on localhost
-                    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-                    let secretCode = '';
-
-                    // Prompt for password if not local
-                    if (!isLocal) {
-                        secretCode = prompt(`Enter the secret code for "${movieName}" to push changes to cloud:`);
-                        if (!secretCode) {
-                            console.log('❌ User cancelled push');
-                            return; // User cancelled
-                        }
-                    }
-
-                    const btn = document.getElementById('push-btn');
-                    const ogText = btn.textContent;
-                    btn.textContent = 'Pushing to GitHub...';
-                    btn.disabled = true;
-
-                    try {
-                        const response = await fetch('/api/push-cast', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                movieName: movieName,
-                                secretCode: secretCode
-                            })
-                        });
-
-                        console.log('📡 Push response status:', response.status);
-                        const data = await response.json();
-                        console.log('📡 Push response data:', data);
-
-                        if (data.success) {
-                            alert('Successfully pushed cast changes to GitHub!');
-                            window.location.reload(); // Reload to show final saved state
-                        } else if (response.status === 401) {
-                            // Unauthorized - show attempts left if available
-                            const attemptsMsg = data.attemptsLeft !== undefined
-                                ? `\n\nAttempts remaining: ${data.attemptsLeft}`
-                                : '';
-                            alert('Authentication failed: ' + (data.error || 'Incorrect secret code') + attemptsMsg);
-                            btn.textContent = ogText;
-                            btn.disabled = false;
-                        } else if (response.status === 429) {
-                            // Too many attempts
-                            alert('Too many failed attempts. ' + (data.error || 'Please try again later.'));
-                            btn.textContent = ogText;
-                            btn.disabled = false;
-                        } else {
-                            alert('Failed to push: ' + (data.error || 'Unknown error'));
-                            btn.textContent = ogText;
-                            btn.disabled = false;
-                        }
-                    } catch (err) {
-                        console.error('❌ Push error:', err);
-                        alert('Network error while pushing to GitHub.');
-                        btn.textContent = ogText;
-                        btn.disabled = false;
-                    }
-                });
-            } else {
-                console.error('❌ Push button not found!');
             }
         });
     </script>
