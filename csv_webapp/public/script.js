@@ -781,6 +781,17 @@ document.addEventListener('DOMContentLoaded', () => {
             if (optionsHtml.length > 1) {
                 container.appendChild(select);
             }
+        } else {
+            const emptySelect = document.createElement('select');
+            const emptyOption = document.createElement('option');
+            emptyOption.value = '';
+            emptyOption.textContent = 'No Matching Cast';
+            emptyOption.selected = true;
+            emptyOption.disabled = true;
+            emptySelect.appendChild(emptyOption);
+            emptySelect.disabled = true;
+            emptySelect.title = 'No cast list found for this movie';
+            container.appendChild(emptySelect);
         }
 
         // 2. Add Extra Cast Button (shows all actors with search)

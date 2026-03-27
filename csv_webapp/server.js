@@ -43,6 +43,53 @@ function getUpdatedFile(filename) {
     return path.join(TAGGED_DIR, filename.replace('.csv', '_tagged.csv'));
 }
 
+function getBaseMovieName(value) {
+    return (value || '')
+        .toString()
+        .replace(/^\uFEFF/, '')
+        .replace(/^.*[\\/]/, '')
+        .replace(/\.csv$/i, '')
+        .replace(/_tagged$/i, '')
+        .replace(/_transliterated$/i, '')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .replace(/^_+|_+$/g, '');
+}
+
+function canonicalMovieKey(value) {
+    return getBaseMovieName(value)
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '');
+}
+
+function getCastMovieName(row) {
+    return (row?.['Movie Name'] || '')
+        .toString()
+        .trim();
+}
+
+function normalizeCastRow(row) {
+    return {
+        'Movie Name': getCastMovieName(row),
+        'Cast': (row?.Cast || '').toString().trim()
+    };
+}
+
+function readCastRows() {
+    return new Promise((resolve, reject) => {
+        const castRows = [];
+        if (!fs.existsSync(CAST_FILE)) return resolve(castRows);
+
+        fs.createReadStream(CAST_FILE)
+            .pipe(csvParser({
+                mapHeaders: ({ header }) => header.replace(/^\uFEFF/, '')
+            }))
+            .on('data', (row) => castRows.push(normalizeCastRow(row)))
+            .on('end', () => resolve(castRows))
+            .on('error', reject);
+    });
+}
+
 const SECRETS_FILE = path.join(BASE_DIR, 'movie_secrets.csv');
 
 function getMovieStatuses() {
@@ -204,11 +251,11 @@ function loadMovieUrl(movieName) {
     return new Promise((resolve) => {
         if (!fs.existsSync(MOVIE_ASSIGNMENTS_FILE)) return resolve(null);
         let url = null;
-        const normalizedTarget = movieName.trim().toLowerCase();
+        const normalizedTarget = canonicalMovieKey(movieName);
         fs.createReadStream(MOVIE_ASSIGNMENTS_FILE)
             .pipe(csvParser())
             .on('data', (row) => {
-                if (row['movie_name'] && row['movie_name'].trim().toLowerCase() === normalizedTarget) {
+                if (canonicalMovieKey(row['movie_name']) === normalizedTarget) {
                     if (row['youtube_url']) url = row['youtube_url'].trim();
                 }
             })
@@ -223,25 +270,18 @@ function loadCastOptions(movieName) {
         let options = [];
         if (!fs.existsSync(CAST_FILE)) return resolve([]);
 
-        const normalizedMovieName = movieName.toLowerCase().trim();
+        const normalizedMovieName = canonicalMovieKey(movieName);
 
-        fs.createReadStream(CAST_FILE)
-            .pipe(csvParser())
-            .on('data', (row) => {
-                // Exact match on normalized movie names
-                if (row['Movie Name']) {
-                    const rowMovieName = row['Movie Name'].toLowerCase().trim();
-                    if (rowMovieName === normalizedMovieName) {
-                        if (row['Cast']) {
-                            options = row['Cast'].split(',').map(c => c.trim()).filter(Boolean);
-                        }
-                    }
+        readCastRows()
+            .then((castRows) => {
+                const movieRow = castRows.find(row => canonicalMovieKey(row['Movie Name']) === normalizedMovieName);
+                if (movieRow?.Cast) {
+                    options = movieRow.Cast.split(',').map(c => c.trim()).filter(Boolean);
                 }
-            })
-            .on('end', () => {
+
                 // Apply pending changes for this movie (check all variations)
                 for (const [pendingMovie, changes] of pendingCastChanges.entries()) {
-                    if (pendingMovie.toLowerCase().trim() === normalizedMovieName) {
+                    if (canonicalMovieKey(pendingMovie) === normalizedMovieName) {
                         // Apply additions
                         for (const actor of changes.added) {
                             if (!options.some(a => a.toLowerCase() === actor.toLowerCase())) {
@@ -257,7 +297,7 @@ function loadCastOptions(movieName) {
                 }
                 resolve(options);
             })
-            .on('error', () => resolve([]));
+            .catch(() => resolve([]));
     });
 }
 
@@ -381,7 +421,7 @@ app.post('/api/load', async (req, res) => {
     const loadResult = await loadData(filename);
     rows = loadResult.rows;
     currentFile = loadResult.actualFilename;
-    currentMovieName = currentFile.replace('.csv', '').replace('_tagged', '').replace('_transliterated', '').trim();
+    currentMovieName = getBaseMovieName(currentFile);
 
     castOptions = await loadCastOptions(currentMovieName);
     const allActors = await loadAllActors();
@@ -588,24 +628,15 @@ app.post('/api/push-cast', async (req, res) => {
             console.log(`📝 Applying ${pendingCastChanges.size} pending movie cast changes...`);
 
             // Read current movie_cast.csv
-            const castRows = [];
-            if (fs.existsSync(CAST_FILE)) {
-                await new Promise((resolve, reject) => {
-                    fs.createReadStream(CAST_FILE)
-                        .pipe(csvParser())
-                        .on('data', (row) => castRows.push(row))
-                        .on('end', resolve)
-                        .on('error', reject);
-                });
-            }
+            const castRows = await readCastRows();
 
             // Apply all pending changes
             for (const [movieName, changes] of pendingCastChanges.entries()) {
-                let movieRow = castRows.find(r => r['Movie Name'] && r['Movie Name'].toLowerCase().trim() === movieName.toLowerCase().trim());
+                let movieRow = castRows.find(r => canonicalMovieKey(r['Movie Name']) === canonicalMovieKey(movieName));
 
                 if (!movieRow) {
                     // Create new movie entry
-                    movieRow = { 'Movie Name': movieName, 'Cast': '' };
+                    movieRow = { 'Movie Name': getBaseMovieName(movieName), 'Cast': '' };
                     castRows.push(movieRow);
                 }
 
@@ -713,19 +744,10 @@ app.post('/api/add-to-cast', async (req, res) => {
 
     try {
         // Read current movie_cast.csv
-        const castRows = [];
-        if (fs.existsSync(CAST_FILE)) {
-            await new Promise((resolve, reject) => {
-                fs.createReadStream(CAST_FILE)
-                    .pipe(csvParser())
-                    .on('data', (row) => castRows.push(row))
-                    .on('end', resolve)
-                    .on('error', reject);
-            });
-        }
+        const castRows = await readCastRows();
 
         // Find the movie row
-        let movieRow = castRows.find(r => r['Movie Name'] && r['Movie Name'].toLowerCase().trim() === movieName.toLowerCase().trim());
+        let movieRow = castRows.find(r => canonicalMovieKey(r['Movie Name']) === canonicalMovieKey(movieName));
 
         if (movieRow) {
             // Parse existing cast
@@ -758,7 +780,7 @@ app.post('/api/add-to-cast', async (req, res) => {
         } else {
             // Movie not found - create new entry
             castRows.push({
-                'Movie Name': movieName,
+                'Movie Name': getBaseMovieName(movieName),
                 'Cast': actorName
             });
 
