@@ -969,24 +969,26 @@ document.addEventListener('DOMContentLoaded', () => {
         const currentActors = extractActors(row.Actors);
         const currentCheck = currentActors.map(a => a.substring(1)); // Remove '#'
 
-        // 1. Movie Cast combobox (typeable dropdown)
+        // 1. Movie Cast combobox (single typeable dropdown)
         if (globalCastOptions.length > 0) {
             const tagActorInput = document.createElement('input');
             tagActorInput.type = 'text';
             tagActorInput.className = 'tag-actor-input';
             tagActorInput.placeholder = 'Tag Actor';
             tagActorInput.title = 'Type or pick an actor to tag';
-            tagActorInput.setAttribute('list', `cast-options-${i}`);
             tagActorInput.autocomplete = 'off';
+            tagActorInput.setAttribute('list', `cast-options-${i}`);
+            tagActorInput.setAttribute('aria-label', 'Tag Actor');
 
             const datalist = document.createElement('datalist');
             datalist.id = `cast-options-${i}`;
+
+            const sortedMovieCast = [...globalCastOptions].sort((a, b) => a.localeCompare(b));
 
             const renderCastOptions = () => {
                 const query = tagActorInput.value.trim().toLowerCase();
                 const optionsHtml = [];
 
-                const sortedMovieCast = [...globalCastOptions].sort((a, b) => a.localeCompare(b));
                 sortedMovieCast.forEach(cast => {
                     if (currentCheck.includes(cast)) return;
                     if (query && !cast.toLowerCase().includes(query)) return;
@@ -1000,7 +1002,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const val = tagActorInput.value.trim();
                 if (!val) return;
 
-                const matchedCast = [...globalCastOptions].find(cast =>
+                const matchedCast = sortedMovieCast.find(cast =>
                     cast.toLowerCase() === val.toLowerCase()
                 );
                 if (!matchedCast || currentCheck.includes(matchedCast)) {
@@ -1060,21 +1062,7 @@ document.addEventListener('DOMContentLoaded', () => {
             container.appendChild(extraCastBtn);
         }
 
-        // 3. Reassign Speaker Button (if speaker exists and actors exist)
-        if (row.speaker && currentActors.length > 0) {
-            const reassignBtn = document.createElement('button');
-            reassignBtn.className = 'btn-reassign-speaker';
-            reassignBtn.innerHTML = '🔄';
-            reassignBtn.title = `Reassign all ${row.speaker} rows`;
-            reassignBtn.type = 'button';
-            reassignBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                showReassignModal(i, row.speaker);
-            });
-            container.appendChild(reassignBtn);
-        }
-
-        // 4. Clear Speaker Tags Button (if speaker exists)
+        // 3. Clear Speaker Tags Button (if speaker exists)
         if (row.speaker) {
             const clearBtn = document.createElement('button');
             clearBtn.className = 'btn-clear-speaker';

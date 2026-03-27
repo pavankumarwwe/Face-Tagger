@@ -277,8 +277,12 @@ tr:hover td {
 
 .actor-pill-inline {
     flex: 0 0 auto;
-    font-size: 0.72rem;
-    padding: 0.2rem 0.55rem;
+    font-size: 0.9rem;
+    line-height: 1;
+    padding: 0.12rem 0.6rem;
+    min-height: 1.7em;
+    display: inline-flex;
+    align-items: center;
 }
 
 .btn-copy-inline {
@@ -425,27 +429,6 @@ select:focus {
 
 .btn-extra-cast:hover {
     background: #f5f3ff;
-    transform: scale(1.1);
-}
-
-.btn-reassign-speaker {
-    background: white;
-    color: #ea580c;
-    border: 1px solid #ea580c;
-    padding: 0.25rem 0.4rem;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.9rem;
-    transition: all 0.2s;
-    min-width: 28px;
-    height: 28px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.btn-reassign-speaker:hover {
-    background: #fff7ed;
     transform: scale(1.1);
 }
 
