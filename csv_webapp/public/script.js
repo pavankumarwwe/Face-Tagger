@@ -44,6 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let globalCastOptions = [];
     let globalAllActors = [];
     let currentFilename = '';
+    let hasUnsavedChanges = false;
 
     function extractActors(str) {
         if (!str) return [];
@@ -84,29 +85,24 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function setDirtyStatus(message = 'Unsaved changes') {
+        hasUnsavedChanges = true;
+        saveStatus.textContent = message;
+        saveStatus.style.color = 'var(--text-secondary)';
+        saveSpinner.classList.add('hidden');
+    }
+
+    function setSavedStatus(message = 'All changes saved') {
+        hasUnsavedChanges = false;
+        saveStatus.textContent = message;
+        saveStatus.style.color = 'var(--success-color)';
+        saveSpinner.classList.add('hidden');
+    }
+
     // Update multiple rows sequentially
     async function updateMultipleRows(indices, field) {
-        for (const i of indices) {
-            await new Promise((resolve) => {
-                const value = globalRows[i][field];
-                fetch('/api/update', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ arrayIndex: i, field, value, filename: currentFilename, secretCode: currentSecretCode })
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if (!data.success) {
-                        console.error('Failed to update row', i);
-                    }
-                    resolve();
-                })
-                .catch(err => {
-                    console.error('Error updating row', i, err);
-                    resolve();
-                });
-            });
-        }
+        if (indices.length > 0) setDirtyStatus();
+        return Promise.resolve();
     }
     
     let currentYoutubeUrl = '';
@@ -680,6 +676,7 @@ document.addEventListener('DOMContentLoaded', () => {
             globalCastOptions = data.castOptions || [];
             globalAllActors = data.allActors || [];
             updateYoutubeLink(data.youtubeUrl);
+            setSavedStatus('Ready');
             renderTable();
         })
         .finally(() => {
@@ -876,38 +873,8 @@ document.addEventListener('DOMContentLoaded', () => {
         tdActors.appendChild(container);
     }
 
-    let saveTimeout;
     function updateBackendMemory(arrayIndex, field, value) {
-        saveStatus.textContent = 'Saving...';
-        saveStatus.style.color = 'var(--text-secondary)';
-        saveSpinner.classList.remove('hidden');
-
-        // Optional debounce
-        clearTimeout(saveTimeout);
-        saveTimeout = setTimeout(() => {
-            fetch('/api/update', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ arrayIndex, field, value, filename: currentFilename, secretCode: currentSecretCode })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if(data.success) {
-                    saveStatus.textContent = 'All changes saved';
-                    saveStatus.style.color = 'var(--success-color)';
-                } else {
-                    throw new Error('Save failed');
-                }
-            })
-            .catch(err => {
-                console.error(err);
-                saveStatus.textContent = 'Failed to save';
-                saveStatus.style.color = '#ef4444';
-            })
-            .finally(() => {
-                saveSpinner.classList.add('hidden');
-            });
-        }, 150);
+        setDirtyStatus();
     }
 
     if (clearAllBtn) {
@@ -926,9 +893,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const ogText = clearAllBtn.textContent;
             clearAllBtn.textContent = 'Clearing...';
             clearAllBtn.disabled = true;
-            saveStatus.textContent = 'Clearing all tags...';
-            saveStatus.style.color = 'var(--text-secondary)';
-            saveSpinner.classList.remove('hidden');
 
             // Clear all actors in memory
             const rowsToUpdate = [];
@@ -945,43 +909,62 @@ document.addEventListener('DOMContentLoaded', () => {
                 globalRows.forEach((_, i) => renderRowActorsCell(i));
             }
 
-            saveStatus.textContent = 'All tags cleared';
-            saveStatus.style.color = 'var(--success-color)';
-            saveSpinner.classList.add('hidden');
+            setDirtyStatus('All tags cleared');
             clearAllBtn.textContent = ogText;
             clearAllBtn.disabled = false;
         });
     }
 
     if (pushBtn) {
-        pushBtn.addEventListener('click', () => {
+        pushBtn.addEventListener('click', async () => {
             if (!currentFilename) return alert('Please load a file first.');
 
             const ogText = pushBtn.textContent;
-            pushBtn.textContent = 'Pushing to GitHub...';
+            pushBtn.textContent = 'Pushing to Cloud...';
             pushBtn.disabled = true;
+            saveSpinner.classList.remove('hidden');
+            saveStatus.textContent = 'Pushing changes...';
+            saveStatus.style.color = 'var(--text-secondary)';
 
-            fetch('/api/push', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ filename: currentFilename, secretCode: currentSecretCode })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    alert('Successfully pushed latest changes to GitHub!');
-                } else {
-                    alert('Failed to push: ' + (data.error || 'Unknown error'));
+            const movieName = currentFilename.replace('.csv', '').replace('_tagged', '').replace('_transliterated', '').trim();
+
+            try {
+                const castResponse = await fetch('/api/push-cast', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ movieName, secretCode: currentSecretCode })
+                });
+                const castData = await castResponse.json();
+                if (!castData.success) {
+                    throw new Error(castData.error || 'Failed to push cast changes');
                 }
-            })
-            .catch(err => {
+
+                const pushResponse = await fetch('/api/push', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        filename: currentFilename,
+                        secretCode: currentSecretCode,
+                        rows: globalRows
+                    })
+                });
+                const pushData = await pushResponse.json();
+                if (!pushData.success) {
+                    throw new Error(pushData.error || 'Failed to push CSV');
+                }
+
+                setSavedStatus('All changes saved');
+                alert('Successfully pushed changes to cloud and GitHub!');
+            } catch (err) {
                 console.error(err);
-                alert('Network error while pushing to GitHub.');
-            })
-            .finally(() => {
+                saveStatus.textContent = 'Push failed';
+                saveStatus.style.color = '#ef4444';
+                alert('Failed to push: ' + (err.message || 'Unknown error'));
+            } finally {
                 pushBtn.textContent = ogText;
                 pushBtn.disabled = false;
-            });
+                saveSpinner.classList.add('hidden');
+            }
         });
     }
 
@@ -1189,15 +1172,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         if (rowsToUpdate.length > 0) {
-            saveStatus.textContent = 'Reassigning speaker...';
-            saveStatus.style.color = 'var(--text-secondary)';
-            saveSpinner.classList.remove('hidden');
-
             await updateMultipleRows(rowsToUpdate, 'Actors');
-
-            saveStatus.textContent = 'All changes saved';
-            saveStatus.style.color = 'var(--success-color)';
-            saveSpinner.classList.add('hidden');
+            setDirtyStatus('Speaker reassigned');
 
             // Re-render all affected cells
             rowsToUpdate.forEach(i => renderRowActorsCell(i));

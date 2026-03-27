@@ -366,17 +366,22 @@ function loadData(filename) {
     });
 }
 
-// Save CSV
-function saveCSV() {
-    const updatedPath = getUpdatedFile(currentFile);
+function saveCSV(targetFile = currentFile, rowsToSave = rows) {
+    const updatedPath = getUpdatedFile(targetFile);
     console.log('💾 Saving CSV...');
-    console.log('  currentFile:', currentFile);
+    console.log('  currentFile:', targetFile);
     console.log('  updatedPath:', updatedPath);
-    console.log('  rows count:', rows.length);
-    console.log('  first row Actors:', rows[0]?.Actors);
-    fastcsv.writeToPath(updatedPath, rows, { headers: true })
-        .on('error', err => console.error('Error writing CSV', err))
-        .on('finish', () => console.log('✅ Saved to', updatedPath));
+    console.log('  rows count:', rowsToSave.length);
+    console.log('  first row Actors:', rowsToSave[0]?.Actors);
+
+    return new Promise((resolve, reject) => {
+        fastcsv.writeToPath(updatedPath, rowsToSave, { headers: true })
+            .on('error', reject)
+            .on('finish', () => {
+                console.log('✅ Saved to', updatedPath);
+                resolve(updatedPath);
+            });
+    });
 }
 
 app.post('/api/load', async (req, res) => {
@@ -493,7 +498,7 @@ app.post('/api/update', async (req, res) => {
         console.log(`  Before update: rows[${arrayIndex}][${field}] =`, rows[arrayIndex][field]);
         rows[arrayIndex][field] = value;
         console.log(`  After update: rows[${arrayIndex}][${field}] =`, rows[arrayIndex][field]);
-        saveCSV();
+        await saveCSV(currentFile, rows);
         res.json({ success: true });
     } else {
         res.status(404).json({ error: 'Row not found' });
@@ -743,58 +748,22 @@ app.post('/api/add-to-cast', async (req, res) => {
     }
 
     try {
-        // Read current movie_cast.csv
-        const castRows = await readCastRows();
-
-        // Find the movie row
-        let movieRow = castRows.find(r => canonicalMovieKey(r['Movie Name']) === canonicalMovieKey(movieName));
-
-        if (movieRow) {
-            // Parse existing cast
-            const currentCast = movieRow['Cast'] ? movieRow['Cast'].split(',').map(a => a.trim()) : [];
-
-            // Check if actor already exists (case-insensitive)
-            const actorExists = currentCast.some(a => a.toLowerCase() === actorName.toLowerCase());
-
-            if (!actorExists) {
-                // Add new actor
-                currentCast.push(actorName);
-                movieRow['Cast'] = currentCast.join(', ');
-
-                // Write back to CSV
-                await new Promise((resolve, reject) => {
-                    fastcsv.writeToPath(CAST_FILE, castRows, { headers: true })
-                        .on('error', reject)
-                        .on('finish', resolve);
-                });
-
-                console.log(`✅ Added ${actorName} to ${movieName} cast`);
-
-                // Reload cast options
-                const updatedCast = await loadCastOptions(movieName);
-                return res.json({ success: true, cast: updatedCast });
-            } else {
-                // Actor already in cast
-                return res.json({ success: true, cast: currentCast, message: 'Actor already in cast' });
-            }
-        } else {
-            // Movie not found - create new entry
-            castRows.push({
-                'Movie Name': getBaseMovieName(movieName),
-                'Cast': actorName
-            });
-
-            await new Promise((resolve, reject) => {
-                fastcsv.writeToPath(CAST_FILE, castRows, { headers: true })
-                    .on('error', reject)
-                    .on('finish', resolve);
-            });
-
-            console.log(`✅ Created new movie entry and added ${actorName} to ${movieName}`);
-
-            const updatedCast = await loadCastOptions(movieName);
-            return res.json({ success: true, cast: updatedCast });
+        // Queue the cast change for the next push, instead of saving immediately.
+        if (!pendingCastChanges.has(movieName)) {
+            pendingCastChanges.set(movieName, { added: new Set(), removed: new Set() });
         }
+
+        const changes = pendingCastChanges.get(movieName);
+
+        if (changes.removed.has(actorName)) {
+            changes.removed.delete(actorName);
+        } else {
+            changes.added.add(actorName);
+        }
+
+        console.log(`📝 Queued: Add ${actorName} to ${movieName} (will save on push)`);
+        const updatedCast = await loadCastOptions(movieName);
+        return res.json({ success: true, cast: updatedCast });
     } catch (err) {
         console.error('Error adding to cast:', err);
         return res.status(500).json({ error: err.message });
@@ -803,7 +772,7 @@ app.post('/api/add-to-cast', async (req, res) => {
 
 // Upload actor photo
 app.post('/api/push', async (req, res) => {
-    const { filename, secretCode } = req.body;
+    const { filename, secretCode, rows: clientRows } = req.body;
     if (!filename) return res.status(400).json({ error: 'No filename provided' });
 
     const isLocal = req.hostname === 'localhost' || req.hostname === '127.0.0.1';
@@ -821,19 +790,27 @@ app.post('/api/push', async (req, res) => {
         const repoOwner = 'pavankumarwwe';
         const repoName = 'Face-Tagger';
         
-        // Ensure rows are loaded
-        if ((rows.length === 0 || currentFile !== filename) && filename) {
+        let rowsToSave = rows;
+
+        if (Array.isArray(clientRows) && clientRows.length > 0) {
+            rowsToSave = clientRows;
+            rows = clientRows;
+            currentFile = filename;
+        } else if ((rows.length === 0 || currentFile !== filename) && filename) {
             const loadResult = await loadData(filename);
+            rowsToSave = loadResult.rows;
             rows = loadResult.rows;
             currentFile = loadResult.actualFilename;
         }
 
-        if (rows.length === 0) {
+        if (!rowsToSave || rowsToSave.length === 0) {
             return res.status(400).json({ error: 'No data found to push.' });
         }
 
+        await saveCSV(filename, rowsToSave);
+
         const fileContent = await new Promise((resolve, reject) => {
-            fastcsv.writeToString(rows, { headers: true })
+            fastcsv.writeToString(rowsToSave, { headers: true })
                 .then(str => resolve(str))
                 .catch(err => reject(err));
         });
