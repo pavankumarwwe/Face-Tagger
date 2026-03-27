@@ -45,14 +45,17 @@ document.addEventListener('DOMContentLoaded', () => {
     let globalAllActors = [];
     let currentFilename = '';
     let hasUnsavedChanges = false;
+    let actorColorSeed = 0;
+    let actorColorMap = new Map();
 
     function extractActors(str) {
         if (!str) return [];
         return str.split(/(?=#)/).map(s => s.trim()).filter(Boolean);
     }
 
-    // Apply actor to all rows with same speaker that have no actors
-    function applySpeakerMapping(rowIndex) {
+    // Apply the current row's actor to later rows with the same speaker.
+    // This intentionally only propagates downward so earlier rows keep their tags.
+    function applySpeakerMappingDown(rowIndex) {
         const currentRow = globalRows[rowIndex];
         const speaker = currentRow.speaker;
 
@@ -64,23 +67,66 @@ document.addEventListener('DOMContentLoaded', () => {
         const currentActors = extractActors(currentRow.Actors);
         if (currentActors.length === 0) return;
 
-        // Collect all rows that need updating
+        // Collect only later rows that match the same speaker
         const rowsToUpdate = [];
-        globalRows.forEach((row, i) => {
-            if (i === rowIndex) return; // Skip current row
-            if (row.speaker !== speaker) return; // Skip different speakers
-            if (row.Actors && row.Actors.trim() !== '') return; // Skip rows that already have actors
+        for (let i = rowIndex + 1; i < globalRows.length; i++) {
+            const row = globalRows[i];
+            if (row.speaker !== speaker) continue; // Skip different speakers
 
-            // Apply the actors from current row
+            // Reassign the same speaker below this point.
             row.Actors = currentRow.Actors;
             rowsToUpdate.push(i);
-        });
+        }
 
         // Update all affected rows sequentially to avoid race conditions
         if (rowsToUpdate.length > 0) {
             updateMultipleRows(rowsToUpdate, 'Actors').then(() => {
                 // Re-render all affected cells after all updates are done
-                rowsToUpdate.forEach(i => renderRowActorsCell(i));
+                const rowsToRender = new Set();
+                rowsToUpdate.forEach(i => {
+                    rowsToRender.add(i);
+                    rowsToRender.add(i + 1);
+                });
+
+                rowsToRender.forEach(i => {
+                    if (i >= 0 && i < globalRows.length) {
+                        renderRowOriginalTeluguCell(i);
+                        renderRowActorsCell(i);
+                    }
+                });
+            });
+        }
+    }
+
+    function clearSpeakerTagsDown(rowIndex) {
+        const currentRow = globalRows[rowIndex];
+        const speaker = currentRow?.speaker;
+
+        if (!speaker) return;
+
+        const rowsToUpdate = [];
+        for (let i = rowIndex; i < globalRows.length; i++) {
+            const row = globalRows[i];
+            if (row.speaker !== speaker) continue;
+
+            row.Actors = '';
+            rowsToUpdate.push(i);
+        }
+
+        if (rowsToUpdate.length > 0) {
+            updateMultipleRows(rowsToUpdate, 'Actors').then(() => {
+                const rowsToRender = new Set();
+                rowsToUpdate.forEach(i => {
+                    rowsToRender.add(i);
+                    rowsToRender.add(i + 1);
+                });
+
+                rowsToRender.forEach(i => {
+                    if (i >= 0 && i < globalRows.length) {
+                        renderRowOriginalTeluguCell(i);
+                        renderRowActorsCell(i);
+                    }
+                });
             });
         }
     }
@@ -687,6 +733,7 @@ document.addEventListener('DOMContentLoaded', () => {
             globalCastOptions = data.castOptions || [];
             globalAllActors = data.allActors || [];
             updateYoutubeLink(data.youtubeUrl);
+            rebuildActorColorMap();
             setSavedStatus('Ready');
             renderTable();
         })
@@ -723,7 +770,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td class="readonly-cell">${escapeHtml(row.start_time || '')}</td>
                 <td class="readonly-cell">${escapeHtml(row.end_time || '')}</td>
                 <td class="readonly-cell">${escapeHtml(row.speaker || '')}</td>
-                <td class="readonly-cell">${escapeHtml(row.original_telugu || '')}</td>
             `;
 
             const tdActors = document.createElement('td');
@@ -731,14 +777,182 @@ document.addEventListener('DOMContentLoaded', () => {
             tdActors.id = 'actors-cell-' + i;
             tr.appendChild(tdActors);
 
+            const tdOriginal = document.createElement('td');
+            tdOriginal.className = 'readonly-cell original-telugu-cell';
+            tdOriginal.id = 'original-telugu-cell-' + i;
+            tr.appendChild(tdOriginal);
+
             fragment.appendChild(tr);
         });
 
         tableBody.appendChild(fragment);
 
         globalRows.forEach((row, i) => {
+            renderRowOriginalTeluguCell(i);
             renderRowActorsCell(i);
         });
+    }
+
+    function hashString(value) {
+        let hash = 0;
+        for (let i = 0; i < value.length; i++) {
+            hash = ((hash << 5) - hash + value.charCodeAt(i)) | 0;
+        }
+        return Math.abs(hash);
+    }
+
+    function normalizeActorName(actor) {
+        return actor.replace(/^#/, '').trim().toLowerCase();
+    }
+
+    function shuffleWithSeed(items, seed) {
+        const shuffled = [...items];
+        let state = seed || 1;
+
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            state = (state * 1664525 + 1013904223) >>> 0;
+            const j = state % (i + 1);
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+
+        return shuffled;
+    }
+
+    function createActorPillColors(index, total, seed) {
+        const safeTotal = Math.max(total, 1);
+        const hueOffset = seed % 360;
+        const hue = (hueOffset + Math.round((index * 360) / safeTotal)) % 360;
+        const saturation = 84 - ((index % 4) * 6);
+        const lightness = 88 - ((index % 5) * 3);
+
+        return {
+            bg: `hsl(${hue} ${saturation}% ${lightness}%)`,
+            fg: `hsl(${hue} 72% 30%)`,
+            hoverBg: `hsl(${hue} ${saturation}% ${Math.max(lightness - 8, 72)}%)`,
+            hoverFg: `hsl(${hue} 74% 22%)`
+        };
+    }
+
+    function rebuildActorColorMap() {
+        const seen = new Set();
+        const uniqueActors = [];
+
+        [...globalCastOptions, ...globalRows.flatMap(row => extractActors(row.Actors))].forEach(actor => {
+            const key = normalizeActorName(actor);
+            if (!key || seen.has(key)) return;
+            seen.add(key);
+            uniqueActors.push(actor);
+        });
+
+        actorColorSeed = hashString(currentFilename || currentSecretCode || 'cast-colors');
+        actorColorMap = new Map();
+
+        shuffleWithSeed(uniqueActors, actorColorSeed).forEach((actor, index) => {
+            actorColorMap.set(normalizeActorName(actor), createActorPillColors(index, uniqueActors.length, actorColorSeed));
+        });
+    }
+
+    function getActorPillColors(actor) {
+        const key = normalizeActorName(actor);
+        if (!key) {
+            return {
+                bg: '#e0e7ff',
+                fg: '#2563eb',
+                hoverBg: '#dbeafe',
+                hoverFg: '#1d4ed8'
+            };
+        }
+
+        if (!actorColorMap.has(key)) {
+            actorColorMap.set(key, createActorPillColors(actorColorMap.size, actorColorMap.size + 1, actorColorSeed));
+        }
+
+        return actorColorMap.get(key);
+    }
+
+    function applyActorPillColors(pill, actor) {
+        const colors = getActorPillColors(actor);
+        pill.style.setProperty('--pill-bg', colors.bg);
+        pill.style.setProperty('--pill-fg', colors.fg);
+        pill.style.setProperty('--pill-hover-bg', colors.hoverBg);
+        pill.style.setProperty('--pill-hover-fg', colors.hoverFg);
+    }
+
+    function renderRowOriginalTeluguCell(i) {
+        if (i < 0 || i >= globalRows.length) return;
+        const row = globalRows[i];
+        const tdOriginal = document.getElementById('original-telugu-cell-' + i);
+        if (!tdOriginal) return;
+
+        tdOriginal.innerHTML = '';
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'original-telugu-wrapper';
+
+        const textSpan = document.createElement('span');
+        textSpan.className = 'original-telugu-text';
+        textSpan.textContent = row.original_telugu || '';
+        wrapper.appendChild(textSpan);
+
+        const actionWrap = document.createElement('span');
+        actionWrap.className = 'original-telugu-actions';
+
+        const currentActors = extractActors(row.Actors);
+        if (currentActors.length > 0) {
+            currentActors.forEach(actor => {
+                const pill = document.createElement('span');
+                pill.className = 'actor-pill actor-pill-inline';
+                pill.textContent = actor;
+                pill.title = 'Click to remove actor from this row';
+                applyActorPillColors(pill, actor);
+                pill.addEventListener('click', () => {
+                    const updatedActors = currentActors.filter(a => a !== actor);
+                    const newText = updatedActors.join(' ');
+
+                    row.Actors = newText;
+                    updateBackendMemory(i, 'Actors', newText);
+
+                    renderRowOriginalTeluguCell(i);
+                    renderRowActorsCell(i);
+                    renderRowOriginalTeluguCell(i + 1);
+                });
+                actionWrap.appendChild(pill);
+            });
+        }
+
+        if (i > 0) {
+            const prevRow = globalRows[i - 1];
+            const prevActors = extractActors(prevRow.Actors);
+            const newToAdd = prevActors.filter(p => !currentActors.includes(p));
+
+            if (newToAdd.length > 0) {
+                const copyBtn = document.createElement('button');
+                copyBtn.className = 'btn-copy btn-copy-inline';
+                copyBtn.textContent = 'Copy Previous';
+                copyBtn.title = 'Copy actors from previous row';
+
+                copyBtn.addEventListener('click', () => {
+                    const oldVal = row.Actors || '';
+                    const currentText = oldVal.trim();
+                    const newText = currentText ? `${currentText} ${newToAdd.join(' ')}` : newToAdd.join(' ');
+
+                    row.Actors = newText;
+                    updateBackendMemory(i, 'Actors', newText);
+
+                    renderRowOriginalTeluguCell(i);
+                    renderRowActorsCell(i);
+                    renderRowOriginalTeluguCell(i + 1);
+                });
+
+                actionWrap.appendChild(copyBtn);
+            }
+        }
+
+        if (actionWrap.childNodes.length > 0) {
+            wrapper.appendChild(actionWrap);
+        }
+
+        tdOriginal.appendChild(wrapper);
     }
 
     function renderRowActorsCell(i) {
@@ -772,18 +986,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 const val = e.target.value;
                 if (!val) return;
 
-                const oldVal = row.Actors || '';
-                const currentText = oldVal.trim();
-                const newText = currentText ? `${currentText} #${val.trim()}` : `#${val.trim()}`;
+                const newText = `#${val.trim()}`;
 
                 row.Actors = newText;
                 updateBackendMemory(i, 'Actors', newText);
 
+                renderRowOriginalTeluguCell(i);
                 renderRowActorsCell(i);
-                renderRowActorsCell(i + 1);
+                renderRowOriginalTeluguCell(i + 1);
 
-                // Apply to all rows with same speaker ONLY when using Select Cast dropdown
-                applySpeakerMapping(i);
+                // Reassign this speaker only in the rows below the current one
+                applySpeakerMappingDown(i);
             });
 
             if (optionsHtml.length > 1) {
@@ -830,57 +1043,20 @@ document.addEventListener('DOMContentLoaded', () => {
             container.appendChild(reassignBtn);
         }
 
-        // 4. Copy Previous Button (only if previous row has actors)
-        if (i > 0) {
-            const prevRow = globalRows[i - 1];
-            const prevActors = extractActors(prevRow.Actors);
-            const newToAdd = prevActors.filter(p => !currentActors.includes(p));
-
-            if (newToAdd.length > 0) {
-                const copyBtn = document.createElement('button');
-                copyBtn.className = 'btn-copy';
-                copyBtn.textContent = 'Copy Previous';
-                copyBtn.title = 'Copy actors from previous row';
-
-                copyBtn.addEventListener('click', () => {
-                    const oldVal = row.Actors || '';
-                    const currentText = oldVal.trim();
-                    const newText = currentText ? `${currentText} ${newToAdd.join(' ')}` : newToAdd.join(' ');
-
-                    row.Actors = newText;
-                    updateBackendMemory(i, 'Actors', newText);
-
-                    renderRowActorsCell(i);
-                    renderRowActorsCell(i + 1);
-
-                    // DO NOT trigger speaker mapping - just copy the actors
-                });
-
-                container.appendChild(copyBtn);
-            }
+        // 4. Clear Speaker Tags Button (if speaker exists)
+        if (row.speaker) {
+            const clearBtn = document.createElement('button');
+            clearBtn.className = 'btn-clear-speaker';
+            clearBtn.innerHTML = '🗑';
+            clearBtn.title = `Clear all tags for ${row.speaker} from this row downward`;
+            clearBtn.type = 'button';
+            clearBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                clearSpeakerTagsDown(i);
+            });
+            container.appendChild(clearBtn);
         }
 
-        // 3. Pills
-        currentActors.forEach(actor => {
-            const pill = document.createElement('span');
-            pill.className = 'actor-pill';
-            pill.textContent = actor;
-            pill.title = 'Click to remove';
-            
-            pill.addEventListener('click', () => {
-                const updatedActors = currentActors.filter(a => a !== actor);
-                const newText = updatedActors.join(' ');
-                
-                row.Actors = newText;
-                updateBackendMemory(i, 'Actors', newText);
-                
-                renderRowActorsCell(i);
-                renderRowActorsCell(i + 1);
-            });
-            
-            container.appendChild(pill);
-        });
-        
         tdActors.appendChild(container);
     }
 
@@ -917,7 +1093,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (rowsToUpdate.length > 0) {
                 await updateMultipleRows(rowsToUpdate, 'Actors');
                 // Re-render ALL rows because "Copy Previous" buttons depend on previous row state
-                globalRows.forEach((_, i) => renderRowActorsCell(i));
+                globalRows.forEach((_, i) => {
+                    renderRowOriginalTeluguCell(i);
+                    renderRowActorsCell(i);
+                });
             }
 
             setDirtyStatus('All tags cleared');
@@ -1133,18 +1312,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // Add actor to a specific row (from "Select Actor from All Actors" modal)
     async function addActorToRow(rowIndex, actorName) {
         const row = globalRows[rowIndex];
-        const oldVal = row.Actors || '';
-        const currentText = oldVal.trim();
-        const newText = currentText ? `${currentText} #${actorName.trim()}` : `#${actorName.trim()}`;
+        const newText = `#${actorName.trim()}`;
 
         row.Actors = newText;
         updateBackendMemory(rowIndex, 'Actors', newText);
 
+        renderRowOriginalTeluguCell(rowIndex);
         renderRowActorsCell(rowIndex);
-        renderRowActorsCell(rowIndex + 1);
+        renderRowOriginalTeluguCell(rowIndex + 1);
 
-        // Apply to all rows with same speaker (auto-fill same speakers)
-        applySpeakerMapping(rowIndex);
+        // Reassign this speaker only in the rows below the current one
+        applySpeakerMappingDown(rowIndex);
 
         // Add actor to movie cast if not already there
         try {
@@ -1165,10 +1343,14 @@ document.addEventListener('DOMContentLoaded', () => {
             if (data.success && data.cast) {
                 // Update global cast options
                 globalCastOptions = data.cast;
+                rebuildActorColorMap();
                 console.log(`✅ ${actorName} added to movie cast`);
 
                 // Re-render all rows to show updated dropdown
-                globalRows.forEach((_, i) => renderRowActorsCell(i));
+                globalRows.forEach((_, i) => {
+                    renderRowOriginalTeluguCell(i);
+                    renderRowActorsCell(i);
+                });
             }
         } catch (err) {
             console.error('Error adding to cast:', err);
@@ -1191,7 +1373,18 @@ document.addEventListener('DOMContentLoaded', () => {
             setDirtyStatus('Speaker reassigned');
 
             // Re-render all affected cells
-            rowsToUpdate.forEach(i => renderRowActorsCell(i));
+            const rowsToRender = new Set();
+            rowsToUpdate.forEach(i => {
+                rowsToRender.add(i);
+                rowsToRender.add(i + 1);
+            });
+
+            rowsToRender.forEach(i => {
+                if (i >= 0 && i < globalRows.length) {
+                    renderRowOriginalTeluguCell(i);
+                    renderRowActorsCell(i);
+                }
+            });
         }
     }
 

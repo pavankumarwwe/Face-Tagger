@@ -183,7 +183,7 @@ main {
 table {
     width: 100%;
     border-collapse: collapse;
-    table-layout: auto; /* Allow flexible column widths */
+    table-layout: fixed; /* Keep percentage column widths stable */
 }
 
 th, td {
@@ -196,33 +196,31 @@ th, td {
 
 /* Fixed widths for time and speaker columns */
 th:nth-child(1), td:nth-child(1) {
-    width: 140px;
-    min-width: 140px;
-    max-width: 140px;
+    width: 10%;
+    min-width: 0;
 } /* Start Time */
 
 th:nth-child(2), td:nth-child(2) {
-    width: 140px;
-    min-width: 140px;
-    max-width: 140px;
+    width: 10%;
+    min-width: 0;
 } /* End Time */
 
 th:nth-child(3), td:nth-child(3) {
-    width: 110px;
-    min-width: 110px;
-    max-width: 110px;
+    width: 10%;
+    min-width: 0;
 } /* Speaker */
 
 /* Flexible widths for content columns */
 th:nth-child(4), td:nth-child(4) {
-    width: 25%;
-    min-width: 200px;
-} /* Telugu */
+    width: 20%;
+    min-width: 0;
+    max-width: none;
+} /* Actors */
 
 th:nth-child(5), td:nth-child(5) {
-    width: auto;
-    min-width: 300px;
-} /* Actors */
+    width: 50%;
+    min-width: 0;
+} /* Telugu */
 
 th {
     position: sticky;
@@ -251,19 +249,59 @@ tr:hover td {
     font-size: 0.95rem;
 }
 
+.original-telugu-cell {
+    color: var(--text-primary);
+}
+
+.original-telugu-wrapper {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 3px;
+    align-items: center;
+}
+
+.original-telugu-text {
+    flex: 0 1 auto;
+    min-width: 0;
+}
+
+.original-telugu-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+    flex: 0 0 auto;
+    align-items: center;
+    margin-left: 0;
+}
+
+.actor-pill-inline {
+    flex: 0 0 auto;
+    font-size: 0.72rem;
+    padding: 0.2rem 0.55rem;
+}
+
+.btn-copy-inline {
+    padding: 0.22rem 0.55rem;
+    font-size: 0.72rem;
+    height: auto;
+    margin-left: 2px;
+}
+
 /* Actors Cell */
 .actors-container {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem;
+    gap: 3px;
     align-items: center;
 }
 
 .actor-pill {
     display: inline-flex;
     align-items: center;
-    background: #e0e7ff;
-    color: var(--accent-color);
+    background: var(--pill-bg, #e0e7ff);
+    color: var(--pill-fg, var(--accent-color));
+    border: 1px solid var(--pill-border, transparent);
     padding: 0.3rem 0.75rem;
     border-radius: 9999px;
     font-size: 0.85rem;
@@ -273,8 +311,8 @@ tr:hover td {
 }
 
 .actor-pill:hover {
-    background: #fee2e2;
-    color: #ef4444;
+    background: var(--pill-hover-bg, #fee2e2);
+    color: var(--pill-hover-fg, #ef4444);
     text-decoration: line-through;
 }
 
@@ -381,6 +419,27 @@ select:focus {
 
 .btn-reassign-speaker:hover {
     background: #fff7ed;
+    transform: scale(1.1);
+}
+
+.btn-clear-speaker {
+    background: white;
+    color: #dc2626;
+    border: 1px solid #dc2626;
+    padding: 0.25rem 0.4rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+    min-width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-clear-speaker:hover {
+    background: #fef2f2;
     transform: scale(1.1);
 }
 
