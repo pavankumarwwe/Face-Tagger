@@ -99,6 +99,17 @@ document.addEventListener('DOMContentLoaded', () => {
         saveSpinner.classList.add('hidden');
     }
 
+    async function readJsonResponse(response) {
+        const contentType = response.headers.get('content-type') || '';
+        const text = await response.text();
+
+        if (contentType.includes('application/json')) {
+            return JSON.parse(text);
+        }
+
+        throw new Error(text.trim() || `Unexpected response (${response.status})`);
+    }
+
     // Update multiple rows sequentially
     async function updateMultipleRows(indices, field) {
         if (indices.length > 0) setDirtyStatus();
@@ -938,7 +949,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         secretCode: currentSecretCode
                     })
                 });
-                const castData = await castResponse.json();
+                const castData = await readJsonResponse(castResponse);
                 if (!castData.success) {
                     throw new Error(castData.error || 'Failed to push cast changes');
                 }
@@ -952,7 +963,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         rows: globalRows
                     })
                 });
-                const pushData = await pushResponse.json();
+                const pushData = await readJsonResponse(pushResponse);
                 if (!pushData.success) {
                     throw new Error(pushData.error || 'Failed to push CSV');
                 }
