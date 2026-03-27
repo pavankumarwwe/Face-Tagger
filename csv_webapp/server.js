@@ -579,11 +579,11 @@ app.post('/api/remove-from-movie-cast', async (req, res) => {
 
 // Push movie_cast.csv to GitHub
 app.post('/api/push-cast', async (req, res) => {
-    const { movieName, secretCode } = req.body;
+    const { movieName, filename, secretCode } = req.body;
 
     // Require movie name to verify password
-    if (!movieName) {
-        return res.status(400).json({ error: 'Movie name is required for authentication' });
+    if (!movieName && !filename) {
+        return res.status(400).json({ error: 'Movie name or filename is required for authentication' });
     }
 
     // Check password (skip for localhost)
@@ -591,22 +591,22 @@ app.post('/api/push-cast', async (req, res) => {
     if (!isLocal) {
         const clientIp = req.ip || req.connection.remoteAddress;
 
-        // Construct filename for verification
-        const filename = movieName.toLowerCase().replace(/\s+/g, '_') + '.csv';
+        // Prefer the exact filename, because movie secrets are stored against the raw file name.
+        const authFilename = filename || `${movieName}.csv`;
 
         // Check if IP is blocked for this movie
-        if (isBlocked(clientIp, filename)) {
-            const minutesRemaining = getBlockedTimeRemaining(clientIp, filename);
+        if (isBlocked(clientIp, authFilename)) {
+            const minutesRemaining = getBlockedTimeRemaining(clientIp, authFilename);
             return res.status(429).json({
                 error: `Too many failed attempts. Please try again in ${minutesRemaining} minutes.`,
                 blockedFor: minutesRemaining
             });
         }
 
-        const isAuthorized = await verifySecret(filename, secretCode);
+        const isAuthorized = await verifySecret(authFilename, secretCode);
         if (!isAuthorized) {
-            recordFailedAttempt(clientIp, filename);
-            const key = getRateLimitKey(clientIp, filename);
+            recordFailedAttempt(clientIp, authFilename);
+            const key = getRateLimitKey(clientIp, authFilename);
             const attempt = failedAttempts.get(key);
             const attemptsLeft = MAX_ATTEMPTS - (attempt?.count || 0);
 
@@ -619,7 +619,7 @@ app.post('/api/push-cast', async (req, res) => {
         }
 
         // Reset attempts on successful authentication
-        resetAttempts(clientIp, filename);
+        resetAttempts(clientIp, authFilename);
     }
 
     const token = process.env.GITHUB_TOKEN;

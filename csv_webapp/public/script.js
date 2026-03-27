@@ -932,7 +932,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 const castResponse = await fetch('/api/push-cast', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ movieName, secretCode: currentSecretCode })
+                    body: JSON.stringify({
+                        movieName,
+                        filename: currentFilename,
+                        secretCode: currentSecretCode
+                    })
                 });
                 const castData = await castResponse.json();
                 if (!castData.success) {
