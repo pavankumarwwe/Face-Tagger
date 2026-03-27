@@ -969,50 +969,81 @@ document.addEventListener('DOMContentLoaded', () => {
         const currentActors = extractActors(row.Actors);
         const currentCheck = currentActors.map(a => a.substring(1)); // Remove '#'
 
-        // 1. Movie Cast Dropdown (simple select)
+        // 1. Movie Cast combobox (typeable dropdown)
         if (globalCastOptions.length > 0) {
-            const select = document.createElement('select');
-            const optionsHtml = ['<option value="">Select Cast</option>'];
+            const tagActorInput = document.createElement('input');
+            tagActorInput.type = 'text';
+            tagActorInput.className = 'tag-actor-input';
+            tagActorInput.placeholder = 'Tag Actor';
+            tagActorInput.title = 'Type or pick an actor to tag';
+            tagActorInput.setAttribute('list', `cast-options-${i}`);
+            tagActorInput.autocomplete = 'off';
 
-            const sortedMovieCast = [...globalCastOptions].sort((a, b) => a.localeCompare(b));
-            sortedMovieCast.forEach(cast => {
-                if (!currentCheck.includes(cast)) {
-                    optionsHtml.push(`<option value="${escapeHtml(cast)}">${escapeHtml(cast)}</option>`);
-                }
-            });
-            select.innerHTML = optionsHtml.join('');
+            const datalist = document.createElement('datalist');
+            datalist.id = `cast-options-${i}`;
 
-            select.addEventListener('change', (e) => {
-                const val = e.target.value;
+            const renderCastOptions = () => {
+                const query = tagActorInput.value.trim().toLowerCase();
+                const optionsHtml = [];
+
+                const sortedMovieCast = [...globalCastOptions].sort((a, b) => a.localeCompare(b));
+                sortedMovieCast.forEach(cast => {
+                    if (currentCheck.includes(cast)) return;
+                    if (query && !cast.toLowerCase().includes(query)) return;
+                    optionsHtml.push(`<option value="${escapeHtml(cast)}"></option>`);
+                });
+
+                datalist.innerHTML = optionsHtml.join('');
+            };
+
+            const commitCastValue = () => {
+                const val = tagActorInput.value.trim();
                 if (!val) return;
 
-                const newText = `#${val.trim()}`;
+                const matchedCast = [...globalCastOptions].find(cast =>
+                    cast.toLowerCase() === val.toLowerCase()
+                );
+                if (!matchedCast || currentCheck.includes(matchedCast)) {
+                    tagActorInput.value = '';
+                    renderCastOptions();
+                    return;
+                }
+
+                const newText = `#${matchedCast.trim()}`;
 
                 row.Actors = newText;
                 updateBackendMemory(i, 'Actors', newText);
 
+                tagActorInput.value = '';
                 renderRowOriginalTeluguCell(i);
                 renderRowActorsCell(i);
                 renderRowOriginalTeluguCell(i + 1);
 
                 // Reassign this speaker only in the rows below the current one
                 applySpeakerMappingDown(i);
+            };
+
+            tagActorInput.addEventListener('input', renderCastOptions);
+            tagActorInput.addEventListener('change', commitCastValue);
+            tagActorInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    commitCastValue();
+                }
             });
 
-            if (optionsHtml.length > 1) {
-                container.appendChild(select);
-            }
+            renderCastOptions();
+
+            container.appendChild(tagActorInput);
+            container.appendChild(datalist);
         } else {
-            const emptySelect = document.createElement('select');
-            const emptyOption = document.createElement('option');
-            emptyOption.value = '';
-            emptyOption.textContent = 'No Matching Cast';
-            emptyOption.selected = true;
-            emptyOption.disabled = true;
-            emptySelect.appendChild(emptyOption);
-            emptySelect.disabled = true;
-            emptySelect.title = 'No cast list found for this movie';
-            container.appendChild(emptySelect);
+            const emptyTagInput = document.createElement('input');
+            emptyTagInput.type = 'text';
+            emptyTagInput.className = 'tag-actor-input';
+            emptyTagInput.placeholder = 'Tag Actor';
+            emptyTagInput.disabled = true;
+            emptyTagInput.title = 'No cast list found for this movie';
+            container.appendChild(emptyTagInput);
         }
 
         // 2. Add Extra Cast Button (shows all actors with search)
