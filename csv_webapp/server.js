@@ -404,10 +404,11 @@ function loadAllActors() {
 function loadData(filename) {
     return new Promise((resolve) => {
         const updatedPath = getUpdatedFile(filename);
-        const repoTaggedPath = path.join(TAGGED_DIR, path.basename(filename || '').replace('.csv', '_tagged.csv'));
         const safeFilename = path.basename(filename || '');
 
-        // Priority: 1. Tagged file, 2. Transliterated file (with speaker), 3. Original filename
+        // Priority: 1. Cloud-saved tagged file, 2. Transliterated file (with speaker), 3. Original filename.
+        // We intentionally do not fall back to repo-tagged CSVs here so an older deployment cannot
+        // overwrite a newer cloud-saved movie.
         let fileToLoad;
         let actualFilename = safeFilename;
 
@@ -415,9 +416,6 @@ function loadData(filename) {
             fileToLoad = updatedPath;
             // Extract the actual filename from the tagged path
             actualFilename = path.basename(updatedPath).replace('_tagged.csv', '.csv');
-        } else if (fs.existsSync(repoTaggedPath)) {
-            fileToLoad = repoTaggedPath;
-            actualFilename = path.basename(repoTaggedPath).replace('_tagged.csv', '.csv');
         } else {
             // Check if the filename is already transliterated or if a transliterated version exists
             const transliteratedName = safeFilename.replace('.csv', '_transliterated.csv');
@@ -914,9 +912,8 @@ app.get('/api/export', async (req, res) => {
     }
 
     const taggedPath = getUpdatedFile(filename);
-    const repoTaggedPath = path.join(TAGGED_DIR, filename.replace('.csv', '_tagged.csv'));
     const fallbackPath = path.join(RAW_DIR, filename);
-    const filePath = getPreferredFilePath(taggedPath, getPreferredFilePath(repoTaggedPath, fallbackPath));
+    const filePath = getPreferredFilePath(taggedPath, fallbackPath);
 
     if (!fs.existsSync(filePath)) {
         return res.status(404).json({ error: 'Export file not found' });
