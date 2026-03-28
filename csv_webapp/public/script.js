@@ -2,6 +2,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const tableBody = document.getElementById('table-body');
     const saveStatus = document.getElementById('save-status');
     const saveSpinner = document.getElementById('save-spinner');
+    const movieStatusPill = document.getElementById('movie-status-pill');
+    const exportBtn = document.getElementById('export-btn');
+    const markCompleteBtn = document.getElementById('mark-complete-btn');
+    const reopenBtn = document.getElementById('reopen-btn');
     const fileSelect = document.getElementById('file-select');
     const loadBtn = document.getElementById('load-file-btn');
     const pageTitle = document.getElementById('page-title');
@@ -44,9 +48,12 @@ document.addEventListener('DOMContentLoaded', () => {
     let globalCastOptions = [];
     let globalAllActors = [];
     let currentFilename = '';
+    let currentMovieStatus = 'Not Started';
     let hasUnsavedChanges = false;
     let actorColorSeed = 0;
     let actorColorMap = new Map();
+    const pendingRowRefreshes = new Set();
+    let rowRefreshScheduled = false;
 
     function extractActors(str) {
         if (!str) return [];
@@ -81,19 +88,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // Update all affected rows sequentially to avoid race conditions
         if (rowsToUpdate.length > 0) {
             updateMultipleRows(rowsToUpdate, 'Actors').then(() => {
-                // Re-render all affected cells after all updates are done
                 const rowsToRender = new Set();
                 rowsToUpdate.forEach(i => {
                     rowsToRender.add(i);
                     rowsToRender.add(i + 1);
                 });
-
-                rowsToRender.forEach(i => {
-                    if (i >= 0 && i < globalRows.length) {
-                        renderRowOriginalTeluguCell(i);
-                        renderRowActorsCell(i);
-                    }
-                });
+                queueRowRefresh(rowsToRender);
             });
         }
     }
@@ -120,13 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     rowsToRender.add(i);
                     rowsToRender.add(i + 1);
                 });
-
-                rowsToRender.forEach(i => {
-                    if (i >= 0 && i < globalRows.length) {
-                        renderRowOriginalTeluguCell(i);
-                        renderRowActorsCell(i);
-                    }
-                });
+                queueRowRefresh(rowsToRender);
             });
         }
     }
@@ -145,6 +139,68 @@ document.addEventListener('DOMContentLoaded', () => {
         saveSpinner.classList.add('hidden');
     }
 
+    function queueRowRefresh(indices) {
+        for (const index of indices) {
+            if (index >= 0 && index < globalRows.length) {
+                pendingRowRefreshes.add(index);
+            }
+        }
+
+        if (rowRefreshScheduled) return;
+        rowRefreshScheduled = true;
+
+        requestAnimationFrame(() => {
+            rowRefreshScheduled = false;
+            const rows = Array.from(pendingRowRefreshes).sort((a, b) => a - b);
+            pendingRowRefreshes.clear();
+
+            const chunkSize = 25;
+            const renderChunk = (start) => {
+                const slice = rows.slice(start, start + chunkSize);
+                slice.forEach((i) => {
+                    renderRowOriginalTeluguCell(i);
+                    renderRowActorsCell(i);
+                });
+
+                if (start + chunkSize < rows.length) {
+                    requestAnimationFrame(() => renderChunk(start + chunkSize));
+                }
+            };
+
+            renderChunk(0);
+        });
+    }
+
+    function setEditingLocked(locked) {
+        if (!tableBody) return;
+        tableBody.style.pointerEvents = locked ? 'none' : '';
+        tableBody.style.opacity = locked ? '0.6' : '';
+    }
+
+    function setMovieStatus(status) {
+        currentMovieStatus = status || 'Not Started';
+
+        if (movieStatusPill) {
+            movieStatusPill.textContent = currentMovieStatus;
+            movieStatusPill.className = 'status-pill ' + (
+                currentMovieStatus === 'Complete'
+                    ? 'status-complete'
+                    : currentMovieStatus === 'In Progress'
+                        ? 'status-in-progress'
+                        : 'status-not-started'
+            );
+        }
+
+        const isComplete = currentMovieStatus === 'Complete';
+        if (exportBtn) exportBtn.style.display = isComplete ? 'inline-flex' : 'none';
+        if (markCompleteBtn) markCompleteBtn.style.display = isComplete ? 'none' : 'inline-flex';
+        if (reopenBtn) reopenBtn.style.display = isComplete ? 'inline-flex' : 'none';
+        if (pushBtn) pushBtn.disabled = isComplete;
+        if (clearAllBtn) clearAllBtn.disabled = isComplete;
+
+        setEditingLocked(isComplete);
+    }
+
     async function readJsonResponse(response) {
         const contentType = response.headers.get('content-type') || '';
         const text = await response.text();
@@ -154,6 +210,46 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         throw new Error(text.trim() || `Unexpected response (${response.status})`);
+    }
+
+    async function saveCurrentMovieToCloud() {
+        if (!currentFilename) throw new Error('Please load a file first.');
+
+        saveSpinner.classList.remove('hidden');
+        saveStatus.textContent = 'Saving to cloud...';
+        saveStatus.style.color = 'var(--text-secondary)';
+
+        const movieName = currentFilename.replace('.csv', '').replace('_tagged', '').replace('_transliterated', '').trim();
+
+        const castResponse = await fetch('/api/push-cast', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                movieName,
+                filename: currentFilename,
+                secretCode: currentSecretCode
+            })
+        });
+        const castData = await readJsonResponse(castResponse);
+        if (!castData.success) {
+            throw new Error(castData.error || 'Failed to save cast changes');
+        }
+
+        const pushResponse = await fetch('/api/push', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                filename: currentFilename,
+                secretCode: currentSecretCode,
+                rows: globalRows
+            })
+        });
+        const pushData = await readJsonResponse(pushResponse);
+        if (!pushData.success) {
+            throw new Error(pushData.error || 'Failed to save CSV');
+        }
+
+        setSavedStatus('All changes saved');
     }
 
     // Update multiple rows sequentially
@@ -719,7 +815,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
             currentSecretCode = code;
-            currentFilename = data.currentFile;
+            currentFilename = filename;
             const pureName = data.currentFile.replace('.csv', '').replace('_tagged', '').replace('_transliterated', '').trim();
             pageTitle.textContent = `CSV Manager - ${pureName}`;
             
@@ -735,6 +831,7 @@ document.addEventListener('DOMContentLoaded', () => {
             updateYoutubeLink(data.youtubeUrl);
             rebuildActorColorMap();
             setSavedStatus('Ready');
+            setMovieStatus(data.status || 'Not Started');
             renderTable();
         })
         .finally(() => {
@@ -749,6 +846,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (data.requiresAuth) {
                 pageTitle.textContent = `Please Select Movie & Enter Code`;
                 globalRows = [];
+                setMovieStatus('Not Started');
                 renderTable();
                 return;
             }
@@ -1112,10 +1210,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (rowsToUpdate.length > 0) {
                 await updateMultipleRows(rowsToUpdate, 'Actors');
                 // Re-render ALL rows because "Copy Previous" buttons depend on previous row state
-                globalRows.forEach((_, i) => {
-                    renderRowOriginalTeluguCell(i);
-                    renderRowActorsCell(i);
-                });
+                queueRowRefresh(globalRows.map((_, i) => i));
             }
 
             setDirtyStatus('All tags cleared');
@@ -1126,57 +1221,106 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (pushBtn) {
         pushBtn.addEventListener('click', async () => {
-            if (!currentFilename) return alert('Please load a file first.');
-
             const ogText = pushBtn.textContent;
-            pushBtn.textContent = 'Pushing to Cloud...';
+            pushBtn.textContent = 'Saving...';
             pushBtn.disabled = true;
-            saveSpinner.classList.remove('hidden');
-            saveStatus.textContent = 'Pushing changes...';
-            saveStatus.style.color = 'var(--text-secondary)';
-
-            const movieName = currentFilename.replace('.csv', '').replace('_tagged', '').replace('_transliterated', '').trim();
 
             try {
-                const castResponse = await fetch('/api/push-cast', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        movieName,
-                        filename: currentFilename,
-                        secretCode: currentSecretCode
-                    })
-                });
-                const castData = await readJsonResponse(castResponse);
-                if (!castData.success) {
-                    throw new Error(castData.error || 'Failed to push cast changes');
-                }
-
-                const pushResponse = await fetch('/api/push', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        filename: currentFilename,
-                        secretCode: currentSecretCode,
-                        rows: globalRows
-                    })
-                });
-                const pushData = await readJsonResponse(pushResponse);
-                if (!pushData.success) {
-                    throw new Error(pushData.error || 'Failed to push CSV');
-                }
-
-                setSavedStatus('All changes saved');
-                alert('Successfully pushed changes to cloud and GitHub!');
+                await saveCurrentMovieToCloud();
+                alert('Successfully saved changes to Fly cloud storage.');
             } catch (err) {
                 console.error(err);
                 saveStatus.textContent = 'Push failed';
                 saveStatus.style.color = '#ef4444';
-                alert('Failed to push: ' + (err.message || 'Unknown error'));
+                alert('Failed to save: ' + (err.message || 'Unknown error'));
             } finally {
                 pushBtn.textContent = ogText;
                 pushBtn.disabled = false;
                 saveSpinner.classList.add('hidden');
+            }
+        });
+    }
+
+    if (exportBtn) {
+        exportBtn.addEventListener('click', () => {
+            if (!currentFilename) return alert('Please load a file first.');
+            window.location.href = `/api/export?filename=${encodeURIComponent(currentFilename)}`;
+        });
+    }
+
+    if (markCompleteBtn) {
+        markCompleteBtn.addEventListener('click', async () => {
+            if (!currentFilename) return alert('Please load a file first.');
+
+            const ogText = markCompleteBtn.textContent;
+            markCompleteBtn.textContent = 'Completing...';
+            markCompleteBtn.disabled = true;
+
+            try {
+                await saveCurrentMovieToCloud();
+
+                const response = await fetch('/api/status', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        filename: currentFilename,
+                        status: 'Complete'
+                    })
+                });
+                const data = await readJsonResponse(response);
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to mark movie complete');
+                }
+
+                setMovieStatus('Complete');
+                setSavedStatus('Movie marked complete');
+                alert('Movie marked complete. You can export the finished CSV now.');
+            } catch (err) {
+                console.error(err);
+                alert('Failed to mark complete: ' + (err.message || 'Unknown error'));
+            } finally {
+                markCompleteBtn.textContent = ogText;
+                markCompleteBtn.disabled = false;
+                saveSpinner.classList.add('hidden');
+            }
+        });
+    }
+
+    if (reopenBtn) {
+        reopenBtn.addEventListener('click', async () => {
+            if (!currentFilename) return alert('Please load a file first.');
+
+            const code = prompt('Enter the universal password to reopen this completed movie:');
+            if (code === null) return;
+
+            const ogText = reopenBtn.textContent;
+            reopenBtn.textContent = 'Reopening...';
+            reopenBtn.disabled = true;
+
+            try {
+                const response = await fetch('/api/status', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        filename: currentFilename,
+                        status: 'In Progress',
+                        secretCode: code
+                    })
+                });
+                const data = await readJsonResponse(response);
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to reopen movie');
+                }
+
+                setMovieStatus('In Progress');
+                setSavedStatus('Movie reopened for editing');
+                alert('Movie reopened. You can edit it again now.');
+            } catch (err) {
+                console.error(err);
+                alert('Failed to reopen: ' + (err.message || 'Unknown error'));
+            } finally {
+                reopenBtn.textContent = ogText;
+                reopenBtn.disabled = false;
             }
         });
     }
@@ -1366,10 +1510,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log(`✅ ${actorName} added to movie cast`);
 
                 // Re-render all rows to show updated dropdown
-                globalRows.forEach((_, i) => {
-                    renderRowOriginalTeluguCell(i);
-                    renderRowActorsCell(i);
-                });
+                queueRowRefresh(globalRows.map((_, i) => i));
             }
         } catch (err) {
             console.error('Error adding to cast:', err);
@@ -1391,19 +1532,12 @@ document.addEventListener('DOMContentLoaded', () => {
             await updateMultipleRows(rowsToUpdate, 'Actors');
             setDirtyStatus('Speaker reassigned');
 
-            // Re-render all affected cells
             const rowsToRender = new Set();
             rowsToUpdate.forEach(i => {
                 rowsToRender.add(i);
                 rowsToRender.add(i + 1);
             });
-
-            rowsToRender.forEach(i => {
-                if (i >= 0 && i < globalRows.length) {
-                    renderRowOriginalTeluguCell(i);
-                    renderRowActorsCell(i);
-                }
-            });
+            queueRowRefresh(rowsToRender);
         }
     }
 

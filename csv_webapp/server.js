@@ -35,13 +35,98 @@ const BASE_DIR = path.join(__dirname, '..');
 const RAW_DIR = path.join(BASE_DIR, 'raw_movies');
 const TAGGED_DIR = path.join(BASE_DIR, 'tagged_movies');
 const CAST_FILE = path.join(BASE_DIR, 'movie_cast.csv');
+const STATUS_FILE = path.join(BASE_DIR, 'movie_status.csv');
+const SECRETS_FILE = path.join(BASE_DIR, 'movie_secrets.csv');
+const MOVIE_ASSIGNMENTS_FILE = path.join(BASE_DIR, 'Movie_Assignments.csv');
+
+// Persistent storage on Fly. When mounted, edited CSVs live here instead of inside the repo tree.
+const STORAGE_ROOT = process.env.FACE_TAGGER_STORAGE_DIR
+    || (process.env.FLY_APP_NAME ? '/data/face-tagger' : path.join(BASE_DIR, '.face-tagger-data'));
+const STORAGE_TAGGED_DIR = path.join(STORAGE_ROOT, 'tagged_movies');
+const STORAGE_CAST_FILE = path.join(STORAGE_ROOT, 'movie_cast.csv');
+const STORAGE_STATUS_FILE = path.join(STORAGE_ROOT, 'movie_status.csv');
+const STORAGE_SECRETS_FILE = path.join(STORAGE_ROOT, 'movie_secrets.csv');
+const STORAGE_ASSIGNMENTS_FILE = path.join(STORAGE_ROOT, 'Movie_Assignments.csv');
+const writeQueues = new Map();
+
+function ensureDirSync(dirPath) {
+    if (!fs.existsSync(dirPath)) {
+        fs.mkdirSync(dirPath, { recursive: true });
+    }
+}
+
+function ensureStorageLayout() {
+    ensureDirSync(STORAGE_ROOT);
+    ensureDirSync(STORAGE_TAGGED_DIR);
+}
+
+ensureStorageLayout();
+
+function queueWrite(filePath, task) {
+    const previous = writeQueues.get(filePath) || Promise.resolve();
+    const next = previous.catch(() => {}).then(task);
+    writeQueues.set(filePath, next.finally(() => {
+        if (writeQueues.get(filePath) === next) {
+            writeQueues.delete(filePath);
+        }
+    }));
+    return next;
+}
+
+function getPreferredFilePath(primaryPath, fallbackPath) {
+    return fs.existsSync(primaryPath) ? primaryPath : fallbackPath;
+}
+
+function readCsvRowsFromFile(filePath, normalizeRow = (row) => row) {
+    return new Promise((resolve, reject) => {
+        const rows = [];
+        if (!fs.existsSync(filePath)) return resolve(rows);
+
+        fs.createReadStream(filePath)
+            .pipe(csvParser({
+                mapHeaders: ({ header }) => header.replace(/^\uFEFF/, '')
+            }))
+            .on('data', (row) => rows.push(normalizeRow(row)))
+            .on('end', () => resolve(rows))
+            .on('error', reject);
+    });
+}
+
+async function readMergedCsvRows(primaryPath, fallbackPath, normalizeRow = (row) => row, keyFn = null) {
+    const [primaryRows, fallbackRows] = await Promise.all([
+        readCsvRowsFromFile(primaryPath, normalizeRow),
+        readCsvRowsFromFile(fallbackPath, normalizeRow)
+    ]);
+
+    if (!keyFn) {
+        return primaryRows.length > 0 ? primaryRows : fallbackRows;
+    }
+
+    const merged = new Map();
+    fallbackRows.forEach((row) => merged.set(keyFn(row), row));
+    primaryRows.forEach((row) => merged.set(keyFn(row), row));
+    return [...merged.values()];
+}
+
+async function writeCsvRowsAtomically(filePath, rowsToSave) {
+    ensureDirSync(path.dirname(filePath));
+
+    return queueWrite(filePath, async () => {
+        const csvString = await fastcsv.writeToString(rowsToSave, { headers: true });
+        const tempPath = `${filePath}.tmp`;
+        await fs.promises.writeFile(tempPath, csvString, 'utf8');
+        await fs.promises.rename(tempPath, filePath);
+        console.log('✅ Saved to', filePath);
+        return filePath;
+    });
+}
 
 let currentFile = 'adhurs.csv';
 let currentMovieName = 'Adhurs';
 
 function getUpdatedFile(filename) {
-    if (!fs.existsSync(TAGGED_DIR)) fs.mkdirSync(TAGGED_DIR, { recursive: true });
-    return path.join(TAGGED_DIR, filename.replace('.csv', '_tagged.csv'));
+    const safeFilename = path.basename(filename || '');
+    return path.join(STORAGE_TAGGED_DIR, safeFilename.replace('.csv', '_tagged.csv'));
 }
 
 function getBaseMovieName(value) {
@@ -77,34 +162,26 @@ function normalizeCastRow(row) {
 }
 
 function readCastRows() {
-    return new Promise((resolve, reject) => {
-        const castRows = [];
-        if (!fs.existsSync(CAST_FILE)) return resolve(castRows);
-
-        fs.createReadStream(CAST_FILE)
-            .pipe(csvParser({
-                mapHeaders: ({ header }) => header.replace(/^\uFEFF/, '')
-            }))
-            .on('data', (row) => castRows.push(normalizeCastRow(row)))
-            .on('end', () => resolve(castRows))
-            .on('error', reject);
-    });
+    return readMergedCsvRows(
+        STORAGE_CAST_FILE,
+        CAST_FILE,
+        normalizeCastRow,
+        (row) => canonicalMovieKey(row['Movie Name'])
+    );
 }
 
-const SECRETS_FILE = path.join(BASE_DIR, 'movie_secrets.csv');
-
 function getMovieStatuses() {
-    const STATUS_FILE = path.join(BASE_DIR, 'movie_status.csv');
-    return new Promise((resolve) => {
+    return readMergedCsvRows(
+        STORAGE_STATUS_FILE,
+        STATUS_FILE,
+        (row) => row,
+        (row) => row.filename
+    ).then((rows) => {
         const statuses = {};
-        if (!fs.existsSync(STATUS_FILE)) return resolve(statuses);
-        fs.createReadStream(STATUS_FILE)
-            .pipe(csvParser())
-            .on('data', (row) => {
-                if (row.filename) statuses[row.filename] = row;
-            })
-            .on('end', () => resolve(statuses))
-            .on('error', () => resolve(statuses));
+        rows.forEach((row) => {
+            if (row.filename) statuses[row.filename] = row;
+        });
+        return statuses;
     });
 }
 
@@ -163,13 +240,14 @@ function verifySecret(filename, code) {
         // Universal code that works for any movie
         if (code === '!@Mkpkntr5038!') return resolve(true);
 
-        if (!fs.existsSync(SECRETS_FILE)) return resolve(true);
+        const secretsPath = getPreferredFilePath(STORAGE_SECRETS_FILE, SECRETS_FILE);
+        if (!fs.existsSync(secretsPath)) return resolve(true);
 
         let valid = false;
         let foundMovie = false;
         const targetFilename = filename.toLowerCase().replace('_tagged', '').trim();
 
-        fs.createReadStream(SECRETS_FILE)
+        fs.createReadStream(secretsPath)
             .pipe(csvParser())
             .on('data', (row) => {
                 if (row.filename && row.filename.toLowerCase().trim() === targetFilename) {
@@ -246,14 +324,13 @@ app.get('/api/cast', async (req, res) => {
     res.json({ cast });
 });
 
-const MOVIE_ASSIGNMENTS_FILE = path.join(BASE_DIR, 'Movie_Assignments.csv');
-
 function loadMovieUrl(movieName) {
     return new Promise((resolve) => {
-        if (!fs.existsSync(MOVIE_ASSIGNMENTS_FILE)) return resolve(null);
+        const assignmentsPath = getPreferredFilePath(STORAGE_ASSIGNMENTS_FILE, MOVIE_ASSIGNMENTS_FILE);
+        if (!fs.existsSync(assignmentsPath)) return resolve(null);
         let url = null;
         const normalizedTarget = canonicalMovieKey(movieName);
-        fs.createReadStream(MOVIE_ASSIGNMENTS_FILE)
+        fs.createReadStream(assignmentsPath)
             .pipe(csvParser())
             .on('data', (row) => {
                 if (canonicalMovieKey(row['movie_name']) === normalizedTarget) {
@@ -327,18 +404,23 @@ function loadAllActors() {
 function loadData(filename) {
     return new Promise((resolve) => {
         const updatedPath = getUpdatedFile(filename);
+        const repoTaggedPath = path.join(TAGGED_DIR, path.basename(filename || '').replace('.csv', '_tagged.csv'));
+        const safeFilename = path.basename(filename || '');
 
         // Priority: 1. Tagged file, 2. Transliterated file (with speaker), 3. Original filename
         let fileToLoad;
-        let actualFilename = filename;
+        let actualFilename = safeFilename;
 
         if (fs.existsSync(updatedPath)) {
             fileToLoad = updatedPath;
             // Extract the actual filename from the tagged path
             actualFilename = path.basename(updatedPath).replace('_tagged.csv', '.csv');
+        } else if (fs.existsSync(repoTaggedPath)) {
+            fileToLoad = repoTaggedPath;
+            actualFilename = path.basename(repoTaggedPath).replace('_tagged.csv', '.csv');
         } else {
             // Check if the filename is already transliterated or if a transliterated version exists
-            const transliteratedName = filename.replace('.csv', '_transliterated.csv');
+            const transliteratedName = safeFilename.replace('.csv', '_transliterated.csv');
             const transliteratedPath = path.join(RAW_DIR, transliteratedName);
 
             if (fs.existsSync(transliteratedPath)) {
@@ -369,21 +451,92 @@ function loadData(filename) {
 
 function saveCSV(targetFile = currentFile, rowsToSave = rows) {
     const updatedPath = getUpdatedFile(targetFile);
+    const safeTarget = path.basename(targetFile || currentFile || '');
     console.log('💾 Saving CSV...');
-    console.log('  currentFile:', targetFile);
+    console.log('  currentFile:', safeTarget);
     console.log('  updatedPath:', updatedPath);
     console.log('  rows count:', rowsToSave.length);
     console.log('  first row Actors:', rowsToSave[0]?.Actors);
 
-    return new Promise((resolve, reject) => {
-        fastcsv.writeToPath(updatedPath, rowsToSave, { headers: true })
-            .on('error', reject)
-            .on('finish', () => {
-                console.log('✅ Saved to', updatedPath);
-                resolve(updatedPath);
-            });
-    });
+    return writeCsvRowsAtomically(updatedPath, rowsToSave);
 }
+
+async function loadStatusRowsForWrite() {
+    return readMergedCsvRows(
+        STORAGE_STATUS_FILE,
+        STATUS_FILE,
+        (row) => row,
+        (row) => row.filename
+    );
+}
+
+function buildStatusRow(filename, status, existingRow = {}) {
+    return {
+        filename,
+        movie_name: existingRow.movie_name || getBaseMovieName(filename),
+        youtube_url: existingRow.youtube_url || '',
+        status
+    };
+}
+
+async function upsertMovieStatus(filename, status) {
+    const safeFilename = path.basename(filename || '');
+    const statuses = await loadStatusRowsForWrite();
+    const existingIndex = statuses.findIndex((row) => row.filename === safeFilename);
+    const existingRow = existingIndex >= 0 ? statuses[existingIndex] : {};
+    const nextRow = buildStatusRow(safeFilename, status, existingRow);
+
+    if (existingIndex >= 0) {
+        statuses[existingIndex] = nextRow;
+    } else {
+        statuses.push(nextRow);
+    }
+
+    await writeCsvRowsAtomically(STORAGE_STATUS_FILE, statuses);
+    return nextRow;
+}
+
+async function getStatusForFile(filename) {
+    const statuses = await getMovieStatuses();
+    return statuses[path.basename(filename || '')] || null;
+}
+
+app.get('/api/status', async (req, res) => {
+    const filename = path.basename(req.query.filename || '');
+    if (!filename) return res.status(400).json({ error: 'filename is required' });
+
+    const statusRow = await getStatusForFile(filename);
+    res.json({
+        filename,
+        status: statusRow?.status || 'Not Started',
+        movie_name: statusRow?.movie_name || getBaseMovieName(filename),
+        youtube_url: statusRow?.youtube_url || ''
+    });
+});
+
+app.post('/api/status', async (req, res) => {
+    const { filename, status, secretCode } = req.body;
+    const safeFilename = path.basename(filename || '');
+    if (!safeFilename || !status) {
+        return res.status(400).json({ error: 'filename and status are required' });
+    }
+
+    const currentStatusRow = await getStatusForFile(safeFilename);
+    const currentStatus = currentStatusRow?.status || 'Not Started';
+
+    if (currentStatus === 'Complete' && status === 'In Progress') {
+        const isLocal = req.hostname === 'localhost' || req.hostname === '127.0.0.1';
+        if (!isLocal) {
+            const isAuthorized = await verifySecret(safeFilename, secretCode);
+            if (!isAuthorized) {
+                return res.status(401).json({ error: 'Password required to reopen a completed movie.' });
+            }
+        }
+    }
+
+    const updated = await upsertMovieStatus(safeFilename, status);
+    res.json({ success: true, status: updated.status });
+});
 
 app.post('/api/load', async (req, res) => {
     const { filename, secretCode } = req.body;
@@ -420,7 +573,7 @@ app.post('/api/load', async (req, res) => {
     }
 
     const statuses = await getMovieStatuses();
-    if (statuses[filename] && statuses[filename].status === 'Complete') {
+    if (statuses[path.basename(filename)] && statuses[path.basename(filename)].status === 'Complete') {
         return res.status(403).json({ error: 'This movie is marked as Complete and cannot be edited.' });
     }
 
@@ -462,7 +615,8 @@ app.post('/api/load', async (req, res) => {
         castOptions: deduplicatedCast,
         allActors: deduplicatedAll,
         currentFile,
-        youtubeUrl
+        youtubeUrl,
+        status: statuses[path.basename(filename)]?.status || 'Not Started'
     });
 });
 
@@ -476,7 +630,7 @@ app.post('/api/update', async (req, res) => {
     console.log('📝 Update request:', { arrayIndex, field, value: value?.substring(0, 50), filename });
 
     const statuses = await getMovieStatuses();
-    if (statuses[filename] && statuses[filename].status === 'Complete') {
+    if (statuses[path.basename(filename)] && statuses[path.basename(filename)].status === 'Complete') {
         return res.status(403).json({ error: 'Cannot edit: Movie marked as Complete.' });
     }
 
@@ -507,8 +661,8 @@ app.post('/api/update', async (req, res) => {
 });
 
 // Added save endpoint
-app.post('/api/save', (req, res) => {
-    saveCSV();
+app.post('/api/save', async (req, res) => {
+    await saveCSV();
     res.json({ success: true });
 });
 
@@ -578,7 +732,7 @@ app.post('/api/remove-from-movie-cast', async (req, res) => {
     }
 });
 
-// Push movie_cast.csv to GitHub
+// Persist movie_cast.csv to Fly storage
 app.post('/api/push-cast', async (req, res) => {
     const { movieName, filename, secretCode } = req.body;
 
@@ -623,11 +777,6 @@ app.post('/api/push-cast', async (req, res) => {
         resetAttempts(clientIp, authFilename);
     }
 
-    const token = process.env.GITHUB_TOKEN;
-    if (!token) {
-        return res.status(500).json({ error: 'GITHUB_TOKEN not configured' });
-    }
-
     try {
         // First, apply all pending changes to the CSV file
         if (pendingCastChanges.size > 0) {
@@ -667,67 +816,17 @@ app.post('/api/push-cast', async (req, res) => {
                 movieRow['Cast'] = currentCast.join(', ');
             }
 
-            // Write updated CSV
-            await new Promise((resolve, reject) => {
-                fastcsv.writeToPath(CAST_FILE, castRows, { headers: true })
-                    .on('error', reject)
-                    .on('finish', resolve);
-            });
+            // Write updated CSV to persistent cloud storage
+            await writeCsvRowsAtomically(STORAGE_CAST_FILE, castRows);
 
             // Clear pending changes after successful save
             pendingCastChanges.clear();
-            console.log('✅ All pending changes saved to movie_cast.csv');
+            console.log('✅ All pending changes saved to persistent movie_cast.csv');
         }
+        const persistedCast = await readCastRows();
+        await writeCsvRowsAtomically(STORAGE_CAST_FILE, persistedCast);
 
-        const repoOwner = 'pavankumarwwe';
-        const repoName = 'Face-Tagger';
-
-        // Read movie_cast.csv
-        const fileContent = fs.readFileSync(CAST_FILE, 'utf8');
-        const base64Content = Buffer.from(fileContent).toString('base64');
-        const githubPath = 'movie_cast.csv';
-        const apiUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${githubPath}`;
-
-        // Get current file SHA
-        let sha = null;
-        const getRes = await fetch(apiUrl, {
-            headers: {
-                'Authorization': `token ${token}`,
-                'Accept': 'application/vnd.github.v3+json',
-                'User-Agent': 'Face-Tagger-App'
-            }
-        });
-
-        if (getRes.ok) {
-            const getData = await getRes.json();
-            sha = getData.sha;
-        }
-
-        // Push to GitHub
-        const body = {
-            message: `Update movie cast via Cast Images page`,
-            content: base64Content
-        };
-        if (sha) body.sha = sha;
-
-        const putRes = await fetch(apiUrl, {
-            method: 'PUT',
-            headers: {
-                'Authorization': `token ${token}`,
-                'Accept': 'application/vnd.github.v3+json',
-                'User-Agent': 'Face-Tagger-App',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(body)
-        });
-
-        if (putRes.ok) {
-            console.log('✅ Pushed movie_cast.csv to GitHub');
-            res.json({ success: true });
-        } else {
-            const errorData = await putRes.json();
-            res.status(500).json({ error: errorData.message || 'GitHub API Error' });
-        }
+        res.json({ success: true, storagePath: STORAGE_CAST_FILE });
     } catch (err) {
         console.error('Push error:', err);
         res.status(500).json({ error: err.message });
@@ -771,7 +870,7 @@ app.post('/api/add-to-cast', async (req, res) => {
     }
 });
 
-// Upload actor photo
+// Persist tagged movie CSV to Fly storage
 app.post('/api/push', async (req, res) => {
     const { filename, secretCode, rows: clientRows } = req.body;
     if (!filename) return res.status(400).json({ error: 'No filename provided' });
@@ -782,21 +881,14 @@ app.post('/api/push', async (req, res) => {
         if (!isAuthorized) return res.status(401).json({ error: 'Unauthorized push attempt.' });
     }
 
-    const token = process.env.GITHUB_TOKEN;
-    if (!token) {
-        return res.status(500).json({ error: 'GITHUB_TOKEN environment variable is not set on the server.' });
-    }
-
     try {
-        const repoOwner = 'pavankumarwwe';
-        const repoName = 'Face-Tagger';
-        
         let rowsToSave = rows;
+        const safeFilename = path.basename(filename);
 
         if (Array.isArray(clientRows) && clientRows.length > 0) {
             rowsToSave = clientRows;
             rows = clientRows;
-            currentFile = filename;
+            currentFile = safeFilename;
         } else if ((rows.length === 0 || currentFile !== filename) && filename) {
             const loadResult = await loadData(filename);
             rowsToSave = loadResult.rows;
@@ -809,60 +901,31 @@ app.post('/api/push', async (req, res) => {
         }
 
         await saveCSV(filename, rowsToSave);
-
-        const fileContent = await new Promise((resolve, reject) => {
-            fastcsv.writeToString(rowsToSave, { headers: true })
-                .then(str => resolve(str))
-                .catch(err => reject(err));
-        });
-
-        const base64Content = Buffer.from(fileContent).toString('base64');
-        const githubPath = `tagged_movies/${filename.replace('.csv', '_tagged.csv')}`;
-        const apiUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${githubPath}`;
-
-        let sha = null;
-        const getRes = await fetch(apiUrl, {
-            headers: {
-                'Authorization': `token ${token}`,
-                'Accept': 'application/vnd.github.v3+json',
-                'User-Agent': 'Face-Tagger-App'
-            }
-        });
-        
-        if (getRes.ok) {
-            const getData = await getRes.json();
-            sha = getData.sha;
-        }
-
-        const body = {
-            message: `Update ${githubPath} via web UI`,
-            content: base64Content
-        };
-        if (sha) body.sha = sha;
-
-        const putRes = await fetch(apiUrl, {
-            method: 'PUT',
-            headers: {
-                'Authorization': `token ${token}`,
-                'Accept': 'application/vnd.github.v3+json',
-                'User-Agent': 'Face-Tagger-App',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(body)
-        });
-
-        if (putRes.ok) {
-            res.json({ success: true });
-        } else {
-            const errorData = await putRes.json();
-            res.status(500).json({ error: errorData.message || 'GitHub API Error' });
-        }
+        res.json({ success: true, storagePath: getUpdatedFile(filename) });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
-// Push actors to GitHub (with password)
+app.get('/api/export', async (req, res) => {
+    const filename = path.basename(req.query.filename || '');
+    if (!filename) {
+        return res.status(400).json({ error: 'filename is required' });
+    }
+
+    const taggedPath = getUpdatedFile(filename);
+    const repoTaggedPath = path.join(TAGGED_DIR, filename.replace('.csv', '_tagged.csv'));
+    const fallbackPath = path.join(RAW_DIR, filename);
+    const filePath = getPreferredFilePath(taggedPath, getPreferredFilePath(repoTaggedPath, fallbackPath));
+
+    if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ error: 'Export file not found' });
+    }
+
+    res.download(filePath, path.basename(filePath));
+});
+
+// The server starts with cloud-backed persistent storage enabled
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server running at http://localhost:${PORT}`);

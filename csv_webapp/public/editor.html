@@ -31,8 +31,12 @@
                 <div style="flex: 1; display: flex; align-items: center; justify-content: flex-end; gap: 10px;">
                     <span id="save-status" style="font-weight: 500; font-size: 0.9rem; color: var(--text-secondary);">Ready</span>
                     <div id="save-spinner" class="spinner hidden"></div>
-                    <button id="clear-all-btn" class="btn" style="background-color: #ef4444; color: white;">Clear All Tags</button>
-                    <button id="push-btn" class="btn" style="background-color: var(--success-color); color: white;">Push to Cloud</button>
+                    <span id="movie-status-pill" class="status-pill status-not-started">Not Started</span>
+                    <button id="export-btn" class="btn btn-secondary" style="display: none;">Export CSV</button>
+                    <button id="mark-complete-btn" class="btn btn-success">Mark Complete</button>
+                    <button id="reopen-btn" class="btn btn-warning" style="display: none;">Reopen</button>
+                    <button id="clear-all-btn" class="btn btn-danger-outline">Clear All Tags</button>
+                    <button id="push-btn" class="btn btn-success">Save to Cloud</button>
                     <a id="ref-btn" href="#" target="_blank" class="btn btn-secondary" style="display: none;">Cast Images</a>
                 </div>
             </div>

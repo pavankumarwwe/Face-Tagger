@@ -115,7 +115,6 @@
         .movie-card.status-complete {
             opacity: 0.6;
             cursor: not-allowed;
-            pointer-events: none; /* Disables clicking */
         }
         
         .movie-card.status-complete:hover {
@@ -169,6 +168,47 @@
             transform: translateX(4px);
         }
 
+        .card-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.65rem;
+            margin-top: 1rem;
+        }
+
+        .card-action-link,
+        .card-action-btn {
+            border: none;
+            border-radius: 999px;
+            padding: 0.55rem 0.9rem;
+            font: inherit;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.18s ease;
+        }
+
+        .card-action-link {
+            background: #ecfeff;
+            color: #0e7490;
+        }
+
+        .card-action-link:hover {
+            background: #cffafe;
+        }
+
+        .card-action-btn {
+            background: #fff7ed;
+            color: #c2410c;
+        }
+
+        .card-action-btn:hover {
+            background: #ffedd5;
+        }
+
         @keyframes fadeInDown {
             from { opacity: 0; transform: translateY(-20px); }
             to { opacity: 1; transform: translateY(0); }
@@ -197,8 +237,9 @@
                 <li><strong>Select a Movie:</strong> Click any "Not Started" or "In Progress" movie below to open the editor.</li>
                 <li><strong>Edit Actors:</strong> Once loaded, click any actor's name to modify or correct the tags. </li>
                 <li><strong>Save changes:</strong> Edits stay in the browser until you are ready to commit them.</li>
-                <li><strong>Push to Cloud:</strong> When you are completely done editing, click the green <em>Push to Cloud</em> button to save the CSV to cloud storage and GitHub.</li>
-                <li><strong>Status:</strong> Movies marked as <em>Complete</em> are locked securely and cannot be edited further.</li>
+                <li><strong>Save to Cloud:</strong> When you are completely done editing, click the green <em>Save to Cloud</em> button to write the CSV into Fly's persistent storage.</li>
+                <li><strong>Export finished files:</strong> Completed movies show an export button so you can download the final CSV anytime.</li>
+                <li><strong>Status:</strong> Movies marked as <em>Complete</em> are locked securely and can only be reopened with the universal password.</li>
             </ul>
         </div>
     </header>
@@ -222,16 +263,32 @@
                             const isComplete = movie.status === 'Complete';
                             // Extract just the first word for CSS resolution: "Not", "In", "Complete"
                             const badgeClass = 'badge-' + movie.status.split(' ')[0];
+                            const exportUrl = `/api/export?filename=${encodeURIComponent(movie.filename)}`;
                             
+                            if (isComplete) {
+                                return `
+                                    <div class="movie-card status-complete" style="animation-delay: ${Math.min(i * 0.03, 1)}s">
+                                        <div>
+                                            <div class="status-badge ${badgeClass}">${movie.status}</div>
+                                            <h2>${movie.displayName}</h2>
+                                        </div>
+                                        <div class="card-actions">
+                                            <a class="card-action-link" href="${exportUrl}">Export CSV</a>
+                                            <button class="card-action-btn reopen-complete-btn" data-filename="${movie.filename}">Reopen</button>
+                                        </div>
+                                    </div>
+                                `;
+                            }
+
                             return `
-                                <a href="${isComplete ? '#' : 'editor.html?file=' + encodeURIComponent(movie.filename)}" 
-                                   class="movie-card ${isComplete ? 'status-complete' : ''}" 
+                                <a href="editor.html?file=${encodeURIComponent(movie.filename)}"
+                                   class="movie-card"
                                    style="animation-delay: ${Math.min(i * 0.03, 1)}s">
                                     <div>
                                         <div class="status-badge ${badgeClass}">${movie.status}</div>
                                         <h2>${movie.displayName}</h2>
                                     </div>
-                                    <div class="action" style="${isComplete ? 'display:none' : ''}">
+                                    <div class="action">
                                         Open Editor
                                         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
@@ -240,6 +297,41 @@
                                 </a>
                             `;
                         }).join('');
+
+                        grid.querySelectorAll('.reopen-complete-btn').forEach(btn => {
+                            btn.addEventListener('click', async () => {
+                                const filename = btn.dataset.filename;
+                                const code = prompt(`Enter the universal password to reopen ${filename}:`);
+                                if (code === null) return;
+
+                                btn.disabled = true;
+                                const oldText = btn.textContent;
+                                btn.textContent = 'Reopening...';
+
+                                try {
+                                    const response = await fetch('/api/status', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({
+                                            filename,
+                                            status: 'In Progress',
+                                            secretCode: code
+                                        })
+                                    });
+                                    const result = await response.json();
+                                    if (!response.ok || !result.success) {
+                                        throw new Error(result.error || 'Failed to reopen movie');
+                                    }
+
+                                    window.location.reload();
+                                } catch (err) {
+                                    alert(err.message || 'Failed to reopen movie');
+                                } finally {
+                                    btn.disabled = false;
+                                    btn.textContent = oldText;
+                                }
+                            });
+                        });
                     } else {
                         loading.textContent = 'No movies available to edit.';
                     }
