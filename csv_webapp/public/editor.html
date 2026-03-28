@@ -20,34 +20,35 @@
 
 <body>
     <div class="app-container">
-        <header style="display: flex; flex-direction: column; gap: 0.75rem; align-items: center;">
-            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                <div style="flex: 1; display: flex; align-items: center;">
-                    <a href="/" class="btn" style="text-decoration: none;">Home</a>
+        <header class="editor-header">
+            <div class="editor-header-top">
+                <div class="editor-left-group">
+                    <a href="/" id="home-link" class="btn btn-secondary editor-home-link editor-compact-btn">Home</a>
+                    <button id="mark-complete-btn" class="btn btn-success editor-compact-btn" style="display: none;">Mark as Complete</button>
+                    <button id="push-btn" class="btn btn-success editor-compact-btn" style="display: none;">Save to Cloud</button>
                 </div>
 
-                <h1 id="page-title" style="margin: 0; padding: 0; text-align: center; font-size: 1.5rem;">CSV Manager</h1>
+                <div class="editor-title-block">
+                    <h1 id="page-title" class="editor-title">CSV Manager</h1>
+                </div>
 
-                <div style="flex: 1; display: flex; align-items: center; justify-content: flex-end; gap: 10px;">
-                    <span id="save-status" style="font-weight: 500; font-size: 0.9rem; color: var(--text-secondary);">Ready</span>
+                <div class="editor-right-group">
+                    <span id="save-status" class="editor-save-status">Ready</span>
                     <div id="save-spinner" class="spinner hidden"></div>
-                    <span id="movie-status-pill" class="status-pill status-not-started">Not Started</span>
-                    <button id="export-btn" class="btn btn-secondary" style="display: none;">Export CSV</button>
-                    <button id="mark-complete-btn" class="btn btn-success">Mark Complete</button>
-                    <button id="reopen-btn" class="btn btn-warning" style="display: none;">Reopen</button>
-                    <button id="clear-all-btn" class="btn btn-danger-outline">Clear All Tags</button>
-                    <button id="push-btn" class="btn btn-success">Save to Cloud</button>
+                    <button id="clear-all-btn" class="btn btn-danger-outline" style="display: none;">Clear All Tags</button>
                     <a id="ref-btn" href="#" target="_blank" class="btn btn-secondary" style="display: none;">Cast Images</a>
+                    <button id="reopen-btn" class="btn btn-warning" style="display: none;">Reopen</button>
+                    <button id="export-btn" class="btn btn-secondary" style="display: none;">Export CSV</button>
                 </div>
             </div>
 
-            <div style="display: flex; justify-content: center; align-items: center; width: 100%; position: relative;">
-                <div class="file-loader" style="display: flex; justify-content: center; align-items: center; gap: 10px;">
-                    <select id="file-select" style="height: 38px;"></select>
-                    <button id="load-file-btn" class="btn" style="height: 38px;">Load</button>
-                    <a id="open-movie-btn" class="btn" href="#" style="display: none; text-decoration: none; height: 38px; align-items: center;">Open Movie</a>
+            <div class="editor-filebar">
+                <div class="file-loader">
+                    <select id="file-select"></select>
+                    <button id="load-file-btn" class="btn">Load</button>
+                    <a id="open-movie-btn" class="btn" href="#" style="display: none; text-decoration: none;">Play Movie</a>
                 </div>
-                <span id="open-movie-help" style="position: absolute; right: 0; color: #ef4444; font-size: 0.9rem; line-height: 1.2; display: none;">No youtube link available for this movie</span>
+                <span id="open-movie-help" class="editor-movie-help" style="display: none;">No youtube link available for this movie</span>
             </div>
         </header>
 

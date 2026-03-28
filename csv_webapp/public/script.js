@@ -2,7 +2,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const tableBody = document.getElementById('table-body');
     const saveStatus = document.getElementById('save-status');
     const saveSpinner = document.getElementById('save-spinner');
-    const movieStatusPill = document.getElementById('movie-status-pill');
     const exportBtn = document.getElementById('export-btn');
     const markCompleteBtn = document.getElementById('mark-complete-btn');
     const reopenBtn = document.getElementById('reopen-btn');
@@ -11,6 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const pageTitle = document.getElementById('page-title');
     const pushBtn = document.getElementById('push-btn');
     const clearAllBtn = document.getElementById('clear-all-btn');
+    const refBtn = document.getElementById('ref-btn');
     const openMovieBtn = document.getElementById('open-movie-btn');
     const openMovieHelp = document.getElementById('open-movie-help');
     const youtubeModal = document.getElementById('youtube-modal');
@@ -26,6 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const muteIcon = document.getElementById('mute-icon');
     const seekBackBtn = document.getElementById('seek-back-btn');
     const seekFwdBtn = document.getElementById('seek-fwd-btn');
+    const homeLink = document.getElementById('home-link');
 
     let ytPlayer = null;
     let timeUpdateInterval = null;
@@ -49,6 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let globalAllActors = [];
     let currentFilename = '';
     let currentMovieStatus = 'Not Started';
+    let currentMovieLoaded = false;
     let hasUnsavedChanges = false;
     let actorColorSeed = 0;
     let actorColorMap = new Map();
@@ -139,6 +141,15 @@ document.addEventListener('DOMContentLoaded', () => {
         saveSpinner.classList.add('hidden');
     }
 
+    function confirmDiscardChanges(actionLabel) {
+        if (!hasUnsavedChanges) return true;
+        return confirm(
+            `You have unsaved changes.\n\n` +
+            `If you continue to ${actionLabel}, your current edits may be lost.\n\n` +
+            `Do you want to continue?`
+        );
+    }
+
     function queueRowRefresh(indices) {
         for (const index of indices) {
             if (index >= 0 && index < globalRows.length) {
@@ -177,29 +188,39 @@ document.addEventListener('DOMContentLoaded', () => {
         tableBody.style.opacity = locked ? '0.6' : '';
     }
 
+    function updateEditorActionVisibility() {
+        const loaded = currentMovieLoaded;
+        const complete = loaded && currentMovieStatus === 'Complete';
+
+        if (markCompleteBtn) markCompleteBtn.style.display = loaded && !complete ? 'inline-flex' : 'none';
+        if (pushBtn) pushBtn.style.display = loaded ? 'inline-flex' : 'none';
+        if (clearAllBtn) clearAllBtn.style.display = loaded ? 'inline-flex' : 'none';
+        if (reopenBtn) reopenBtn.style.display = complete ? 'inline-flex' : 'none';
+        if (exportBtn) exportBtn.style.display = complete ? 'inline-flex' : 'none';
+        if (refBtn) refBtn.style.display = loaded ? 'inline-flex' : 'none';
+    }
+
+    function setMovieLoaded(loaded) {
+        currentMovieLoaded = loaded;
+        updateEditorActionVisibility();
+    }
+
     function setMovieStatus(status) {
         currentMovieStatus = status || 'Not Started';
 
-        if (movieStatusPill) {
-            movieStatusPill.textContent = currentMovieStatus;
-            movieStatusPill.className = 'status-pill ' + (
-                currentMovieStatus === 'Complete'
-                    ? 'status-complete'
-                    : currentMovieStatus === 'In Progress'
-                        ? 'status-in-progress'
-                        : 'status-not-started'
-            );
-        }
-
-        const isComplete = currentMovieStatus === 'Complete';
-        if (exportBtn) exportBtn.style.display = isComplete ? 'inline-flex' : 'none';
-        if (markCompleteBtn) markCompleteBtn.style.display = isComplete ? 'none' : 'inline-flex';
-        if (reopenBtn) reopenBtn.style.display = isComplete ? 'inline-flex' : 'none';
+        const isComplete = currentMovieLoaded && currentMovieStatus === 'Complete';
+        updateEditorActionVisibility();
         if (pushBtn) pushBtn.disabled = isComplete;
         if (clearAllBtn) clearAllBtn.disabled = isComplete;
 
         setEditingLocked(isComplete);
     }
+
+    window.addEventListener('beforeunload', (event) => {
+        if (!hasUnsavedChanges) return;
+        event.preventDefault();
+        event.returnValue = '';
+    });
 
     async function readJsonResponse(response) {
         const contentType = response.headers.get('content-type') || '';
@@ -787,6 +808,10 @@ document.addEventListener('DOMContentLoaded', () => {
     loadBtn.addEventListener('click', () => {
         const filename = fileSelect.value;
         if (!filename) return;
+
+        if (!confirmDiscardChanges(`load ${filename}`)) {
+            return;
+        }
         
         let code = 'pavanKPK5038';
         if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
@@ -818,11 +843,9 @@ document.addEventListener('DOMContentLoaded', () => {
             currentFilename = filename;
             const pureName = data.currentFile.replace('.csv', '').replace('_tagged', '').replace('_transliterated', '').trim();
             pageTitle.textContent = `CSV Manager - ${pureName}`;
-            
-            const refBtn = document.getElementById('ref-btn');
+
             if (refBtn) {
                 refBtn.href = `/reference.html?movie=${encodeURIComponent(pureName)}`;
-                refBtn.style.display = 'inline-flex';
             }
 
             globalRows = data.rows;
@@ -830,6 +853,7 @@ document.addEventListener('DOMContentLoaded', () => {
             globalAllActors = data.allActors || [];
             updateYoutubeLink(data.youtubeUrl);
             rebuildActorColorMap();
+            setMovieLoaded(true);
             setSavedStatus('Ready');
             setMovieStatus(data.status || 'Not Started');
             renderTable();
@@ -840,12 +864,23 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    if (homeLink) {
+        homeLink.addEventListener('click', (event) => {
+            if (confirmDiscardChanges('go home')) {
+                return;
+            }
+
+            event.preventDefault();
+        });
+    }
+
     fetch('/api/data')
         .then(res => res.json())
         .then(data => {
             if (data.requiresAuth) {
                 pageTitle.textContent = `Please Select Movie & Enter Code`;
                 globalRows = [];
+                setMovieLoaded(false);
                 setMovieStatus('Not Started');
                 renderTable();
                 return;
@@ -1194,6 +1229,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (!confirmed) return;
 
+            const password = prompt(`Enter the password for ${currentFilename} before clearing all tags:`);
+            if (password === null) return;
+            if (password !== currentSecretCode) {
+                alert('Incorrect password.');
+                return;
+            }
+
             const ogText = clearAllBtn.textContent;
             clearAllBtn.textContent = 'Clearing...';
             clearAllBtn.disabled = true;
@@ -1252,6 +1294,13 @@ document.addEventListener('DOMContentLoaded', () => {
         markCompleteBtn.addEventListener('click', async () => {
             if (!currentFilename) return alert('Please load a file first.');
 
+            const confirmed = confirm(
+                'Mark this movie as Complete?\n\n' +
+                'This will lock editing until it is reopened with the password.'
+            );
+
+            if (!confirmed) return;
+
             const ogText = markCompleteBtn.textContent;
             markCompleteBtn.textContent = 'Completing...';
             markCompleteBtn.disabled = true;
@@ -1277,7 +1326,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert('Movie marked complete. You can export the finished CSV now.');
             } catch (err) {
                 console.error(err);
-                alert('Failed to mark complete: ' + (err.message || 'Unknown error'));
+                alert('Failed to mark as complete: ' + (err.message || 'Unknown error'));
             } finally {
                 markCompleteBtn.textContent = ogText;
                 markCompleteBtn.disabled = false;

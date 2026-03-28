@@ -43,6 +43,93 @@ header {
     box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
 
+.editor-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+}
+
+.editor-header-top {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    gap: 1rem;
+    align-items: center;
+}
+
+.editor-left-group,
+.editor-right-group {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    flex-wrap: wrap;
+}
+
+.editor-home-link {
+    min-width: 80px;
+}
+
+.editor-compact-btn {
+    height: 26px;
+    padding: 0 0.75rem;
+    font-size: 0.68rem;
+}
+
+.editor-title-block {
+    text-align: center;
+    min-width: 0;
+    justify-self: center;
+}
+
+.editor-title {
+    font-size: 1.75rem;
+    line-height: 1.1;
+    color: var(--accent-color);
+    margin: 0;
+    word-break: break-word;
+}
+
+.editor-status-block {
+    display: none;
+}
+
+.editor-left-group {
+    justify-self: start;
+}
+
+.editor-right-group {
+    justify-self: end;
+    justify-content: flex-end;
+}
+
+.editor-save-status {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+.editor-filebar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    padding-top: 0.25rem;
+    border-top: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.editor-movie-help {
+    color: #dc2626;
+    font-size: 0.9rem;
+    line-height: 1.2;
+    text-align: right;
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    max-width: 34%;
+}
+
 .header-content {
     display: flex;
     gap: 2rem;
@@ -60,6 +147,10 @@ h1 {
     display: flex;
     gap: 0.5rem;
     align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: fit-content;
+    margin: 0 auto;
 }
 
 .file-loader select {
@@ -75,6 +166,10 @@ h1 {
     line-height: 1;
 }
 
+.file-loader .btn {
+    height: 38px;
+}
+
 .header-actions {
     display: flex;
     gap: 1rem;
@@ -85,9 +180,9 @@ h1 {
     background: var(--accent-color);
     color: white;
     border: none;
-    padding: 0 0.75rem;
+    padding: 0 0.95rem;
     height: 32px;
-    border-radius: 5px;
+    border-radius: 999px;
     cursor: pointer;
     font-weight: 600;
     font-size: 0.85rem;
@@ -101,6 +196,11 @@ h1 {
     text-decoration: none;
 }
 
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
 .btn:hover {
     background: var(--accent-hover);
 }
@@ -109,9 +209,9 @@ h1 {
     background: white;
     color: var(--accent-color);
     border: 1px solid var(--accent-color);
-    padding: 0 0.75rem;
+    padding: 0 0.95rem;
     height: 32px;
-    border-radius: 5px;
+    border-radius: 999px;
     cursor: pointer;
     font-weight: 600;
     font-size: 0.85rem;
@@ -823,4 +923,71 @@ select:focus {
     left: 20px;
     top: auto;
     right: auto;
+}
+
+@media (max-width: 1200px) {
+    .editor-header-top {
+        grid-template-columns: 1fr;
+    }
+
+    .editor-left-group,
+    .editor-right-group,
+    .editor-movie-help {
+        justify-self: start;
+        text-align: left;
+    }
+
+    .editor-title-block {
+        text-align: left;
+    }
+
+    .editor-filebar,
+    .file-loader {
+        justify-content: flex-start;
+    }
+
+    .editor-movie-help {
+        position: static;
+        transform: none;
+        max-width: none;
+        margin-top: 0.35rem;
+    }
+}
+
+@media (max-width: 720px) {
+    .app-container {
+        padding: 0.65rem;
+    }
+
+    .editor-header {
+        padding: 0.85rem;
+    }
+
+    .editor-title {
+        font-size: 1.4rem;
+    }
+
+    .editor-left-group,
+    .editor-right-group {
+        width: 100%;
+    }
+
+    .file-loader select,
+    .file-loader .btn {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .file-loader {
+        width: 100%;
+    }
+
+    .editor-filebar {
+        align-items: flex-start;
+    }
+
+    .editor-primary-actions .btn,
+    .editor-secondary-actions .btn {
+        width: 100%;
+    }
 }
