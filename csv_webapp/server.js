@@ -162,12 +162,8 @@ function normalizeCastRow(row) {
 }
 
 function readCastRows() {
-    return readMergedCsvRows(
-        STORAGE_CAST_FILE,
-        CAST_FILE,
-        normalizeCastRow,
-        (row) => canonicalMovieKey(row['Movie Name'])
-    );
+    // Always use local movie_cast.csv file, not cloud storage
+    return readCsvRowsFromFile(CAST_FILE, normalizeCastRow);
 }
 
 function getMovieStatuses() {
@@ -814,17 +810,17 @@ app.post('/api/push-cast', async (req, res) => {
                 movieRow['Cast'] = currentCast.join(', ');
             }
 
-            // Write updated CSV to persistent cloud storage
-            await writeCsvRowsAtomically(STORAGE_CAST_FILE, castRows);
+            // Write updated CSV to local file (always use local, not cloud)
+            await writeCsvRowsAtomically(CAST_FILE, castRows);
 
             // Clear pending changes after successful save
             pendingCastChanges.clear();
-            console.log('✅ All pending changes saved to persistent movie_cast.csv');
+            console.log('✅ All pending changes saved to local movie_cast.csv');
         }
         const persistedCast = await readCastRows();
-        await writeCsvRowsAtomically(STORAGE_CAST_FILE, persistedCast);
+        await writeCsvRowsAtomically(CAST_FILE, persistedCast);
 
-        res.json({ success: true, storagePath: STORAGE_CAST_FILE });
+        res.json({ success: true, storagePath: CAST_FILE });
     } catch (err) {
         console.error('Push error:', err);
         res.status(500).json({ error: err.message });
