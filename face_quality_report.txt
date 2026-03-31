@@ -1,0 +1,600 @@
+ANR Akkineni Nageswara Rao.jpg|PASS|20.88|1.00|0.000|0.000|1|0|
+AVS.jpg|PASS|23.57|1.00|0.000|0.000|1|0|
+Aadi Pinisetty.jpg|FAIL|10.64|0.31|0.785|0.000|1|0|non_frontal
+Aadi Saikumar.jpg|PASS|17.32|1.00|0.000|0.000|1|0|
+Aadukalam Naren.jpg|PASS|13.54|1.00|0.000|0.000|1|0|
+Aanchal Munjal.jpg|FAIL|7.10|0.31|0.785|0.000|1|0|small_face,non_frontal
+Aarthi Agarwal.jpg|PASS|14.47|1.00|0.000|0.000|1|0|
+Abbas.jpg|FAIL|17.23|0.31|0.785|0.000|1|0|non_frontal
+Abhijeet Duddala.jpg|PASS|17.70|1.00|0.000|0.000|1|0|
+Abhinav Gomatam.jpg|PASS|17.59|1.00|0.000|0.000|1|0|
+Abhinaya Sri.jpg|PASS|27.19|1.00|0.000|0.000|1|0|
+Achyut Kumar.jpg|PASS|15.36|1.00|0.000|0.000|1|0|
+Adarsh Balakrishna.jpg|PASS|13.83|1.00|0.000|0.000|1|0|
+Adhire Abhi.jpg|PASS|18.73|1.00|0.000|0.000|1|0|
+Aditi Myakal.jpg|FAIL|2.59|0.31|0.785|0.000|0|0|small_face,non_frontal
+Aditi Rao Hydari.jpg|PASS|11.20|1.00|0.000|0.000|1|0|
+Aditya Menon.jpg|PASS|30.13|1.00|0.000|0.000|1|0|
+Adivi Sesh.jpg|PASS|21.71|1.00|0.000|0.000|1|0|
+Ahmareen Anjum.jpg|FAIL|7.06|0.31|-0.785|0.000|1|0|small_face,non_frontal
+Ahuti Prasad.jpg|PASS|31.11|1.00|0.000|0.000|1|0|
+Aishwarya Rajesh.jpg|PASS|11.68|1.00|0.000|0.000|1|0|
+Ajay Devgn.jpg|PASS|13.32|1.00|0.000|0.000|1|0|
+Ajay Ghosh.jpg|PASS|24.08|1.00|0.000|0.000|1|0|
+Ajay Ratnam.jpg|PASS|17.73|1.00|0.000|0.000|1|0|
+Ajay.jpg|FAIL|27.69|0.31|0.785|0.000|1|0|non_frontal
+Ajith Kumar.jpg|PASS|17.60|1.00|0.000|0.000|1|0|
+Ajmal Ameer.jpg|PASS|26.99|1.00|0.000|0.000|1|0|
+Akash Puri.jpg|PASS|20.70|1.00|0.000|0.000|1|0|
+Akhil Akkineni.jpg|FAIL|7.42|0.05|0.785|0.524|1|0|small_face,non_frontal
+Aksha Pardasany.jpg|PASS|23.21|1.00|0.000|0.000|1|0|
+Ali.jpeg|PASS|20.49|1.00|0.000|0.000|1|0|
+Alia Bhatt.jpg|PASS|16.66|1.00|0.000|0.000|1|0|
+Alison Doody.jpg|PASS|28.32|0.74|0.000|0.524|1|0|
+Allari Naresh.jpg|PASS|19.30|1.00|0.000|0.000|1|0|
+Allari Subhashini.jpg|PASS|16.86|1.00|0.000|0.000|1|0|
+Allu Arjun.jpg|PASS|27.05|1.00|0.000|0.000|1|0|
+Allu Shirish.jpg|PASS|22.60|1.00|0.000|0.000|1|0|
+Amani.jpg|FAIL|22.17|0.31|-0.785|0.000|1|0|non_frontal
+Ambati Srinivas.jpg|PASS|15.15|1.00|0.000|0.000|1|0|
+Amit Sharma.jpg|FAIL|9.89|1.00|0.000|0.000|1|0|small_face
+Amit Tiwari.jpg|PASS|12.49|1.00|0.000|0.000|1|0|
+Amitabh Bachchan.jpg|PASS|29.14|1.00|0.000|0.000|1|0|
+Amy Jackson.jpg|PASS|28.55|1.00|0.000|0.000|1|0|
+Anand Devarakonda.jpg|PASS|22.52|1.00|0.000|0.000|1|0|
+Anand Raj.jpg|PASS|14.17|1.00|0.000|0.000|1|0|
+Anand Ramaraju.jpg|PASS|22.73|1.00|0.000|0.000|1|0|
+Anandaraj.jpg|PASS|20.35|1.00|0.000|0.000|1|0|
+Anandhi.jpg|PASS|15.24|1.00|0.000|0.000|1|0|
+Anant Nag.jpg|PASS|23.91|1.00|0.000|0.000|1|0|
+Ananth Babu.jpg|PASS|36.35|1.00|0.000|0.000|1|0|
+Anantha Sriram.jpg|PASS|30.28|1.00|0.000|0.000|1|0|
+Ananya Nagalla.jpg|FAIL|1.26|0.05|-0.785|0.524|0|0|small_face,non_frontal
+Ananya Tamil.jpg|PASS|26.18|1.00|0.000|0.000|1|0|
+Anasuya Bhardwaj.jpg|FAIL|12.23|0.31|0.785|0.000|1|0|non_frontal
+Anil Ravipudi.jpg|FAIL|6.16|1.00|0.000|0.000|1|0|small_face
+Anish Kuruvilla.jpg|PASS|22.07|1.00|0.000|0.000|1|0|
+Anisha Alla.jpg|PASS|21.97|1.00|0.000|0.000|1|0|
+Anitha Chowdary.jpg|FAIL|5.70|1.00|0.000|0.000|1|0|small_face
+Anjala Zhaveri.jpg|PASS|33.45|1.00|0.000|0.000|1|0|
+Anjali.jpg|PASS|34.22|1.00|0.000|0.000|1|0|
+Ankith Koyya.jpg|PASS|13.22|1.00|0.000|0.000|1|0|
+Anna Ben.jpg|FAIL|2.05|1.00|0.000|0.000|0|0|small_face
+Annapoorna.png|PASS|25.02|1.00|0.000|0.000|1|0|
+Anu Emmanuel.jpg|PASS|21.13|1.00|0.000|0.000|1|0|
+Anupama Parameswaran.webp|PASS|17.27|0.74|0.000|-0.524|1|0|
+Anushka Shetty.jpg|PASS|24.35|1.00|0.000|0.000|1|0|
+Archana Jois.jpg|PASS|12.43|1.00|0.000|0.000|1|0|
+Arjan Bajwa.jpg|PASS|10.21|1.00|0.000|0.000|1|0|
+Arjun Das.jpg|PASS|21.88|1.00|0.000|0.000|1|0|
+Arjun Sajja.jpg|PASS|29.49|1.00|0.000|0.000|1|0|
+Arun Alexander.jpg|FAIL|6.88|0.74|0.000|0.524|1|0|small_face
+Arvind Swami.jpg|PASS|14.90|1.00|0.000|0.000|1|0|
+Arya.jpg|FAIL|9.98|1.00|0.000|0.000|1|1|small_face
+Aryan Rajesh.jpg|PASS|25.10|1.00|0.000|0.000|1|0|
+Ashish Vidyrathi.jpg|PASS|26.66|1.00|0.000|0.000|1|0|
+Ashutosh Rana.jpg|PASS|31.82|1.00|0.000|0.000|1|0|
+Ashwin Babu.jpg|PASS|14.12|1.00|0.000|0.000|1|0|
+Asin.jpg|PASS|18.67|0.74|0.000|-0.524|1|0|
+Athulya Chandra.jpg|PASS|21.48|1.00|0.000|0.000|1|0|
+Avasarala Srinivas.jpg|FAIL|6.52|1.00|0.000|0.000|1|0|small_face
+Avika Gor.jpg|PASS|20.03|1.00|0.000|0.000|1|1|
+Ayyappa P Sharma.jpg|PASS|16.97|1.00|0.000|0.000|1|0|
+BVS Ravi.jpg|PASS|18.09|1.00|0.000|0.000|1|0|
+Babloo Prithiveeraj.jpg|PASS|28.81|1.00|0.000|0.000|1|0|
+Babu Mohan.jpg|PASS|37.94|1.00|0.000|0.000|1|0|
+Bala Aditya.webp|FAIL|4.89|1.00|0.000|0.000|1|1|small_face
+Balakrishna.jpg|FAIL|9.64|1.00|0.000|0.000|1|0|small_face
+Bandla Ganesh.jpg|PASS|18.78|1.00|0.000|0.000|1|0|
+Bellamkonda Ganesh.jpg|PASS|15.47|1.00|0.000|0.000|1|0|
+Bellamkonda Sreenivas.jpg|PASS|17.85|1.00|0.000|0.000|1|0|
+Bhanu Chander.webp|PASS|15.36|1.00|0.000|0.000|1|0|
+Bharath Raju.jpg|PASS|28.94|0.74|0.000|0.524|1|0|
+Bheems Ceciroleo.jpg|FAIL|3.57|1.00|0.000|0.000|0|0|small_face
+Bhumika.jpg|PASS|20.53|1.00|0.000|0.000|1|0|
+Bindu Madhavi.jpg|PASS|13.68|1.00|0.000|0.000|1|0|
+Bobby Simha.jpg|FAIL|6.10|0.31|-0.785|0.000|1|1|small_face,non_frontal
+Boman Irani.jpg|PASS|26.08|1.00|0.000|0.000|1|0|
+Brahmaji.jpg|PASS|10.42|1.00|0.000|0.000|1|0|
+Bramhanandham.jpg|FAIL|8.70|1.00|0.000|0.000|1|2|small_face,poster_text
+C. V. L. Narasimha Rao.png|PASS|26.68|1.00|0.000|0.000|1|0|
+Catherine Tresa.jpg|PASS|12.51|1.00|0.000|0.000|1|0|
+Chaitanya Garikipati.jpg|PASS|14.68|1.00|0.000|0.000|1|0|
+Chaitanya Rao.webp|PASS|17.07|1.00|0.000|0.000|1|0|
+Chakri.jpg|FAIL|5.04|1.00|0.000|0.000|1|0|small_face
+Chalaki Chanti.jpg|FAIL|21.51|0.31|-0.785|0.000|1|0|non_frontal
+Chalapati Rao.jpg|PASS|27.75|1.00|0.000|0.000|1|0|
+Chammak Chandra.jpg|PASS|29.61|1.00|0.000|0.000|1|0|
+Chandini Chowdary.jpg|FAIL|10.97|0.31|-0.785|0.000|1|0|non_frontal
+Chandra Mohan.jpg|PASS|22.52|1.00|0.000|0.000|1|0|
+Charan Raj.jpg|PASS|15.37|1.00|0.000|0.000|1|1|
+Charmy.jpg|FAIL|19.26|0.31|-0.785|0.000|1|0|non_frontal
+Chatrapathi Sekhar.jpg|PASS|17.37|1.00|0.000|0.000|1|0|
+Chiranjeevi.jpg|PASS|26.89|1.00|0.000|0.000|1|0|
+Chitram Sreenu.jpg|PASS|25.46|1.00|0.000|0.000|1|0|
+Chittibabu.jpg|PASS|16.86|1.00|0.000|0.000|1|0|
+Cochin Haneefa.jpg|PASS|14.19|1.00|0.000|0.000|1|0|
+Dayanand Reddy.jpg|PASS|21.32|1.00|0.000|0.000|1|0|
+Deepika Padukone.jpg|PASS|22.23|1.00|0.000|0.000|1|0|
+Dev Gill.jpg|FAIL|14.41|0.31|0.785|0.000|1|1|non_frontal
+Devadas Kanakala.jpg|FAIL|9.56|1.00|0.000|0.000|1|1|small_face
+Devaraj.jpg|PASS|18.43|1.00|0.000|0.000|1|0|
+Dhana Dhan Dhanaraj.jpg|PASS|23.55|0.74|0.000|0.524|1|0|
+Dhananjaya.jpg|FAIL|10.00|1.00|0.000|0.000|1|0|small_face
+Dhanraj.jpg|FAIL|11.13|0.31|-0.785|0.000|1|0|non_frontal
+Dhanya Balakrishna.jpg|FAIL|13.34|0.31|-0.785|0.000|1|0|non_frontal
+Dharmavarapu Subramanyam.jpg|PASS|13.30|1.00|0.000|0.000|1|0|
+Dheera Reddy Pisati.jpg|FAIL|1.56|0.31|-0.785|0.000|0|0|small_face,non_frontal
+Dil Raju.jpg|FAIL|5.18|0.04|-1.571|0.524|1|0|small_face,non_frontal
+Dil Ramesh.jpg|PASS|14.34|1.00|0.000|0.000|1|0|
+Dimple Hayathi.jpg|PASS|21.24|1.00|0.000|0.000|1|0|
+Dinesh Mangaluru.jpg|PASS|17.76|1.00|0.000|0.000|1|0|
+Disha Patani.jpg|PASS|11.86|1.00|0.000|0.000|1|0|
+Divi Vadthya.jpg|FAIL|9.63|1.00|0.000|0.000|1|0|small_face
+Divya Sripada.jpg|PASS|31.14|1.00|0.000|0.000|1|0|
+Dulquer Salman.jpg|FAIL|5.74|1.00|0.000|0.000|1|0|small_face
+Easwari Rao.jpg|PASS|22.20|1.00|0.000|0.000|1|0|
+Eduard Buhac.jpg|PASS|14.60|1.00|0.000|0.000|1|0|
+Edward Sonnenblick.jpg|PASS|27.02|1.00|0.000|0.000|1|0|
+Eesha Rebba.jpg|PASS|20.23|1.00|0.000|0.000|1|0|
+Eeshwari Rao.jpg|PASS|28.69|1.00|0.000|0.000|1|0|
+Fahad Fasil.jpg|PASS|20.15|0.74|0.000|-0.524|1|0|
+Faria Abdullah.jpg|FAIL|5.59|0.74|0.000|0.524|1|0|small_face
+Faria Abdullah.png|FAIL|6.32|1.00|0.000|0.000|1|1|small_face
+Fish Venkat.jpg|PASS|21.22|1.00|0.000|0.000|1|0|
+Gajala.jpg|PASS|28.52|1.00|0.000|0.000|1|0|
+Gangavva.jpg|PASS|11.75|1.00|0.000|0.000|1|0|
+Garuda Ram.jpg|PASS|31.60|1.00|0.000|0.000|1|0|
+Gautham Menon.jpg|PASS|34.55|1.00|0.000|0.000|1|0|
+Geetha Singh.jpg|PASS|27.24|1.00|0.000|0.000|1|0|
+Geetha.jpg|PASS|34.56|1.00|0.000|0.000|1|0|
+Genelia.jpg|FAIL|8.37|0.05|0.785|-0.524|1|0|small_face,non_frontal
+George Maryan.png|PASS|20.76|1.00|0.000|0.000|1|0|
+Getup Srinu.jpg|PASS|10.80|1.00|0.000|0.000|1|1|
+Giri Babu.jpg|FAIL|14.82|1.00|0.000|0.000|2|0|multiple_faces
+Giri Babu.webp|FAIL|9.69|1.00|0.000|0.000|1|0|small_face
+Gollapudi Maruthi Rao.jpg|PASS|41.25|1.00|0.000|0.000|1|0|
+Goparaju Ramana.jpg|PASS|16.82|1.00|0.000|0.000|1|0|
+Gopichand.jpg|PASS|11.24|1.00|0.000|0.000|1|0|
+Gummadi Venkateshwara Rao.jpg|PASS|22.31|1.00|0.000|0.000|1|0|
+Gundu Hanumantha Rao.jpg|PASS|23.45|1.00|0.000|0.000|1|0|
+Gundu Sudhakar.webp|PASS|15.87|1.00|0.000|0.000|1|0|
+Gv Prakash.jpg|PASS|29.71|1.00|0.000|0.000|1|0|
+Gv Sudhakar Naidu.jpg|PASS|20.58|0.74|0.000|-0.524|1|0|
+Hamsa Nandini.jpg|FAIL|21.86|0.31|-0.785|0.000|1|0|non_frontal
+Hansika.jpg|PASS|12.30|1.00|0.000|0.000|1|1|
+Harinath Raj.jpg|PASS|13.22|1.00|0.000|0.000|1|0|
+Harish Rai.jpg|PASS|26.23|1.00|0.000|0.000|1|0|
+Harish Shankar.jpg|FAIL|3.68|0.31|-0.785|0.000|0|2|small_face,non_frontal,poster_text
+Hariteja.jpg|PASS|28.72|1.00|0.000|0.000|1|0|
+Harsh Roshan.jpg|PASS|24.10|1.00|0.000|0.000|1|0|
+Harsha Chemudu.jpg|FAIL|4.72|1.00|0.000|0.000|1|0|small_face
+Harshavardhan.jpg|PASS|34.09|1.00|0.000|0.000|1|0|
+Hema Charcter Artist.jpg|PASS|24.24|1.00|0.000|0.000|1|0|
+Himaja Charcter Artist.jpg|PASS|19.13|1.00|0.000|0.000|1|0|
+Himaja.jpg|FAIL|15.01|0.31|0.785|0.000|1|0|non_frontal
+Hyper Aadi.jpg|FAIL|7.34|1.00|0.000|0.000|1|1|small_face
+Ileana.jpg|FAIL|9.00|1.00|0.000|0.000|1|0|small_face
+Indraja.jpg|PASS|17.71|1.00|0.000|0.000|1|0|
+Isha Chawla.jpg|PASS|17.55|1.00|0.000|0.000|1|0|
+Isha Yadav.jpg|FAIL|5.95|0.31|0.785|0.000|1|0|small_face,non_frontal
+Ivana.jpg|PASS|29.47|1.00|0.000|0.000|1|0|
+JD Chakravarthy.jpg|FAIL|7.67|1.00|0.000|0.000|1|0|small_face
+Jaffer Sadiq.jpg|PASS|16.60|1.00|0.000|0.000|1|0|
+Jagadeesh Prathap Bandari.jpg|PASS|20.50|1.00|0.000|0.000|1|0|
+Jagapathi Babu.jpg|PASS|17.68|1.00|0.000|0.000|1|0|
+Jahnavi Kapoor.jpg|PASS|10.50|1.00|0.000|0.000|1|0|
+Jai Krishna.jpg|PASS|10.36|1.00|0.000|0.000|1|0|
+Jaya Pradha.jpg|PASS|11.10|1.00|0.000|0.000|1|0|
+Jaya Praksah Reddy.jpg|PASS|14.81|1.00|0.000|0.000|1|0|
+Jayam Ravi.jpg|PASS|18.84|1.00|0.000|0.000|1|0|
+Jayaram.jpg|PASS|23.34|1.00|0.000|0.000|1|0|
+Jayasudha.jpg|PASS|17.02|1.00|0.000|0.000|1|0|
+Jeevan Kumar Naidu.jpg|PASS|21.32|1.00|0.000|0.000|1|0|
+Jeevitha.png|PASS|29.66|1.00|0.000|0.000|1|0|
+Jhansi.jpg|PASS|18.67|0.74|0.000|-0.524|1|0|
+Jia Sharma.jpg|FAIL|2.71|1.00|0.000|0.000|0|0|small_face
+Jisshu Senguptha.jpg|PASS|25.23|1.00|0.000|0.000|1|0|
+John Kokken.jpg|FAIL|2.46|1.00|0.000|0.000|0|0|small_face
+John Vijay.jpg|PASS|18.69|1.00|0.000|0.000|1|0|
+Jyothika.jpg|PASS|22.95|0.74|0.000|0.524|1|0|
+K Vishwanath.jpg|PASS|20.23|1.00|0.000|0.000|1|0|
+K. V. Anudeep.jpg|FAIL|1.58|1.00|0.000|0.000|0|1|small_face
+KS Ravi Kumar.jpg|PASS|22.25|1.00|0.000|0.000|1|0|
+Kadhal Dandapani.jpg|PASS|33.59|1.00|0.000|0.000|1|0|
+Kaikala Satyanarayana.jpg|PASS|19.20|1.00|0.000|0.000|1|0|
+Kajal Aggarwal.jpg|FAIL|9.43|0.31|-0.785|0.000|1|0|small_face,non_frontal
+Kalabhavan Mani.jpg|PASS|27.41|1.00|0.000|0.000|1|0|
+Kallu Chidambaram.jpg|PASS|27.35|1.00|0.000|0.000|1|0|
+Kalpalatha.jpg|FAIL|9.85|1.00|0.000|0.000|1|0|small_face
+Kalpana Rai.jpg|PASS|63.72|1.00|0.000|0.000|1|0|
+Kalyan Ram.jpg|PASS|30.40|1.00|0.000|0.000|1|0|
+Kalyani Priyadarshan.jpg|PASS|19.21|1.00|0.000|0.000|1|0|
+Kamal Hasan.jpg|PASS|19.26|1.00|0.000|0.000|1|0|
+Kamal Kamaraju.jpg|FAIL|7.22|0.74|0.000|0.524|1|1|small_face
+Kanchana.jpg|PASS|18.36|1.00|0.000|0.000|1|0|
+Karate Kalyani.jpg|PASS|19.75|1.00|0.000|0.000|1|0|
+Karrhikeya Dev.png|FAIL|7.22|0.05|0.785|-0.524|1|0|small_face,non_frontal
+Karthikeya Gummakonda.jpg|PASS|20.89|1.00|0.000|0.000|1|0|
+Karuna Bhushan.jpg|PASS|10.07|0.74|0.000|0.524|1|0|
+Karunakaran Actor.jpg|PASS|20.12|1.00|0.000|0.000|1|0|
+Karunakaran.jpg|FAIL|20.23|1.00|0.000|0.000|1|2|poster_text
+Karunas.jpg|PASS|28.98|1.00|0.000|0.000|1|0|
+Kasi Viswanath.jpg|PASS|19.36|1.00|0.000|0.000|1|1|
+Katrina Kaif.jpg|PASS|15.70|1.00|0.000|0.000|1|0|
+Kavya Kalyanram.jpg|PASS|14.68|1.00|0.000|0.000|1|0|
+Kayadu Lohar.jpg|FAIL|6.08|0.05|-0.785|0.524|1|0|small_face,non_frontal
+Keerthi Chawla.jpg|PASS|16.82|1.00|0.000|0.000|1|0|
+Keerthi Suresh.jpg|FAIL|6.57|1.00|0.000|0.000|1|0|small_face
+Keerthy Suresh.jpg|FAIL|3.55|1.00|0.000|0.000|0|0|small_face
+Keshav Deepak.jpg|FAIL|20.50|0.31|0.785|0.000|1|0|non_frontal
+Ketika Sharma.jpg|PASS|19.15|1.00|0.000|0.000|1|0|
+Kiara Advani.jpg|FAIL|9.28|1.00|0.000|0.000|1|0|small_face
+Kicha Sudeep.jpg|PASS|12.80|1.00|0.000|0.000|1|0|
+Kick Shyam.jpg|PASS|21.88|1.00|0.000|0.000|1|0|
+Kiran Abbavaram.jpg|PASS|25.75|1.00|0.000|0.000|1|1|
+Kireeti Damaraju.jpg|PASS|13.29|1.00|0.000|0.000|1|1|
+Kondavalasa Lakshmana Rao.jpg|PASS|23.93|1.00|0.000|0.000|1|0|
+Kota Srinivas Rao.jpg|PASS|25.17|1.00|0.000|0.000|1|0|
+Kovai Sarala.jpg|PASS|24.72|1.00|0.000|0.000|1|0|
+Krishna Bhagavan.jpg|PASS|30.13|1.00|0.000|0.000|1|0|
+Krishnam Raju.jpg|PASS|19.25|1.00|0.000|0.000|1|0|
+Krithi Shetty.jpg|PASS|11.54|1.00|0.000|0.000|1|0|
+LB Sriram.jpg|PASS|30.51|1.00|0.000|0.000|1|0|
+Lakshmi Rai.jpg|FAIL|14.02|0.31|-0.785|0.000|1|0|non_frontal
+Lavanya Tripathi.jpg|FAIL|19.07|0.31|0.785|0.000|1|0|non_frontal
+Laya.png|PASS|27.68|1.00|0.000|0.000|1|0|
+Madhusudhan Rao.jpg|FAIL|1.67|1.00|0.000|0.000|0|1|small_face
+Mahat Raghavendra.jpg|PASS|25.02|1.00|0.000|0.000|1|0|
+Mahesh Achanta.jpg|FAIL|2.78|0.74|0.000|-0.524|0|0|small_face
+Mahesh Babu.jpg|PASS|22.29|1.00|0.000|0.000|1|0|
+Mahesh Balaraj.jpg|PASS|43.45|1.00|0.000|0.000|1|0|
+Mahesh Jabardasth.jpg|PASS|20.06|1.00|0.000|0.000|1|0|
+Mahesh Manjrekhar.jpeg|PASS|34.88|1.00|0.000|0.000|1|0|
+Mahesh Manjrekhar.jpg|FAIL|2.23|1.00|0.000|0.000|0|0|small_face
+Makarand Deshpande.jpg|PASS|33.32|1.00|0.000|0.000|1|0|
+Malavika Avinash.jpg|FAIL|3.48|0.31|0.785|0.000|0|2|small_face,non_frontal,poster_text
+Malavika Mohanan.jpg|FAIL|8.87|1.00|0.000|0.000|1|0|small_face
+Mallikarjuna Rao.jpg|PASS|36.00|1.00|0.000|0.000|1|0|
+Malvika Nair.jpg|PASS|11.01|1.00|0.000|0.000|1|0|
+Mamila Shailaja Priya.jpg|PASS|25.83|1.00|0.000|0.000|1|0|
+Manchu Lakshmi.jpg|PASS|15.41|1.00|0.000|0.000|1|0|
+Manchu Manoj.jpg|PASS|20.88|1.00|0.000|0.000|1|0|
+Manik Reddy.jpg|FAIL|34.57|0.74|0.000|0.524|2|0|multiple_faces
+Manivannan.jpg|PASS|38.77|1.00|0.000|0.000|1|0|
+Mannava Balayya.jpg|PASS|21.73|1.00|0.000|0.000|1|0|
+Manobala.jpg|PASS|30.40|1.00|0.000|0.000|1|0|
+Mark Bennington.jpg|FAIL|2.41|1.00|0.000|0.000|0|5|small_face,poster_text
+Mast Ali.jpg|FAIL|9.64|1.00|0.000|0.000|1|0|small_face
+Master Bharath.jpg|PASS|21.61|1.00|0.000|0.000|1|0|
+Meenakshi Choudhary.jpg|PASS|22.39|1.00|0.000|0.000|1|0|
+Meera Jasmine.jpg|PASS|22.21|1.00|0.000|0.000|1|0|
+Megha Akash.jpg|PASS|12.40|1.00|0.000|0.000|1|0|
+Mehreen Pirzada.png|PASS|14.71|1.00|0.000|0.000|1|0|
+Meka Rama Krishna.jpg|FAIL|28.67|0.31|-0.785|0.000|1|0|non_frontal
+Mime Gopi.jpg|PASS|13.78|1.00|0.000|0.000|1|0|
+Mirnalini Ravi.jpg|PASS|20.25|1.00|0.000|0.000|1|0|
+Mohan Babu.jpg|PASS|30.54|1.00|0.000|0.000|1|0|
+Mohan Lal.jpg|PASS|17.69|1.00|0.000|0.000|1|0|
+Mouli Tanuj Prasanth.jpg|FAIL|9.48|1.00|0.000|0.000|1|0|small_face
+Mouni Roy.jpg|FAIL|7.43|1.00|0.000|0.000|1|0|small_face
+Mrunal Thakur.jpg|PASS|19.00|1.00|0.000|0.000|1|0|
+Ms Narayana.jpg|PASS|13.00|1.00|0.000|0.000|1|0|
+Mukesh Rishi.jpg|PASS|21.25|1.00|0.000|0.000|1|0|
+Mukku Avinash.jpg|PASS|16.80|1.00|0.000|0.000|1|0|
+Mukul Dev.jpg|PASS|23.61|1.00|0.000|0.000|1|0|
+Murali Mohan.jpg|PASS|19.40|1.00|0.000|0.000|1|0|
+Murali Sharma.jpg|PASS|29.70|1.00|0.000|0.000|1|0|
+Muralidhar Goud.webp|PASS|15.87|1.00|0.000|0.000|1|0|
+N T Rama Rao Jr..jpg|FAIL|6.67|1.00|0.000|0.000|1|0|small_face
+Nabha Natesh.jpg|PASS|19.48|1.00|0.000|0.000|1|0|
+Nadhiya.jpg|PASS|21.93|1.00|0.000|0.000|1|0|
+Naga Babu.jpg|PASS|22.65|1.00|0.000|0.000|1|0|
+Naga Chaitanya.jpg|PASS|15.79|1.00|0.000|0.000|1|0|
+Naga Shourya.jpg|FAIL|6.10|0.05|-0.785|0.524|1|0|small_face,non_frontal
+Nagarjuna Akkineni.jpg|FAIL|8.84|0.31|-0.785|0.000|1|0|small_face,non_frontal
+Nagineedu.jpg|PASS|36.69|1.00|0.000|0.000|1|0|
+Nagma.jpg|PASS|14.55|1.00|0.000|0.000|1|0|
+Nani.jpg|FAIL|12.07|0.05|-0.785|0.524|1|0|non_frontal
+Nara Rohith.jpg|PASS|10.39|1.00|0.000|0.000|1|0|
+Naramalli Siva Prasad.jpg|PASS|16.70|1.00|0.000|0.000|1|1|
+Naresh Agastya.jpg|PASS|14.97|1.00|0.000|0.000|1|1|
+Naresh.jpg|PASS|35.31|1.00|0.000|0.000|1|0|
+Narne Nithiin.jpg|PASS|16.92|1.00|0.000|0.000|1|0|
+Narsing Yadav.jpg|PASS|28.04|1.00|0.000|0.000|1|0|
+Nassar.jpg|FAIL|22.97|0.31|-0.785|0.000|1|0|non_frontal
+Naveen Chandra.jpg|PASS|15.68|1.00|0.000|0.000|1|0|
+Naveen Polishetty.jpg|PASS|10.15|0.74|0.000|0.524|1|0|
+Nayanthara.jpg|PASS|20.15|1.00|0.000|0.000|1|1|
+Neha Shetty.jpg|FAIL|3.83|1.00|0.000|0.000|0|0|small_face
+Nidhi Agarwal.jpg|PASS|14.86|1.00|0.000|0.000|1|0|
+Niharika NM.jpg|FAIL|4.93|0.05|0.785|-0.524|1|0|small_face,non_frontal
+Nikhil Abburi.jpg|PASS|11.58|1.00|0.000|0.000|1|0|
+Nikhil Siddhartha.jpg|PASS|26.95|1.00|0.000|0.000|1|0|
+Nirmalamma.jpg|PASS|39.67|1.00|0.000|0.000|1|0|
+Nithiin.png|PASS|13.55|1.00|0.000|0.000|1|0|
+Nithya Menen.jpg|FAIL|9.32|1.00|0.000|0.000|1|0|small_face
+Nivetha Thomas.jpg|PASS|23.68|1.00|0.000|0.000|1|0|
+Nutan Prasad.jpg|FAIL|7.91|1.00|0.000|0.000|1|0|small_face
+Olivia Morris.jpg|FAIL|19.37|0.31|-0.785|0.000|1|0|non_frontal
+P. Sai Kumar.jpg|FAIL|27.02|0.31|0.785|0.000|1|0|non_frontal
+Padmini Settam.jpg|FAIL|13.56|0.31|0.785|0.000|1|0|non_frontal
+Pammi Sai.jpg|PASS|21.11|1.00|0.000|0.000|1|0|
+Paruchuri Gopala Krishna.jpg|PASS|13.27|1.00|0.000|0.000|1|0|
+Paruchuri Venkateswara Rao.jpg|PASS|13.61|1.00|0.000|0.000|1|0|
+Pasupathy.jpg|PASS|24.14|1.00|0.000|0.000|1|0|
+Pavala Shyamala.jpg|PASS|25.79|1.00|0.000|0.000|1|0|
+Pavani Karanam.jpg|FAIL|1.04|1.00|0.000|0.000|0|0|small_face
+Pavitra Lokesh.jpg|FAIL|6.05|1.00|0.000|0.000|1|0|small_face
+Pawan Kalyan.jpg|PASS|24.21|1.00|0.000|0.000|1|0|
+Payal Rajput.jpg|PASS|10.46|1.00|0.000|0.000|1|0|
+Ping Pong Surya.jpg|FAIL|7.09|1.00|0.000|0.000|1|0|small_face
+Pooja Hegde.jpg|PASS|59.96|1.00|0.000|0.000|1|0|
+Poorna.jpg|FAIL|7.58|1.00|0.000|0.000|1|0|small_face
+Posani Krishna Murali.jpg|FAIL|7.49|1.00|0.000|0.000|1|0|small_face
+Prabhakar.jpg|FAIL|11.53|0.31|-0.785|0.000|1|0|non_frontal
+Prabhas Sreenu.jpg|FAIL|18.73|0.31|-0.785|0.000|1|0|non_frontal
+Prabhas.jpg|FAIL|5.64|1.00|0.000|0.000|1|0|small_face
+Prabhu Deva.jpg|PASS|23.90|1.00|0.000|0.000|1|0|
+Pradeep Kabra.jpg|FAIL|4.17|1.00|0.000|0.000|1|0|small_face
+Pradeep Kondiparthy.jpg|PASS|14.02|1.00|0.000|0.000|1|0|
+Pradeep Machiraju.jpg|PASS|22.81|1.00|0.000|0.000|1|0|
+Pradeep Ranganathan.jpg|PASS|20.84|1.00|0.000|0.000|1|0|
+Pradeep Rawat.jpg|PASS|32.01|1.00|0.000|0.000|1|0|
+Pragathi.jpg|PASS|21.46|1.00|0.000|0.000|1|1|
+Pragya Jaiswal.jpg|FAIL|5.52|1.00|0.000|0.000|1|0|small_face
+Prakash Belwadi.jpg|PASS|23.66|1.00|0.000|0.000|1|0|
+Prakash Raj.jpg|PASS|24.20|1.00|0.000|0.000|1|0|
+Prakash Tirupati.jpg|PASS|18.94|1.00|0.000|0.000|1|0|
+Prasad Babu.jpg|PASS|36.33|1.00|0.000|0.000|1|0|
+Prasad Behara.jpg|PASS|22.33|1.00|0.000|0.000|1|0|
+Praveen Comedian.jpg|PASS|28.10|1.00|0.000|0.000|1|0|
+Praveen.jpg|FAIL|7.08|1.00|0.000|0.000|1|1|small_face
+Preity Zinta.jpg|PASS|28.80|1.00|0.000|0.000|1|0|
+Premgi Amaren.jpg|PASS|13.54|1.00|0.000|0.000|1|0|
+Prince Cecil.jpg|PASS|25.50|0.74|0.000|0.524|1|0|
+Priya Anand.webp|PASS|19.41|1.00|0.000|0.000|1|0|
+Priya Varrier.webp|FAIL|12.71|0.31|-0.785|0.000|1|0|non_frontal
+Priyadarshi Pulikonda.jpg|PASS|20.39|1.00|0.000|0.000|1|0|
+Priyadarshi.jpg|FAIL|7.51|1.00|0.000|0.000|1|0|small_face
+Priyamani.jpg|FAIL|7.78|1.00|0.000|0.000|1|0|small_face
+Priyanka Mohan.webp|PASS|16.37|1.00|0.000|0.000|1|0|
+Prudhvi Raj.jpg|FAIL|2.55|1.00|0.000|0.000|0|0|small_face
+Prudhviraj Sukumaran.jpg|FAIL|8.57|0.31|0.785|0.000|1|1|small_face,non_frontal
+Punarnavi Bhupalam.webp|FAIL|6.76|0.74|0.000|0.524|1|0|small_face
+R. Bhakti Klein.jpg|PASS|39.53|1.00|0.000|0.000|1|0|
+RJ Hemanth.jpg|FAIL|6.01|1.00|0.000|0.000|1|0|small_face
+RK Mama.png|PASS|42.17|1.00|0.000|0.000|1|0|
+RK Sagar.jpg|FAIL|5.46|0.31|0.785|0.000|1|0|small_face,non_frontal
+Racha Ravi.jpg|FAIL|3.98|0.31|-0.785|0.000|0|0|small_face,non_frontal
+Rag Mayur.jpg|FAIL|7.14|1.00|0.000|0.000|1|0|small_face
+Raghu Babu.jpg|PASS|21.92|1.00|0.000|0.000|1|0|
+Raghu Karumanchi.jpg|PASS|18.67|1.00|0.000|0.000|1|0|
+Ragini.jpg|FAIL|12.52|0.05|0.785|-0.524|1|1|non_frontal
+Rahul Dev.jpg|PASS|17.83|1.00|0.000|0.000|1|0|
+Rahul Ramakrishna.jpg|PASS|10.45|1.00|0.000|0.000|1|0|
+Rahul Ravindran.jpg|FAIL|10.72|0.31|-0.785|0.000|1|0|non_frontal
+Raj Tarun.jpg|PASS|17.52|0.74|0.000|0.524|1|0|
+Raj Tirandasu.jpg|PASS|10.86|1.00|0.000|0.000|1|0|
+Raja Babu.jpg|PASS|16.35|1.00|0.000|0.000|1|0|
+Raja Goutham.png|PASS|15.93|1.00|0.000|0.000|1|0|
+Raja Krishnamurthy Kitty.jpg|PASS|37.80|1.00|0.000|0.000|1|0|
+Raja Ravindra.jpg|PASS|17.98|1.00|0.000|0.000|1|0|
+Rajan P Dev.jpg|FAIL|43.36|0.31|0.785|0.000|1|0|non_frontal
+Rajashree Nair.jpg|PASS|22.23|1.00|0.000|0.000|1|0|
+Rajeev Kanakala.jpg|PASS|23.84|1.00|0.000|0.000|1|0|
+Rajendra Prasad.jpg|FAIL|4.06|1.00|0.000|0.000|1|0|small_face
+Rajendra Prasad.png|PASS|54.48|1.00|0.000|0.000|1|0|
+Rajitha.webp|PASS|29.24|1.00|0.000|0.000|1|0|
+Rajkumar Kasireddy.jpg|FAIL|23.05|0.31|0.785|0.000|1|0|non_frontal
+Raju Sundaram.jpg|PASS|12.09|1.00|0.000|0.000|1|0|
+Rajya Lakshmi.jpg|PASS|24.00|1.00|0.000|0.000|1|0|
+Rajya Lakshmi.png|PASS|26.98|1.00|0.000|0.000|1|0|
+Rakesh Master.jpg|PASS|18.17|1.00|0.000|0.000|1|0|
+Rakul Preet Singh.webp|PASS|28.12|1.00|0.000|0.000|1|0|
+Ram Charan.jpg|PASS|12.60|1.00|0.000|0.000|1|0|
+Ram Charan.webp|PASS|11.78|1.00|0.000|0.000|1|0|
+Ram Nithin.jpg|FAIL|15.56|0.31|0.785|0.000|1|0|non_frontal
+Ram Pothineni.jpg|PASS|22.55|1.00|0.000|0.000|1|0|
+Ram Prasad.jpg|PASS|37.04|1.00|0.000|0.000|1|0|
+Rama Prabha.jpg|FAIL|11.15|0.05|-0.785|0.524|1|0|non_frontal
+Rama Prabha.webp|PASS|11.98|1.00|0.000|0.000|1|0|
+Ramaraju.jpg|PASS|26.29|1.00|0.000|0.000|1|0|
+Rambha.webp|FAIL|19.71|0.31|-0.785|0.000|1|0|non_frontal
+Ramesh Aravind.jpg|PASS|24.59|1.00|0.000|0.000|1|0|
+Ramesh Khanna.png|PASS|16.35|1.00|0.000|0.000|1|1|
+Rami Reddy.jpg|PASS|31.78|1.00|0.000|0.000|1|0|
+Ramya Krishna.jpg|PASS|15.88|1.00|0.000|0.000|1|0|
+Ramya Sri.jpg|PASS|22.40|1.00|0.000|0.000|1|0|
+Rana Daggubati.jpg|PASS|19.96|1.00|0.000|0.000|1|0|
+Rao Gopal Rao.jpg|PASS|18.32|1.00|0.000|0.000|1|0|
+Rao Ramesh.jpg|PASS|13.80|1.00|0.000|0.000|1|0|
+Rashmika Mandanna.jpg|FAIL|5.10|1.00|0.000|0.000|1|1|small_face
+Rashmika Mandanna.webp|PASS|13.72|1.00|0.000|0.000|1|0|
+Raveena Tandon.webp|PASS|24.49|1.00|0.000|0.000|1|0|
+Ravi Babu.jpg|PASS|21.91|1.00|0.000|0.000|1|0|
+Ravi Kale.jpg|PASS|12.57|1.00|0.000|0.000|1|0|
+Ravi Kishan.jpg|PASS|15.46|1.00|0.000|0.000|1|0|
+Ravi Krishna.webp|PASS|10.37|1.00|0.000|0.000|1|0|
+Ravi Shankar.jpg|PASS|25.10|1.00|0.000|0.000|1|0|
+Ravi Teja Nannimala.jpg|PASS|27.49|1.00|0.000|0.000|1|0|
+Ravi Teja.jpg|FAIL|18.52|0.31|0.785|0.000|1|1|non_frontal
+Ravi Varma Adduri.jpg|PASS|25.97|1.00|0.000|0.000|1|0|
+Ravi Varma.jpg|PASS|20.78|1.00|0.000|0.000|1|0|
+Ravindra Vijay.jpg|PASS|22.34|1.00|0.000|0.000|1|0|
+Ray Stevenson.jpg|PASS|24.59|1.00|0.000|0.000|1|0|
+Redin Kingsley.jpg|PASS|29.21|1.00|0.000|0.000|1|0|
+Reema Sen.jpg|FAIL|5.05|1.00|0.000|0.000|1|0|small_face
+Regina Cassandra.webp|FAIL|11.48|0.31|0.785|0.000|1|0|non_frontal
+Ritu Varma.webp|PASS|22.15|1.00|0.000|0.000|1|0|
+Riyaz Khan.jpg|FAIL|26.85|0.31|-0.785|0.000|1|1|non_frontal
+Robo Shankar.webp|PASS|21.60|1.00|0.000|0.000|1|0|
+Rocket Raghava.jpg|PASS|25.41|1.00|0.000|0.000|1|0|
+Rohini Reddy Noni.jpg|FAIL|4.34|1.00|0.000|0.000|1|0|small_face
+Rohini.jpg|PASS|31.26|1.00|0.000|0.000|1|0|
+Rohini.webp|PASS|14.01|1.00|0.000|0.000|1|0|
+Roja.webp|PASS|18.55|1.00|0.000|0.000|1|0|
+Roshan Kanakala.jpg|FAIL|7.50|1.00|0.000|0.000|1|0|small_face
+Roshan Meka.jpg|PASS|15.71|1.00|0.000|0.000|1|0|
+Rp Patnaik.jpg|PASS|28.55|1.00|0.000|0.000|1|0|
+Rukmini Vasanth.webp|FAIL|19.61|0.31|-0.785|0.000|1|0|non_frontal
+Rukshar Dhillon.jpg|FAIL|2.36|1.00|0.000|0.000|0|3|small_face,poster_text
+S. J. Suriya.jpg|PASS|30.12|1.00|0.000|0.000|1|0|
+S. S. Kanchi.jpg|FAIL|7.59|1.00|0.000|0.000|1|0|small_face
+Saanve Meghana.png|FAIL|13.13|0.31|-0.785|0.000|1|0|non_frontal
+Sachin Joshi.jpg|FAIL|8.99|1.00|0.000|0.000|1|0|small_face
+Sachin Khedekar.jpg|PASS|27.74|1.00|0.000|0.000|1|0|
+Sadha.webp|PASS|30.18|1.00|0.000|0.000|1|0|
+Sadhu Kokila.jpg|PASS|14.21|1.00|0.000|0.000|1|0|
+Sai Dharam Tej.jpg|PASS|15.40|1.00|0.000|0.000|1|0|
+Sai Kumar.jpg|FAIL|27.86|0.31|0.785|0.000|1|0|non_frontal
+Sai Pallavi.webp|PASS|19.55|1.00|0.000|0.000|1|0|
+Sai Sushanth.png|PASS|28.29|1.00|0.000|0.000|1|0|
+Salim Baig.jpg|PASS|34.03|1.00|0.000|0.000|1|0|
+Salman Khan.jpg|PASS|13.22|1.00|0.000|0.000|1|0|
+Samantha Ruth Prabhu.jpg|PASS|11.41|1.00|0.000|0.000|1|0|
+Sampath Raj.jpg|PASS|21.45|1.00|0.000|0.000|1|0|
+Sampoornesh Babu.jpg|PASS|13.03|1.00|0.000|0.000|1|0|
+Samuthirakani.jpg|FAIL|3.63|1.00|0.000|0.000|0|0|small_face
+Samyuktha.png|FAIL|25.33|1.00|0.000|0.000|1|7|poster_text
+Sana.webp|PASS|25.24|1.00|0.000|0.000|1|0|
+Sandhya Janak.png|FAIL|7.46|1.00|0.000|0.000|1|0|small_face
+Sangeeth Shobhan.webp|FAIL|11.60|0.31|0.785|0.000|1|0|non_frontal
+Santhana Bharathi.jpg|PASS|21.26|1.00|0.000|0.000|1|0|
+Sarath Babu.jpg|PASS|15.25|1.00|0.000|0.000|1|0|
+Sarath Kumar.jpg|PASS|27.48|1.00|0.000|0.000|1|0|
+Sarvadaman D. Banerjee.jpg|PASS|17.76|1.00|0.000|0.000|1|0|
+Saswata Chatterjee.jpg|FAIL|6.43|0.74|0.000|0.524|1|0|small_face
+Satish Saripalli.png|PASS|18.61|1.00|0.000|0.000|1|0|
+Satya Krishnan.jpg|PASS|20.18|1.00|0.000|0.000|1|0|
+Satya Prakash.jpg|PASS|18.58|1.00|0.000|0.000|1|0|
+Satya Raj.jpg|PASS|27.12|1.00|0.000|0.000|1|1|
+Satya.jpg|FAIL|6.17|1.00|0.000|0.000|1|0|small_face
+Satyam Rajesh.jpg|PASS|17.48|1.00|0.000|0.000|1|0|
+Saurabh Sachdeva.jpg|FAIL|6.54|1.00|0.000|0.000|1|0|small_face
+Sayaji Shinde.jpg|PASS|27.30|1.00|0.000|0.000|1|0|
+Shafi.jpg|FAIL|2.46|0.74|0.000|0.524|0|0|small_face
+Shahwar Ali.jpg|PASS|14.50|1.00|0.000|0.000|1|1|
+Shailaja Durvasula.png|FAIL|8.07|0.05|-0.785|-0.524|1|0|small_face,non_frontal
+Shaji Chen.jpg|PASS|32.94|1.00|0.000|0.000|1|0|
+Shalini Pandey.jpg|FAIL|8.69|1.00|0.000|0.000|1|0|small_face
+Shankar Melkote.jpg|PASS|27.69|1.00|0.000|0.000|1|0|
+Shanmukh.jpg|PASS|12.23|1.00|0.000|0.000|1|0|
+Sharat Saxena.jpg|PASS|17.84|1.00|0.000|0.000|1|0|
+Sharwanand.jpg|FAIL|34.22|0.05|0.785|0.524|1|0|non_frontal
+Shatru.jpg|PASS|16.16|1.00|0.000|0.000|1|0|
+Sheela Kaur.jpg|PASS|20.52|1.00|0.000|0.000|1|0|
+Sheerat Kapoor.webp|FAIL|10.89|0.31|-0.785|0.000|1|0|non_frontal
+Shiva Rajkumar.jpg|PASS|28.20|1.00|0.000|0.000|1|0|
+Shivani Nagaram.jpeg|FAIL|3.63|1.00|0.000|0.000|0|0|small_face
+Shobana.jpg|FAIL|16.57|0.05|0.785|-0.524|1|0|non_frontal
+Shobhan Babu.jpg|PASS|31.55|1.00|0.000|0.000|1|0|
+Shobita Dhulipala.jpg|FAIL|11.34|0.31|-0.785|0.000|1|0|non_frontal
+Shobita Dhulipala.webp|PASS|13.73|1.00|0.000|0.000|1|0|
+Shraddha Srinath.png|PASS|11.64|1.00|0.000|0.000|1|0|
+Shriya Saran.jpg|PASS|15.00|1.00|0.000|0.000|1|0|
+Shriya Saran.webp|PASS|20.29|1.00|0.000|0.000|1|0|
+Shruti Hassan.jpg|PASS|10.76|1.00|0.000|0.000|1|0|
+Shruti Hassan.webp|PASS|25.13|1.00|0.000|0.000|1|0|
+Shyamala.webp|PASS|13.36|1.00|0.000|0.000|1|0|
+Siddu Jonnalagadda.jpg|PASS|22.76|1.00|0.000|0.000|1|0|
+Siva Balaji.jpg|PASS|42.06|1.00|0.000|0.000|1|0|
+Sivaji Raja.jpg|PASS|23.77|1.00|0.000|0.000|1|0|
+Sivannarayana Naripeddi.jpg|PASS|13.19|1.00|0.000|0.000|1|0|
+Sneha Ullal.jpg|PASS|26.90|1.00|0.000|0.000|1|0|
+Sonali Bendre.png|PASS|12.35|1.00|0.000|0.000|1|0|
+Sonia Agarwal.jpg|PASS|21.90|1.00|0.000|0.000|1|0|
+Sonu Sood.jpg|PASS|32.24|1.00|0.000|0.000|1|0|
+Sowcar Janaki.jpg|PASS|20.92|1.00|0.000|0.000|1|0|
+Sp Balasubramanyam.jpg|PASS|26.15|1.00|0.000|0.000|1|0|
+Sr Ntr.jpg|PASS|15.36|1.00|0.000|0.000|1|0|
+Sravan Raghavendra.jpg|PASS|23.20|1.00|0.000|0.000|1|0|
+Sravya Mrudula.png|FAIL|9.37|1.00|0.000|0.000|1|0|small_face
+Sree Vishnu.jpg|FAIL|2.25|1.00|0.000|0.000|0|0|small_face
+Sreeleela.jpg|FAIL|4.99|0.05|-0.785|-0.524|1|0|small_face,non_frontal
+Sri Simha Koduri.png|FAIL|9.17|1.00|0.000|0.000|1|0|small_face
+Sri Simha.jpg|PASS|12.53|1.00|0.000|0.000|1|0|
+Sridevi Court Fame.jpg|PASS|22.30|1.00|0.000|0.000|1|0|
+Sridevi Senior.jpg|PASS|24.49|1.00|0.000|0.000|1|0|
+Srikanth Iyengar.jpg|PASS|19.45|1.00|0.000|0.000|1|0|
+Srinidhi Shetty.jpg|PASS|16.83|1.00|0.000|0.000|1|0|
+Srinivas Avasarala.jpg|PASS|24.70|1.00|0.000|0.000|1|0|
+Srinivas Murthy.png|PASS|32.00|1.00|0.000|0.000|1|0|
+Srinivas Ramireddy.jpg|PASS|80.74|1.00|0.000|0.000|1|0|
+Srinivasa Reddy.jpg|PASS|36.32|1.00|0.000|0.000|1|0|
+Sritej.jpg|FAIL|9.80|1.00|0.000|0.000|1|0|small_face
+Sriya Reddy.jpg|FAIL|6.20|1.00|0.000|0.000|1|0|small_face
+Subbu Panchu Arunachalam.png|PASS|34.91|1.00|0.000|0.000|1|0|
+Subhalekha Sudhakar.jpg|PASS|40.38|1.00|0.000|0.000|1|0|
+Sudev Nair.jpg|PASS|25.87|1.00|0.000|0.000|1|1|
+Sudha.jpg|PASS|24.93|1.00|0.000|0.000|1|0|
+Sudhakar Komakula.jpg|PASS|18.51|1.00|0.000|0.000|1|0|
+Sudheer Babu.jpg|PASS|24.71|1.00|0.000|0.000|1|0|
+Sudigali Sudheer.jpg|FAIL|10.76|0.31|-0.785|0.000|1|0|non_frontal
+Suhas.jpg|FAIL|9.14|1.00|0.000|0.000|1|2|small_face,poster_text
+Suman Shetty.jpg|PASS|32.94|1.00|0.000|0.000|1|0|
+Sumanth Ashwin.jpg|PASS|20.59|1.00|0.000|0.000|1|0|
+Sumanth.jpg|PASS|13.25|1.00|0.000|0.000|1|0|
+Sundeep Kishan.jpg|PASS|21.41|1.00|0.000|0.000|1|0|
+Sunil.jpg|FAIL|17.88|0.31|-0.785|0.000|1|0|non_frontal
+Supreeth Reddy.jpg|FAIL|6.68|1.00|0.000|0.000|1|0|small_face
+Surabhi Prabhavati.jpg|FAIL|10.16|0.31|0.785|0.000|1|0|non_frontal
+Surekha Vani.jpg|PASS|37.28|1.00|0.000|0.000|1|0|
+Suriya.jpg|PASS|18.69|0.74|0.000|0.524|1|0|
+Suthi Velu.jpg|PASS|24.96|1.00|0.000|0.000|1|0|
+Swathi Reddy.jpg|PASS|28.08|1.00|0.000|0.000|1|0|
+Tamanna Bhatia.jpg|PASS|13.14|1.00|0.000|0.000|1|0|
+Tanikella Bharani.jpg|PASS|23.34|1.00|0.000|0.000|1|0|
+Tarak Ponnappa.png|FAIL|3.10|1.00|0.000|0.000|0|0|small_face
+Tarun Kumar.jpg|PASS|26.51|1.00|0.000|0.000|1|0|
+Teja Sajja.jpg|PASS|10.20|1.00|0.000|0.000|1|0|
+Telangana Shakuntala.jpg|PASS|26.88|1.00|0.000|0.000|1|0|
+Temper Vamsi.jpg|PASS|11.89|0.74|0.000|-0.524|1|0|
+Thagubothu Ramesh.jpg|PASS|16.66|1.00|0.000|0.000|1|0|
+Tharun Bhascker.jpg|PASS|10.31|1.00|0.000|0.000|1|0|
+Tinnu Anand.jpg|PASS|24.88|1.00|0.000|0.000|1|0|
+Tom Chacko.jpg|PASS|27.48|1.00|0.000|0.000|1|0|
+Twinkle Sharma.jpg|PASS|15.79|1.00|0.000|0.000|1|0|
+Uday Bhanu.jpg|PASS|10.93|1.00|0.000|0.000|1|0|
+Uday Kiran.jpg|PASS|22.00|1.00|0.000|0.000|1|0|
+Udhayanidhi Stalin.jpg|PASS|28.77|1.00|0.000|0.000|1|0|
+Upendra Limaye.jpg|PASS|25.59|1.00|0.000|0.000|1|0|
+VTV Ganesh.jpg|PASS|15.94|1.00|0.000|0.000|1|0|
+Vadde Naveen.jpg|FAIL|8.68|1.00|0.000|0.000|1|0|small_face
+Vadlamani Srinivas.jpg|PASS|61.51|1.00|0.000|0.000|1|0|
+Vaishnavi Chaitanya.jpg|PASS|18.68|1.00|0.000|0.000|1|0|
+Vaishnavi Tej.jpg|PASS|20.48|1.00|0.000|0.000|1|1|
+Vaishta Simha.jpg|PASS|28.34|1.00|0.000|0.000|1|0|
+Vajja Venkata Giridhar.jpg|PASS|27.75|1.00|0.000|0.000|1|0|
+Vamshidhar Goud.png|PASS|14.80|1.00|0.000|0.000|1|0|
+Vamsikrishna.png|PASS|25.62|1.00|0.000|0.000|1|0|
+Varsha Bollamma.jpg|FAIL|5.25|0.31|0.785|0.000|1|0|small_face,non_frontal
+Varun Sandesh.jpg|PASS|19.29|1.00|0.000|0.000|1|0|
+Varun Tej.jpg|FAIL|5.08|1.00|0.000|0.000|1|0|small_face
+Vastala Rajagopal.jpg|FAIL|14.16|0.31|-0.785|0.000|1|0|non_frontal
+Vasu Inturi.jpg|PASS|43.85|1.00|0.000|0.000|1|0|
+Venkatesh Kakumanu.jpg|PASS|49.52|1.00|0.000|0.000|1|0|
+Venkatesh.jpg|PASS|14.86|1.00|0.000|0.000|1|0|
+Vennela Kishore.jpg|PASS|16.22|1.00|0.000|0.000|1|0|
+Vennela Rama Rao.jpg|FAIL|0.67|1.00|0.000|0.000|0|1|small_face
+Venu Madhav.jpg|PASS|31.31|1.00|0.000|0.000|1|0|
+Venu Thottempudi.jpg|PASS|35.95|1.00|0.000|0.000|1|0|
+Venu Yeldandi.jpg|PASS|17.20|1.00|0.000|0.000|1|0|
+Vepada Subba Rao.jpg|FAIL|7.28|1.00|0.000|0.000|1|0|small_face
+Vidyullekha Raman.jpg|PASS|15.97|1.00|0.000|0.000|1|0|
+Vidyut Jammwal.jpg|PASS|21.17|0.74|0.000|0.524|1|0|
+Vijay Deverakonda.jpg|FAIL|2.34|0.05|0.785|-0.524|0|0|small_face,non_frontal
+Vinay Bidappa.jpg|NO_FACE|0|
+Vinaya Prasad.jpg|FAIL|5.84|1.00|0.000|0.000|1|0|small_face
+Vishnu Oi.webp|FAIL|11.67|0.31|-0.785|0.000|1|0|non_frontal
+Vishwak Sen.jpg|PASS|27.81|1.00|0.000|0.000|1|0|
+Vithaya Pansringarm.jpg|PASS|33.08|1.00|0.000|0.000|1|0|
+Viva Harsha.webp|FAIL|8.46|1.00|0.000|0.000|1|0|small_face
+Vivek Oberoi.jpg|PASS|24.01|1.00|0.000|0.000|1|0|
+Vivek.jpg|PASS|19.54|1.00|0.000|0.000|1|0|
+Y Gee Mahendra.jpg|PASS|25.37|1.00|0.000|0.000|1|0|
+Y Vijaya.jpg|PASS|47.80|1.00|0.000|0.000|1|0|
+Yash.jpg|PASS|21.40|0.74|0.000|0.524|1|0|
+Yogi Babu.jpg|FAIL|10.31|0.31|-0.785|0.000|1|0|non_frontal
+Yugi Sethu.jpg|FAIL|9.10|1.00|0.000|0.000|1|0|small_face
+Zarina Wahab.jpg|PASS|21.76|1.00|0.000|0.000|1|0|
