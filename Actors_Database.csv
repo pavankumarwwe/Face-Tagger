@@ -1,6 +1,6 @@
 Alug,Actor,Aliases
 ADI-PNST,Aadi Pinisetty,
-ADI-SKMR,Aadi Saikumar,Aadi
+ADI-SKMR,Aadi Saikumar,Aadi; Aditya Pudipeddi
 ADKL-NRN,Aadukalam Naren,
 ANCH-MNJL,Aanchal Munjal,
 ARTH-AGRW,Aarthi Agarwal,
@@ -97,9 +97,8 @@ BND-MDHV,Bindu Madhavi,
 BOB-SMH,Bobby Simha,
 BMN-IRN,Boman Irani,
 BRHMJ,Brahmaji,
-BRMHNDHM,Bramhanandham,
+BRMHNDHM,Bramhanandham,Brahmanandam; Kanneganti Brahmanandam
 BVS-RAV,BVS Ravi,
-CVLN-RAO,CVL Narasimha Rao,C V L Narasimha Rao; CVL Narasimha Rao
 CTHR-TRS,Catherine Tresa,
 CHTN-GRKP,Chaitanya Garikipati,
 CHTN-RAO,Chaitanya Rao,
@@ -116,6 +115,7 @@ CHRNJV,Chiranjeevi,Konidela Chiranjeevi; Konidela Sivasankara Varaprasad; Mega S
 CHTR-SRN,Chitram Sreenu,
 CHTB,Chittibabu,
 CHN-HNF,Cochin Haneefa,
+CVLN-RAO,CVL Narasimha Rao,C. V. L. Narasimha Rao
 DYND-RDY,Dayanand Reddy,
 DPK-PDKN,Deepika Padukone,
 DEV-GIL,Dev Gill,
@@ -168,9 +168,8 @@ HRTJ,Hariteja,
 HRSH-RSHN,Harsh Roshan,
 HRSH-CHMD,Harsha Chemudu,
 HRSHVRDH,Harshavardhan,Harsha Vardhan
-HEM-CHRC-ARTS,Hema Charcter Artist,
-HMJ,Himaja,Himaja Charcter Artist
-HMJ-CHRC-ARTS,Himaja Charcter Artist,Himaja
+HEM-CHRC-ARTS,Hema Charcter Artist,Hema; Hema Character Artist; Krishna Veni
+HMJ,Himaja,Himaja Mallireddy; Himaja Character Artist; Himaja Charcter Artist
 HYPR-ADI,Hyper Aadi,
 ILN,Ileana,
 INDRJ,Indraja,
@@ -214,8 +213,7 @@ KRT-KLYN,Karate Kalyani,
 KRHK-DEV,Karrhikeya Dev,Karthikeya Dev
 KRTH-GMKN,Karthikeya Gummakonda,
 KRN-BHSH,Karuna Bhushan,
-KRNKRN,Karunakaran,Karunakaran Actor
-KRNK-ACTR,Karunakaran Actor,Karunakaran
+KRNKRN,Karunakaran,Karunakaran Actor; Karunakaran Kalidas
 KRNS,Karunas,
 KAS-VSWN,Kasi Viswanath,
 KTRN-KAI,Katrina Kaif,
@@ -316,7 +314,7 @@ NVTH-PTHR,Nivetha Pethuraj,
 NVTH-THMS,Nivetha Thomas,
 NTN-PRSD,Nutan Prasad,
 OLV-MRS,Olivia Morris,
-PSA-KMR,P. Sai Kumar,P Sai Kumar; P SaiKumar
+PSA-KMR,P. Sai Kumar,P Sai Kumar; P SaiKumar; Pudipeddi Sai Kumar; Saikumar
 PDMN-STM,Padmini Settam,
 PAM-SAI,Pammi Sai,
 PRCH-GPL-KRSH,Paruchuri Gopala Krishna,
@@ -347,7 +345,7 @@ PRKS-RAJ,Prakash Raj,
 PRKS-TRPT,Prakash Tirupati,
 PRSD-BAB,Prasad Babu,
 PRSD-BHR,Prasad Behara,
-PRVN-CMDN,Praveen Comedian,
+PRVN-CMDN,Praveen Comedian,Praveen; Bellamkonda Praveen
 PRTY-ZNT,Preity Zinta,
 PRMG-AMRN,Premgi Amaren,
 PRNC-CEC,Prince Cecil,
@@ -378,7 +376,7 @@ RAJ-RVND,Raja Ravindra,
 RJN-PDV,Rajan P Dev,
 RJSH-NAI,Rajashree Nair,
 RJV-KNKL,Rajeev Kanakala,
-RJND-PRSD,Rajendra Prasad,
+RJND-PRSD,Rajendra Prasad,Gadde Babu Rajendra Prasad
 RJTH,Rajitha,
 RJKM-KSRD,Rajkumar Kasireddy,
 RAJ-SNDR,Raju Sundaram,
@@ -497,15 +495,15 @@ SON-AGRW,Sonia Agarwal,
 SON-SOD,Sonu Sood,
 SWCR-JNK,Sowcar Janaki,
 SPBL,Sp Balasubramanyam,SP Balasubrahmanyam; S. P. Balasubrahmanyam; SPB
-SNR-NTR,Sr Ntr,
+SNR-NTR,Sr Ntr,N. T. Rama Rao; N T Rama Rao; NTR; Nandamuri Taraka Rama Rao
 SRVN-RGHV,Sravan Raghavendra,
 SRVY-MRDL,Sravya Mrudula,
 SRE-VSHN,Sree Vishnu,Rudraraju Vishnuvardhan
 SRL,Sreeleela,
 SRI-SMH,Sri Simha,
 SRI-SMH-KDR,Sri Simha Koduri,
-SRDV-CRT-FAM,Sridevi Court Fame,Sridevi Senior
-SRDV-SNR,Sridevi Senior,Sridevi Court Fame
+SRDV-CRT-FAM,Sridevi Court Fame,Sridevi; Court fame Sridevi
+SRDV-SNR,Sridevi Senior,
 SRKN-IYNG,Srikanth Iyengar,
 SRND-SHTY,Srinidhi Shetty,
 SRNV-AVSR,Srinivas Avasarala,

@@ -13,6 +13,7 @@ OUTPUT_CSV = ROOT / "Actors_Database.csv"
 
 
 MANUAL_ALIASES = {
+    "Aadi Saikumar": ["Aadi", "Aditya Pudipeddi"],
     "Mahesh Babu": ["Ghattamaneni Mahesh Babu", "Superstar", "Prince Mahesh Babu", "SSMB"],
     "Naga Chaitanya": ["Akkineni Naga Chaitanya"],
     "N T Rama Rao Jr.": ["Nandamuri Taraka Rama Rao", "NTR Jr", "Jr NTR", "Young Tiger", "Man of Masses"],
@@ -44,13 +45,22 @@ MANUAL_ALIASES = {
     "Karrhikeya Dev": ["Karthikeya Dev"],
     "Prudhvi Raj": ["Prithvi Raj"],
     "Prudhviraj Sukumaran": ["Prithviraj Sukumaran"],
+    "Bramhanandham": ["Brahmanandam", "Kanneganti Brahmanandam"],
+    "Brahmaji": ["Brahmaji"],
+    "Hema Charcter Artist": ["Hema", "Hema Character Artist", "Krishna Veni"],
+    "Himaja": ["Himaja Mallireddy", "Himaja Character Artist", "Himaja Charcter Artist"],
+    "Karunakaran": ["Karunakaran Actor", "Karunakaran Kalidas"],
+    "Praveen Comedian": ["Praveen", "Bellamkonda Praveen"],
+    "Rajendra Prasad": ["Gadde Babu Rajendra Prasad"],
     "Rp Patnaik": ["RP Patnaik", "R. P. Patnaik"],
     "Gv Prakash": ["GV Prakash", "G. V. Prakash"],
     "Sp Balasubramanyam": ["SP Balasubrahmanyam", "S. P. Balasubrahmanyam", "SPB"],
     "SJ Suriya": ["S. J. Suryah", "SJ Suryah", "S J Suryah"],
     "S. J. Suriya": ["S. J. Suryah", "SJ Suriya", "SJ Suryah", "S J Suriya"],
-    "P. Sai Kumar": ["P Sai Kumar", "P SaiKumar"],
+    "P. Sai Kumar": ["P Sai Kumar", "P SaiKumar", "Pudipeddi Sai Kumar", "Saikumar"],
     "Sai Kumar": ["Saikumar"],
+    "Sridevi Court Fame": ["Sridevi", "Court fame Sridevi"],
+    "Sr Ntr": ["N. T. Rama Rao", "N T Rama Rao", "NTR", "Nandamuri Taraka Rama Rao"],
     "Naresh": ["Naresh Vijay Krishna", "Naresh Senior"],
     "Harshavardhan": ["Harsha Vardhan"],
     "Ketika Sharma": ["Kethika Sharma"],
@@ -69,7 +79,6 @@ MANUAL_ALIASES = {
     "Sudheer Babu": ["Posani Sudheer Babu"],
     "Sree Vishnu": ["Rudraraju Vishnuvardhan"],
     "Vishwak Sen": ["Vishwaksen", "Dinesh Naidu"],
-    "Aadi Saikumar": ["Aadi"],
     "Uday Kiran": ["Vajapeyajula Uday Kiran"],
     "Akhil Akkineni": ["Akhil"],
 }
@@ -86,6 +95,11 @@ DESCRIPTOR_WORDS = {
     "fame",
 }
 
+DISTINCT_DESCRIPTOR_NAMES = {
+    "sridevi senior",
+    "sridevi court fame",
+}
+
 
 def read_actor_names() -> list[str]:
     names = {path.stem.split("__")[0] for path in ACTORS_DB_DIR.iterdir() if path.is_file()}
@@ -93,6 +107,9 @@ def read_actor_names() -> list[str]:
 
 
 def normalized_key(name: str) -> str:
+    if name.strip().lower() in DISTINCT_DESCRIPTOR_NAMES:
+        return re.sub(r"[^a-z0-9]+", "", name.lower().replace("&", "and"))
+
     lowered = name.lower()
     lowered = lowered.replace("&", "and")
     lowered = re.sub(r"[^a-z0-9]+", " ", lowered)
@@ -186,9 +203,23 @@ def slugify_base(name: str) -> str:
 
 
 def build_unique_slugs(names: list[str]) -> dict[str, str]:
+    existing: dict[str, str] = {}
+    if OUTPUT_CSV.exists():
+        with OUTPUT_CSV.open(newline="", encoding="utf-8-sig") as handle:
+            for row in csv.DictReader(handle):
+                actor = (row.get("Actor") or "").strip()
+                slug = (row.get("Alug") or "").strip()
+                if actor and slug:
+                    existing[actor] = slug
+
     assigned: dict[str, str] = {}
     used: set[str] = set()
     for name in names:
+        if name in existing and existing[name] not in used:
+            assigned[name] = existing[name]
+            used.add(existing[name])
+            continue
+
         base = slugify_base(name)
         slug = base
         counter = 2
