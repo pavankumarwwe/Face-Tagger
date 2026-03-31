@@ -251,8 +251,11 @@
                 img.src = `/faces/${baseName}.${extensions[index]}`;
             };
 
-            function buildGoogleImagesUrl(actorName) {
-                return `https://www.google.com/search?tbm=isch&q=${encodeURIComponent(actorName)}`;
+            function buildGoogleImagesUrl(actorName, relatedMovieName = '') {
+                const searchTerms = relatedMovieName
+                    ? `${actorName} in ${relatedMovieName} still photos`
+                    : actorName;
+                return `https://www.google.com/search?tbm=isch&q=${encodeURIComponent(searchTerms)}`;
             }
 
             function escapeHtml(value) {
@@ -418,14 +421,17 @@
                     });
                 }
 
-                function renderGrid(containerId, entries) {
+                function renderGrid(containerId, entries, includeMovieNameInSearch = false) {
                     const container = document.getElementById(containerId);
                     container.innerHTML = entries.map((entry) => {
                         const displayName = typeof entry === 'string'
                             ? entry.replace(/\.(jpg|jpeg|png|webp)$/i, '')
                             : entry.name;
                         const imageUrl = typeof entry === 'string' ? `/faces/${encodeURIComponent(entry)}` : (entry.image ? `/faces/${encodeURIComponent(entry.image)}` : '');
-                        const googleImagesUrl = buildGoogleImagesUrl(displayName);
+                        const googleImagesUrl = buildGoogleImagesUrl(
+                            displayName,
+                            includeMovieNameInSearch ? movieName : ''
+                        );
                         const safeName = escapeHtml(displayName);
 
                         return `
@@ -445,7 +451,7 @@
                     const container = document.getElementById(containerId);
                     container.innerHTML = names.map((name) => {
                         const safeName = escapeHtml(name);
-                        const googleImagesUrl = buildGoogleImagesUrl(name);
+                        const googleImagesUrl = buildGoogleImagesUrl(name, movieName);
                         return `
                             <li>
                                 <a class="missing-link" href="${googleImagesUrl}" target="_blank" rel="noopener noreferrer" aria-label="Search Google Images for ${safeName}">
@@ -461,7 +467,7 @@
                 if (matchedCast.length > 0) {
                     document.getElementById('matched-heading').style.display = 'flex';
                     document.getElementById('matched-count').textContent = matchedCast.length;
-                    renderGrid('matched-grid', matchedCast);
+                    renderGrid('matched-grid', matchedCast, true);
                 }
 
                 if (missingCast.length > 0) {
