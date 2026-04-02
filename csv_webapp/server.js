@@ -48,6 +48,7 @@ const STORAGE_CAST_FILE = path.join(STORAGE_ROOT, 'movie_cast.csv');
 const STORAGE_STATUS_FILE = path.join(STORAGE_ROOT, 'movie_status.csv');
 const STORAGE_SECRETS_FILE = path.join(STORAGE_ROOT, 'movie_secrets.csv');
 const STORAGE_ASSIGNMENTS_FILE = path.join(STORAGE_ROOT, 'Movie_Assignments.csv');
+const STORAGE_TRANSLITERATIONS_FILE = path.join(STORAGE_ROOT, 'telugu_transliterations.csv');
 const writeQueues = new Map();
 
 function ensureDirSync(dirPath) {
@@ -76,6 +77,10 @@ function queueWrite(filePath, task) {
 
 function getPreferredFilePath(primaryPath, fallbackPath) {
     return fs.existsSync(primaryPath) ? primaryPath : fallbackPath;
+}
+
+function getTransliterationsFilePath() {
+    return getPreferredFilePath(STORAGE_TRANSLITERATIONS_FILE, TRANSLITERATIONS_FILE);
 }
 
 function readCsvRowsFromFile(filePath, normalizeRow = (row) => row) {
@@ -268,7 +273,8 @@ function verifyUniversalSecret(code) {
 }
 
 async function readTransliterationRows() {
-    return readCsvRowsFromFile(TRANSLITERATIONS_FILE, (row) => ({
+    return readCsvRowsFromFile(getTransliterationsFilePath(), (row) => ({
+        index: (row?.index || '').toString(),
         english: (row?.english || '').toString(),
         cmu: (row?.cmu || '').toString(),
         google: (row?.google || '').toString()
@@ -982,7 +988,8 @@ app.post('/api/transliterations/load', async (req, res) => {
 
     resetAttempts(clientIp, authKey);
 
-    if (!fs.existsSync(TRANSLITERATIONS_FILE)) {
+    const transliterationsPath = getTransliterationsFilePath();
+    if (!fs.existsSync(transliterationsPath)) {
         return res.status(404).json({ error: 'Transliterations CSV not found.' });
     }
 
@@ -1015,13 +1022,14 @@ app.post('/api/transliterations/save', async (req, res) => {
         return res.status(403).json({ error: 'Cannot edit: transliterations CSV is marked as Complete.' });
     }
 
-    const sanitizedRows = submittedRows.map((row) => ({
+    const sanitizedRows = submittedRows.map((row, index) => ({
+        index: (row?.index || index + 1).toString(),
         english: (row?.english || '').toString(),
         cmu: (row?.cmu || '').toString(),
         google: (row?.google || '').toString()
     }));
 
-    await writeCsvRowsAtomically(TRANSLITERATIONS_FILE, sanitizedRows);
+    await writeCsvRowsAtomically(STORAGE_TRANSLITERATIONS_FILE, sanitizedRows);
     res.json({
         success: true,
         filename: path.basename(TRANSLITERATIONS_FILE),
@@ -1030,11 +1038,12 @@ app.post('/api/transliterations/save', async (req, res) => {
 });
 
 app.get('/api/transliterations/export', async (req, res) => {
-    if (!fs.existsSync(TRANSLITERATIONS_FILE)) {
+    const transliterationsPath = getTransliterationsFilePath();
+    if (!fs.existsSync(transliterationsPath)) {
         return res.status(404).json({ error: 'Transliterations CSV not found.' });
     }
 
-    res.download(TRANSLITERATIONS_FILE, path.basename(TRANSLITERATIONS_FILE));
+    res.download(transliterationsPath, path.basename(TRANSLITERATIONS_FILE));
 });
 
 app.post('/api/transliterations/progress', async (req, res) => {

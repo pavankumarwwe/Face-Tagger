@@ -196,6 +196,25 @@ header {
     min-width: 0;
 }
 
+.transliteration-card-header {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.transliteration-index-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 52px;
+    padding: 0.32rem 0.6rem;
+    border-radius: 999px;
+    background: #e0f2fe;
+    color: #075985;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+}
+
 .transliteration-field {
     display: flex;
     flex-direction: column;
@@ -284,12 +303,30 @@ header {
     height: 38px;
     padding: 0 0.9rem;
     white-space: nowrap;
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 0.18s ease, transform 0.18s ease;
 }
 
 .progress-marker-btn.is-active {
     background: #dbeafe;
     color: #1d4ed8;
     border-color: #93c5fd;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .transliteration-english-row .progress-marker-btn:not(.is-active) {
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(-2px);
+    }
+
+    .transliteration-field:hover .progress-marker-btn,
+    .transliteration-field:focus-within .progress-marker-btn {
+        opacity: 1;
+        pointer-events: auto;
+        transform: translateY(0);
+    }
 }
 
 @media (max-width: 1200px) {

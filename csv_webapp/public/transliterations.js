@@ -109,9 +109,13 @@ document.addEventListener('DOMContentLoaded', () => {
         tableBody.innerHTML = filteredRows.map((row) => {
             const actualIndex = row.__rowIndex;
             const isProgress = actualIndex === progressRow;
+            const displayIndex = row.index || String(actualIndex + 1);
 
             return `
             <article class="transliteration-card ${isProgress ? 'is-progress-row' : ''}" data-row-index="${actualIndex}">
+                <div class="transliteration-card-header">
+                    <span class="transliteration-index-badge">#${escapeHtml(displayIndex)}</span>
+                </div>
                 <div class="transliteration-field">
                     <span class="transliteration-field-label">English</span>
                     <div class="transliteration-english-row">
@@ -219,7 +223,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function scrollToProgressRow() {
         if (!Number.isInteger(progressRow) || progressRow < 0) return;
 
-        const targetRow = tableBody.querySelector(`tr[data-row-index="${progressRow}"]`);
+        const targetRow = tableBody.querySelector(`[data-row-index="${progressRow}"]`);
         if (!targetRow) return;
 
         targetRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -265,6 +269,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             allRows = (Array.isArray(data.rows) ? data.rows : []).map((row, index) => ({
                 ...row,
+                index: (row?.index || index + 1).toString(),
                 __rowIndex: index
             }));
             filteredRows = [...allRows];
@@ -348,7 +353,7 @@ document.addEventListener('DOMContentLoaded', () => {
             progressRow = Number.isInteger(data.progressRow) ? data.progressRow : nextProgressRow;
             progressLabel = data.progressLabel || row.english;
             renderTable();
-            setSavedStatus(`Checkpoint saved at row ${progressRow + 1}${progressLabel ? `: ${progressLabel}` : ''}`);
+            setSavedStatus(`Checkpoint saved at row ${(allRows[progressRow]?.index || progressRow + 1)}${progressLabel ? `: ${progressLabel}` : ''}`);
             requestAnimationFrame(() => {
                 scrollToProgressRow();
             });
