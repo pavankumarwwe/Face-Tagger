@@ -16,8 +16,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let hasUnsavedChanges = false;
     let currentStatus = 'Not Started';
     let isLoaded = false;
-    let progressRow = null;
-    let progressLabel = '';
     const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
     function setStatus(message, colorVar = '--text-secondary') {
@@ -108,11 +106,10 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderTable() {
         tableBody.innerHTML = filteredRows.map((row) => {
             const actualIndex = row.__rowIndex;
-            const isProgress = actualIndex === progressRow;
             const displayIndex = row.index || String(actualIndex + 1);
 
             return `
-            <article class="transliteration-card ${isProgress ? 'is-progress-row' : ''}" data-row-index="${actualIndex}">
+            <article class="transliteration-card" data-row-index="${actualIndex}">
                 <div class="transliteration-card-header">
                     <span class="transliteration-index-badge">#${escapeHtml(displayIndex)}</span>
                 </div>
@@ -120,14 +117,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span class="transliteration-field-label">English</span>
                     <div class="transliteration-english-row">
                         <div class="readonly-cell transliteration-english-cell">${escapeHtml(row.english)}</div>
-                        <button
-                            class="btn btn-secondary progress-marker-btn ${isProgress ? 'is-active' : ''}"
-                            data-progress-row="${actualIndex}"
-                            type="button"
-                            title="Save this word as your checkpoint. Next time the page opens, it will auto-scroll here."
-                        >
-                            ${isProgress ? 'Marked' : 'Mark Here'}
-                        </button>
                     </div>
                 </div>
                 <div class="transliteration-field">
@@ -180,14 +169,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         updateRowCount();
 
-        tableBody.querySelectorAll('.progress-marker-btn').forEach((button) => {
-            button.addEventListener('click', async (event) => {
-                const nextProgressRow = Number.parseInt(event.currentTarget.dataset.progressRow || '', 10);
-                if (!Number.isInteger(nextProgressRow) || nextProgressRow < 0) return;
-                await saveProgressMarker(nextProgressRow);
-            });
-        });
-
         tableBody.querySelectorAll('.transliteration-input').forEach((input) => {
             input.addEventListener('input', (event) => {
                 const rowIndex = Number.parseInt(event.target.dataset.rowIndex || '', 10);
@@ -218,15 +199,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 setDirtyStatus();
             });
         });
-    }
-
-    function scrollToProgressRow() {
-        if (!Number.isInteger(progressRow) || progressRow < 0) return;
-
-        const targetRow = tableBody.querySelector(`[data-row-index="${progressRow}"]`);
-        if (!targetRow) return;
-
-        targetRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
     function applyFilter(query) {
@@ -273,8 +245,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 __rowIndex: index
             }));
             filteredRows = [...allRows];
-            progressRow = Number.isInteger(data.progressRow) ? data.progressRow : null;
-            progressLabel = data.progressLabel || '';
             isLoaded = true;
             renderTable();
             updateControls(true);
@@ -284,9 +254,6 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 setSavedStatus('Editor unlocked');
             }
-            requestAnimationFrame(() => {
-                scrollToProgressRow();
-            });
         } catch (error) {
             isLoaded = false;
             updateActionVisibility();
@@ -323,45 +290,6 @@ document.addEventListener('DOMContentLoaded', () => {
         } finally {
             clearBusy();
             saveBtn.disabled = false;
-        }
-    }
-
-    async function saveProgressMarker(nextProgressRow) {
-        if (!secretCode || currentStatus === 'Complete') return;
-
-        const row = allRows[nextProgressRow];
-        if (!row) return;
-
-        setBusy('Saving checkpoint...');
-
-        try {
-            const response = await fetch('/api/transliterations/progress', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    secretCode,
-                    progressRow: nextProgressRow,
-                    progressLabel: row.english
-                })
-            });
-            const data = await readJsonResponse(response);
-
-            if (!response.ok || !data.success) {
-                throw new Error(data.error || 'Failed to save checkpoint.');
-            }
-
-            progressRow = Number.isInteger(data.progressRow) ? data.progressRow : nextProgressRow;
-            progressLabel = data.progressLabel || row.english;
-            renderTable();
-            setSavedStatus(`Checkpoint saved at row ${(allRows[progressRow]?.index || progressRow + 1)}${progressLabel ? `: ${progressLabel}` : ''}`);
-            requestAnimationFrame(() => {
-                scrollToProgressRow();
-            });
-        } catch (error) {
-            setStatus('Checkpoint failed', '--danger-color');
-            alert(error.message || 'Failed to save checkpoint.');
-        } finally {
-            clearBusy();
         }
     }
 
