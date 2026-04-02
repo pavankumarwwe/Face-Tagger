@@ -225,6 +225,55 @@
             font-size: 1.1rem;
             padding: 3rem;
         }
+
+        .tools-panel {
+            max-width: 1200px;
+            margin: 0 auto 0.5rem;
+            padding: 0 2rem;
+            box-sizing: border-box;
+            width: 100%;
+        }
+
+        .tools-card {
+            background: linear-gradient(135deg, #eff6ff 0%, #f8fafc 100%);
+            border: 1px solid #bfdbfe;
+            border-radius: 16px;
+            padding: 1.1rem 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            box-shadow: 0 10px 24px rgba(37, 99, 235, 0.08);
+        }
+
+        .tools-copy h3 {
+            margin: 0 0 0.3rem;
+            color: #1d4ed8;
+            font-size: 1rem;
+        }
+
+        .tools-copy p {
+            margin: 0;
+            color: var(--text-muted);
+            font-size: 0.94rem;
+        }
+
+        .tools-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            border-radius: 999px;
+            padding: 0.72rem 1rem;
+            font-weight: 700;
+            color: white;
+            background: var(--accent);
+            white-space: nowrap;
+        }
+
+        .tools-link:hover {
+            background: var(--accent-hover);
+        }
     </style>
 </head>
 <body>
@@ -243,6 +292,15 @@
             </ul>
         </div>
     </header>
+
+    <section class="tools-panel">
+        <div class="tools-card">
+            <div class="tools-copy">
+                <h3>Transliteration Tools</h3>
+            </div>
+            <a class="tools-link" href="transliterations.html">Open Transliteration Editor</a>
+        </div>
+    </section>
 
     <div class="container">
         <div id="loading" class="loader">Loading movie database...</div>

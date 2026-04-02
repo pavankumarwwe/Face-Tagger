@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Telugu transliterations editor">
+    <meta name="theme-color" content="#4f46e5">
+    <title>Telugu Transliterations Editor</title>
+
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon.svg">
+    <link rel="apple-touch-icon" href="favicon.svg">
+
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container transliteration-app">
+        <header class="editor-header">
+            <div class="editor-header-top">
+                <div class="editor-left-group">
+                    <a href="/" class="btn btn-secondary editor-home-link editor-compact-btn">Home</a>
+                </div>
+
+                <div class="editor-title-block">
+                    <h1 class="editor-title">Telugu Transliterations</h1>
+                    <p class="transliteration-subtitle">Universal password required. Only <strong>cmu</strong> and <strong>google</strong> are editable.</p>
+                </div>
+
+                <div class="editor-right-group">
+                    <span id="save-status" class="editor-save-status">Locked</span>
+                    <div id="save-spinner" class="spinner hidden"></div>
+                    <button id="mark-complete-btn" class="btn btn-success" disabled>Mark as Complete</button>
+                    <button id="export-btn" class="btn btn-secondary" style="display: none;">Export CSV</button>
+                    <button id="reopen-btn" class="btn btn-warning" style="display: none;">Reopen</button>
+                    <button id="reload-btn" class="btn btn-secondary" disabled>Reload</button>
+                    <button id="save-btn" class="btn btn-success" disabled>Save CSV</button>
+                </div>
+            </div>
+        </header>
+
+        <main class="transliteration-main">
+            <section class="transliteration-toolbar">
+                <div class="transliteration-search-wrap">
+                    <input id="search-input" type="search" placeholder="Search english, cmu, or google..." disabled>
+                </div>
+                <div id="row-count" class="transliteration-row-count">0 rows</div>
+            </section>
+
+            <div class="table-wrapper transliteration-table-wrapper">
+                <div id="table-body" class="transliteration-grid"></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="transliterations.js"></script>
+</body>
+</html>

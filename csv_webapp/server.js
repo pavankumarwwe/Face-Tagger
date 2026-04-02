@@ -38,6 +38,7 @@ const CAST_FILE = path.join(BASE_DIR, 'movie_cast.csv');
 const STATUS_FILE = path.join(BASE_DIR, 'movie_status.csv');
 const SECRETS_FILE = path.join(BASE_DIR, 'movie_secrets.csv');
 const MOVIE_ASSIGNMENTS_FILE = path.join(BASE_DIR, 'Movie_Assignments.csv');
+const TRANSLITERATIONS_FILE = path.join(BASE_DIR, 'telugu_transliterations.csv');
 
 // Persistent storage on Fly. When mounted, edited CSVs live here instead of inside the repo tree.
 const STORAGE_ROOT = process.env.FACE_TAGGER_STORAGE_DIR
@@ -262,6 +263,18 @@ function verifySecret(filename, code) {
     });
 }
 
+function verifyUniversalSecret(code) {
+    return code === '!@Mkpkntr5038!';
+}
+
+async function readTransliterationRows() {
+    return readCsvRowsFromFile(TRANSLITERATIONS_FILE, (row) => ({
+        english: (row?.english || '').toString(),
+        cmu: (row?.cmu || '').toString(),
+        google: (row?.google || '').toString()
+    }));
+}
+
 let rows = [];
 let castOptions = [];
 
@@ -469,7 +482,9 @@ function buildStatusRow(filename, status, existingRow = {}) {
         filename,
         movie_name: existingRow.movie_name || getBaseMovieName(filename),
         youtube_url: existingRow.youtube_url || '',
-        status
+        status,
+        progress_row: existingRow.progress_row || '',
+        progress_label: existingRow.progress_label || ''
     };
 }
 
@@ -479,6 +494,27 @@ async function upsertMovieStatus(filename, status) {
     const existingIndex = statuses.findIndex((row) => row.filename === safeFilename);
     const existingRow = existingIndex >= 0 ? statuses[existingIndex] : {};
     const nextRow = buildStatusRow(safeFilename, status, existingRow);
+
+    if (existingIndex >= 0) {
+        statuses[existingIndex] = nextRow;
+    } else {
+        statuses.push(nextRow);
+    }
+
+    await writeCsvRowsAtomically(STORAGE_STATUS_FILE, statuses);
+    return nextRow;
+}
+
+async function updateStatusMetadata(filename, updates = {}) {
+    const safeFilename = path.basename(filename || '');
+    const statuses = await loadStatusRowsForWrite();
+    const existingIndex = statuses.findIndex((row) => row.filename === safeFilename);
+    const existingRow = existingIndex >= 0 ? statuses[existingIndex] : {};
+    const nextRow = {
+        ...buildStatusRow(safeFilename, existingRow.status || 'Not Started', existingRow),
+        ...updates,
+        filename: safeFilename
+    };
 
     if (existingIndex >= 0) {
         statuses[existingIndex] = nextRow;
@@ -504,7 +540,9 @@ app.get('/api/status', async (req, res) => {
         filename,
         status: statusRow?.status || 'Not Started',
         movie_name: statusRow?.movie_name || getBaseMovieName(filename),
-        youtube_url: statusRow?.youtube_url || ''
+        youtube_url: statusRow?.youtube_url || '',
+        progress_row: statusRow?.progress_row || '',
+        progress_label: statusRow?.progress_label || ''
     });
 });
 
@@ -916,6 +954,111 @@ app.get('/api/export', async (req, res) => {
     }
 
     res.download(filePath, path.basename(filePath));
+});
+
+app.post('/api/transliterations/load', async (req, res) => {
+    const { secretCode } = req.body;
+    const authKey = 'telugu_transliterations.csv';
+    const clientIp = req.ip || req.connection.remoteAddress;
+
+    if (isBlocked(clientIp, authKey)) {
+        const minutesRemaining = getBlockedTimeRemaining(clientIp, authKey);
+        return res.status(429).json({
+            error: `Too many failed attempts. Please try again in ${minutesRemaining} minutes.`,
+            blockedFor: minutesRemaining
+        });
+    }
+
+    if (!verifyUniversalSecret(secretCode)) {
+        recordFailedAttempt(clientIp, authKey);
+        const attempt = failedAttempts.get(getRateLimitKey(clientIp, authKey));
+        const attemptsLeft = MAX_ATTEMPTS - (attempt?.count || 0);
+
+        return res.status(401).json({
+            error: 'Incorrect universal password.',
+            attemptsLeft: attemptsLeft > 0 ? attemptsLeft : 0
+        });
+    }
+
+    resetAttempts(clientIp, authKey);
+
+    if (!fs.existsSync(TRANSLITERATIONS_FILE)) {
+        return res.status(404).json({ error: 'Transliterations CSV not found.' });
+    }
+
+    const rows = await readTransliterationRows();
+    const statusRow = await getStatusForFile(path.basename(TRANSLITERATIONS_FILE));
+    res.json({
+        success: true,
+        rows,
+        filename: path.basename(TRANSLITERATIONS_FILE),
+        status: statusRow?.status || 'Not Started',
+        progressRow: Number.parseInt(statusRow?.progress_row || '', 10),
+        progressLabel: statusRow?.progress_label || ''
+    });
+});
+
+app.post('/api/transliterations/save', async (req, res) => {
+    const { secretCode, rows: submittedRows } = req.body;
+
+    if (!verifyUniversalSecret(secretCode)) {
+        return res.status(401).json({ error: 'Incorrect universal password.' });
+    }
+
+    if (!Array.isArray(submittedRows)) {
+        return res.status(400).json({ error: 'Rows payload is required.' });
+    }
+
+    const safeFilename = path.basename(TRANSLITERATIONS_FILE);
+    const statusRow = await getStatusForFile(safeFilename);
+    if (statusRow?.status === 'Complete') {
+        return res.status(403).json({ error: 'Cannot edit: transliterations CSV is marked as Complete.' });
+    }
+
+    const sanitizedRows = submittedRows.map((row) => ({
+        english: (row?.english || '').toString(),
+        cmu: (row?.cmu || '').toString(),
+        google: (row?.google || '').toString()
+    }));
+
+    await writeCsvRowsAtomically(TRANSLITERATIONS_FILE, sanitizedRows);
+    res.json({
+        success: true,
+        filename: path.basename(TRANSLITERATIONS_FILE),
+        rowsSaved: sanitizedRows.length
+    });
+});
+
+app.get('/api/transliterations/export', async (req, res) => {
+    if (!fs.existsSync(TRANSLITERATIONS_FILE)) {
+        return res.status(404).json({ error: 'Transliterations CSV not found.' });
+    }
+
+    res.download(TRANSLITERATIONS_FILE, path.basename(TRANSLITERATIONS_FILE));
+});
+
+app.post('/api/transliterations/progress', async (req, res) => {
+    const { secretCode, progressRow, progressLabel } = req.body;
+
+    if (!verifyUniversalSecret(secretCode)) {
+        return res.status(401).json({ error: 'Incorrect universal password.' });
+    }
+
+    const parsedRow = Number.parseInt(progressRow, 10);
+    if (!Number.isInteger(parsedRow) || parsedRow < 0) {
+        return res.status(400).json({ error: 'Valid progressRow is required.' });
+    }
+
+    const updated = await updateStatusMetadata(path.basename(TRANSLITERATIONS_FILE), {
+        progress_row: String(parsedRow),
+        progress_label: (progressLabel || '').toString().trim()
+    });
+
+    res.json({
+        success: true,
+        progressRow: Number.parseInt(updated.progress_row || '', 10),
+        progressLabel: updated.progress_label || ''
+    });
 });
 
 // The server starts with cloud-backed persistent storage enabled

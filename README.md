@@ -114,10 +114,8 @@ npm install
 
 ### Start
 
-```bash
 cd csv_webapp
 npm start
-```
 
 The server starts on `http://localhost:3000`.
 
