@@ -7,7 +7,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const markCompleteBtn = document.getElementById('mark-complete-btn');
     const exportBtn = document.getElementById('export-btn');
     const reopenBtn = document.getElementById('reopen-btn');
-    const searchInput = document.getElementById('search-input');
     const rowCount = document.getElementById('row-count');
 
     let secretCode = '';
@@ -43,7 +42,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateControls(enabled) {
-        searchInput.disabled = !enabled;
         reloadBtn.disabled = !enabled;
     }
 
@@ -51,7 +49,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!tableBody) return;
         tableBody.style.pointerEvents = locked ? 'none' : '';
         tableBody.style.opacity = locked ? '0.6' : '';
-        searchInput.disabled = locked || !isLoaded;
         saveBtn.disabled = locked || !isLoaded;
     }
 
@@ -201,22 +198,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function applyFilter(query) {
-        const normalized = (query || '').trim().toLowerCase();
-        if (!normalized) {
-            filteredRows = [...allRows];
-            renderTable();
-            return;
-        }
-
-        filteredRows = allRows.filter((row) => (
-            row.english.toLowerCase().includes(normalized) ||
-            row.cmu.toLowerCase().includes(normalized) ||
-            row.google.toLowerCase().includes(normalized)
-        ));
-        renderTable();
-    }
-
     async function loadRows() {
         if (!secretCode) return;
 
@@ -297,10 +278,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!hasUnsavedChanges) return;
         event.preventDefault();
         event.returnValue = '';
-    });
-
-    searchInput.addEventListener('input', (event) => {
-        applyFilter(event.target.value);
     });
 
     reloadBtn.addEventListener('click', async () => {
