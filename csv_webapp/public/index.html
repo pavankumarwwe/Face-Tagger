@@ -59,21 +59,6 @@
             letter-spacing: -1px;
         }
 
-        .help-box {
-            background: white;
-            border: 1px solid var(--card-border);
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin: 1.5rem auto 0;
-            max-width: 800px;
-            text-align: left;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-            animation: fadeInDown 0.8s ease-out;
-        }
-
-        .help-box h3 { margin-top: 0; color: var(--accent); }
-        .help-box ul { margin: 0; padding-left: 1.5rem; color: var(--text-muted); line-height: 1.6; font-size: 0.95rem; }
-
         .container {
             width: 100%;
             max-width: 1200px;
@@ -279,18 +264,6 @@
 <body>
     <header>
         <h1>Face-Tagger Portal</h1>
-        
-        <div class="help-box">
-            <h3>📝 How to use this platform</h3>
-            <ul>
-                <li><strong>Select a Movie:</strong> Click any "Not Started" or "In Progress" movie below to open the editor.</li>
-                <li><strong>Edit Actors:</strong> Once loaded, click any actor's name to modify or correct the tags. </li>
-                <li><strong>Save changes:</strong> Edits stay in the browser until you are ready to commit them.</li>
-                <li><strong>Save to Cloud:</strong> When you are completely done editing, click the green <em>Save to Cloud</em> button to write the CSV into Fly's persistent storage.</li>
-                <li><strong>Export finished files:</strong> Completed movies show an export button so you can download the final CSV anytime.</li>
-                <li><strong>Status:</strong> Movies marked as <em>Complete</em> are locked securely and can only be reopened with the universal password.</li>
-            </ul>
-        </div>
     </header>
 
     <section class="tools-panel">
