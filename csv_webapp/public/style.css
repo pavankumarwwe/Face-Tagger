@@ -646,6 +646,15 @@ tr:hover td {
     margin-left: 2px;
 }
 
+.btn-add-inline-actor {
+    color: #0f766e;
+    border-color: #14b8a6;
+}
+
+.btn-add-inline-actor:hover {
+    background: #f0fdfa;
+}
+
 /* Actors Cell */
 .actors-container {
     display: flex;
@@ -679,6 +688,11 @@ tr:hover td {
 .tag-actor-input:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+}
+
+.tag-actor-input-append {
+    border-color: #14b8a6;
+    box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.08);
 }
 
 .actor-pill {

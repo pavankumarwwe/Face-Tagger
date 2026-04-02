@@ -54,6 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let hasUnsavedChanges = false;
     let actorColorSeed = 0;
     let actorColorMap = new Map();
+    const rowActorInputModes = new Map();
     const pendingRowRefreshes = new Set();
     let rowRefreshScheduled = false;
 
@@ -148,6 +149,18 @@ document.addEventListener('DOMContentLoaded', () => {
             `If you continue to ${actionLabel}, your current edits may be lost.\n\n` +
             `Do you want to continue?`
         );
+    }
+
+    function getRowActorInputMode(rowIndex) {
+        return rowActorInputModes.get(rowIndex) || 'replace-propagate';
+    }
+
+    function setRowActorInputMode(rowIndex, mode) {
+        if (mode === 'append-row-only') {
+            rowActorInputModes.set(rowIndex, mode);
+        } else {
+            rowActorInputModes.delete(rowIndex);
+        }
     }
 
     function queueRowRefresh(indices) {
@@ -1051,6 +1064,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 actionWrap.appendChild(pill);
             });
+
+            const addActorBtn = document.createElement('button');
+            addActorBtn.className = 'btn-copy btn-copy-inline btn-add-inline-actor';
+            addActorBtn.textContent = '+ Actor';
+            addActorBtn.title = 'Add another actor to this row only';
+            addActorBtn.type = 'button';
+            addActorBtn.addEventListener('click', () => {
+                setRowActorInputMode(i, 'append-row-only');
+                renderRowActorsCell(i);
+                const actorInput = document.querySelector(`#actors-cell-${i} .tag-actor-input`);
+                if (actorInput) {
+                    actorInput.focus();
+                    actorInput.dispatchEvent(new Event('input', { bubbles: true }));
+                    if (typeof actorInput.showPicker === 'function') {
+                        actorInput.showPicker();
+                    }
+                }
+            });
+            actionWrap.appendChild(addActorBtn);
         }
 
         if (i > 0) {
@@ -1101,17 +1133,23 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const currentActors = extractActors(row.Actors);
         const currentCheck = currentActors.map(a => a.substring(1)); // Remove '#'
+        const inputMode = getRowActorInputMode(i);
 
         // 1. Movie Cast combobox (single typeable dropdown)
         if (globalCastOptions.length > 0) {
             const tagActorInput = document.createElement('input');
             tagActorInput.type = 'text';
             tagActorInput.className = 'tag-actor-input';
-            tagActorInput.placeholder = 'Tag Actor';
-            tagActorInput.title = 'Type or pick an actor to tag';
+            tagActorInput.placeholder = inputMode === 'append-row-only' ? 'Add actor to this row' : 'Tag Actor';
+            tagActorInput.title = inputMode === 'append-row-only'
+                ? 'Type or pick an actor to add only to this row'
+                : 'Type or pick an actor to tag';
             tagActorInput.autocomplete = 'off';
             tagActorInput.setAttribute('list', `cast-options-${i}`);
             tagActorInput.setAttribute('aria-label', 'Tag Actor');
+            if (inputMode === 'append-row-only') {
+                tagActorInput.classList.add('tag-actor-input-append');
+            }
 
             const datalist = document.createElement('datalist');
             datalist.id = `cast-options-${i}`;
@@ -1144,18 +1182,24 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
 
-                const newText = `#${matchedCast.trim()}`;
+                const actorToken = `#${matchedCast.trim()}`;
+                const newText = inputMode === 'append-row-only' && currentActors.length > 0
+                    ? `${row.Actors.trim()} ${actorToken}`.trim()
+                    : actorToken;
 
                 row.Actors = newText;
                 updateBackendMemory(i, 'Actors', newText);
+                setRowActorInputMode(i, 'replace-propagate');
 
                 tagActorInput.value = '';
                 renderRowOriginalTeluguCell(i);
                 renderRowActorsCell(i);
                 renderRowOriginalTeluguCell(i + 1);
 
-                // Reassign this speaker only in the rows below the current one
-                applySpeakerMappingDown(i);
+                if (inputMode !== 'append-row-only') {
+                    // Reassign this speaker only in the rows below the current one
+                    applySpeakerMappingDown(i);
+                }
             };
 
             tagActorInput.addEventListener('input', renderCastOptions);
