@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const tableBody = document.getElementById('table-body');
     const saveStatus = document.getElementById('save-status');
     const saveSpinner = document.getElementById('save-spinner');
@@ -341,7 +341,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let code = '!@Mkpkntr5038!';
         if (!isLocalhost) {
-            code = window.prompt('Enter the universal password to reopen this completed CSV:');
+            code = await window.promptForPassword({
+                title: 'Reopen Transliteration CSV',
+                message: 'Enter the universal password to reopen this completed CSV.',
+                placeholder: 'Universal password',
+                confirmText: 'Reopen'
+            });
             if (code === null) return;
         }
 
@@ -380,7 +385,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (isLocalhost) {
         secretCode = '!@Mkpkntr5038!';
     } else {
-        secretCode = window.prompt('Enter the universal password to open Telugu transliterations:') || '';
+        secretCode = await window.promptForPassword({
+            title: 'Unlock Telugu Transliterations',
+            message: 'Enter the universal password to open Telugu transliterations.',
+            placeholder: 'Universal password',
+            confirmText: 'Unlock'
+        }) || '';
         if (!secretCode) {
             setStatus('Access cancelled', '--danger-color');
             return;

@@ -868,6 +868,88 @@ select:focus {
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
+.password-modal-content {
+    max-width: 440px;
+}
+
+.password-modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.password-modal-message {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 0.96rem;
+}
+
+.password-modal-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.password-input-group {
+    position: relative;
+}
+
+.password-modal-input {
+    margin-bottom: 0;
+    padding-right: 3rem;
+}
+
+.password-toggle-btn {
+    position: absolute;
+    top: 50%;
+    right: 0.65rem;
+    transform: translateY(-50%);
+    border: none;
+    background: transparent;
+    color: #64748b;
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.18s ease, color 0.18s ease;
+}
+
+.password-toggle-btn:hover {
+    background: #eff6ff;
+    color: var(--accent-color);
+}
+
+.password-toggle-btn svg {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.password-icon-eye-off {
+    display: none;
+}
+
+.password-toggle-btn.is-visible .password-icon-eye {
+    display: none;
+}
+
+.password-toggle-btn.is-visible .password-icon-eye-off {
+    display: block;
+}
+
+.password-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+}
+
 .actors-list {
     max-height: 400px;
     overflow-y: auto;

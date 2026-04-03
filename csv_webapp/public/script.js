@@ -818,7 +818,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-    loadBtn.addEventListener('click', () => {
+    loadBtn.addEventListener('click', async () => {
         const filename = fileSelect.value;
         if (!filename) return;
 
@@ -828,7 +828,12 @@ document.addEventListener('DOMContentLoaded', () => {
         
         let code = 'pavanKPK5038';
         if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-            code = prompt(`Please enter the secret code for ${filename}:`);
+            code = await window.promptForPassword({
+                title: 'Enter Secret Code',
+                message: `Please enter the secret code for ${filename}.`,
+                placeholder: 'Secret code',
+                confirmText: 'Load'
+            });
             if (code === null) return;
         }
         
@@ -1273,7 +1278,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (!confirmed) return;
 
-            const password = prompt(`Enter the password for ${currentFilename} before clearing all tags:`);
+            const password = await window.promptForPassword({
+                title: 'Confirm Clear All Tags',
+                message: `Enter the password for ${currentFilename} before clearing all tags.`,
+                placeholder: 'Password',
+                confirmText: 'Clear Tags'
+            });
             if (password === null) return;
             if (password !== currentSecretCode) {
                 alert('Incorrect password.');
@@ -1383,7 +1393,12 @@ document.addEventListener('DOMContentLoaded', () => {
         reopenBtn.addEventListener('click', async () => {
             if (!currentFilename) return alert('Please load a file first.');
 
-            const code = prompt('Enter the universal password to reopen this completed movie:');
+            const code = await window.promptForPassword({
+                title: 'Reopen Movie',
+                message: 'Enter the universal password to reopen this completed movie.',
+                placeholder: 'Universal password',
+                confirmText: 'Reopen'
+            });
             if (code === null) return;
 
             const ogText = reopenBtn.textContent;
