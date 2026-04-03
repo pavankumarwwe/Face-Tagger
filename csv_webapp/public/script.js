@@ -142,13 +142,16 @@ document.addEventListener('DOMContentLoaded', () => {
         saveSpinner.classList.add('hidden');
     }
 
-    function confirmDiscardChanges(actionLabel) {
+    async function confirmDiscardChanges(actionLabel) {
         if (!hasUnsavedChanges) return true;
-        return confirm(
-            `You have unsaved changes.\n\n` +
-            `If you continue to ${actionLabel}, your current edits may be lost.\n\n` +
-            `Do you want to continue?`
-        );
+        return window.confirmWithModal({
+            title: 'Unsaved Changes',
+            message:
+                `You have unsaved changes.\n\n` +
+                `If you continue to ${actionLabel}, your current edits may be lost.`,
+            confirmText: 'Continue',
+            cancelText: 'Stay'
+        });
     }
 
     function getRowActorInputMode(rowIndex) {
@@ -805,7 +808,7 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(res => res.json())
         .then(data => {
             if (data.files && data.files.length > 0) {
-                fileSelect.innerHTML = data.files.map(f => `<option value="${f}">${f.replace('_transliterated', '')}</option>`).join('');
+                fileSelect.innerHTML = data.files.map(f => `<option value="${f}">${f.replace('.csv', '').replace('_transliterated', '')}</option>`).join('');
                 if (data.currentFile) fileSelect.value = data.currentFile;
                 
                 const urlParams = new URLSearchParams(window.location.search);
@@ -822,69 +825,92 @@ document.addEventListener('DOMContentLoaded', () => {
         const filename = fileSelect.value;
         if (!filename) return;
 
-        if (!confirmDiscardChanges(`load ${filename}`)) {
+        if (!await confirmDiscardChanges(`load ${filename}`)) {
             return;
         }
-        
+
         let code = 'pavanKPK5038';
-        if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-            code = await window.promptForPassword({
-                title: 'Enter Secret Code',
-                message: `Please enter the secret code for ${filename}.`,
-                placeholder: 'Secret code',
-                confirmText: 'Load'
-            });
-            if (code === null) return;
-        }
-        
+        let modalFeedback = '';
+        let feedbackType = '';
+
         loadBtn.textContent = 'Loading...';
         loadBtn.disabled = true;
 
-        fetch('/api/load', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ filename, secretCode: code })
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.error) {
-                let errorMsg = data.error;
-                if (data.attemptsLeft !== undefined && data.attemptsLeft > 0) {
-                    errorMsg += `\n\nAttempts remaining: ${data.attemptsLeft}`;
-                } else if (data.blockedFor) {
-                    errorMsg += `\n\nYou have been blocked for ${data.blockedFor} minutes.`;
+        try {
+            while (true) {
+                if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+                    code = await window.promptForPassword({
+                        title: 'Enter Secret Code',
+                        message: 'Please enter the secret code for "Akasham Yerraga Undhi".',
+                        placeholder: 'Secret code',
+                        confirmText: 'Load',
+                        feedback: modalFeedback,
+                        feedbackType
+                    });
+
+                    if (code === null) {
+                        return;
+                    }
                 }
-                alert(errorMsg);
+
+                const response = await fetch('/api/load', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ filename, secretCode: code })
+                });
+                const data = await response.json();
+
+                if (data.error) {
+                    if (response.status === 401) {
+                        const attemptsMessage = data.attemptsLeft !== undefined
+                            ? `Attempts remaining: ${data.attemptsLeft}`
+                            : '';
+                        modalFeedback = attemptsMessage
+                            ? `Code Vadu Phone Lo Cheppanu Kadha\n${attemptsMessage}`
+                            : 'Code Vadu Phone Lo Cheppanu Kadha';
+                        feedbackType = 'error';
+                        continue;
+                    }
+
+                    if (response.status === 429) {
+                        modalFeedback = `Code Vadu Phone Lo Cheppanu Kadha\nPlease try again in ${data.blockedFor} minutes.`;
+                        feedbackType = 'error';
+                        continue;
+                    }
+
+                    alert(data.error);
+                    return;
+                }
+
+                currentSecretCode = code;
+                currentFilename = filename;
+                const pureName = data.currentFile.replace('.csv', '').replace('_tagged', '').replace('_transliterated', '').trim();
+                pageTitle.textContent = `CSV Manager - ${pureName}`;
+
+                if (refBtn) {
+                    refBtn.href = `/reference.html?movie=${encodeURIComponent(pureName)}`;
+                }
+
+                globalRows = data.rows;
+                globalCastOptions = data.castOptions || [];
+                globalAllActors = data.allActors || [];
+                updateYoutubeLink(data.youtubeUrl);
+                rebuildActorColorMap();
+                setMovieLoaded(true);
+                setSavedStatus('Ready');
+                setMovieStatus(data.status || 'Not Started');
+                renderTable();
                 return;
             }
-            currentSecretCode = code;
-            currentFilename = filename;
-            const pureName = data.currentFile.replace('.csv', '').replace('_tagged', '').replace('_transliterated', '').trim();
-            pageTitle.textContent = `CSV Manager - ${pureName}`;
-
-            if (refBtn) {
-                refBtn.href = `/reference.html?movie=${encodeURIComponent(pureName)}`;
-            }
-
-            globalRows = data.rows;
-            globalCastOptions = data.castOptions || [];
-            globalAllActors = data.allActors || [];
-            updateYoutubeLink(data.youtubeUrl);
-            rebuildActorColorMap();
-            setMovieLoaded(true);
-            setSavedStatus('Ready');
-            setMovieStatus(data.status || 'Not Started');
-            renderTable();
-        })
-        .finally(() => {
+        } finally {
             loadBtn.textContent = 'Load';
             loadBtn.disabled = false;
-        });
+        }
     });
 
     if (homeLink) {
-        homeLink.addEventListener('click', (event) => {
-            if (confirmDiscardChanges('go home')) {
+        homeLink.addEventListener('click', async (event) => {
+            if (await confirmDiscardChanges('go home')) {
                 return;
             }
 
@@ -1269,12 +1295,15 @@ document.addEventListener('DOMContentLoaded', () => {
         clearAllBtn.addEventListener('click', async () => {
             if (!currentFilename) return alert('Please load a file first.');
 
-            const confirmed = confirm(
-                '⚠️ Clear All Actor Tags?\n\n' +
-                'This will remove ALL actor tags from ALL rows in this file.\n' +
-                'This action cannot be undone.\n\n' +
-                'Are you sure you want to continue?'
-            );
+            const confirmed = await window.confirmWithModal({
+                title: 'Clear All Actor Tags?',
+                message:
+                    'This will remove ALL actor tags from ALL rows in this file.\n\n' +
+                    'This action cannot be undone.',
+                confirmText: 'Clear All',
+                cancelText: 'Cancel',
+                confirmStyle: 'danger'
+            });
 
             if (!confirmed) return;
 
@@ -1348,10 +1377,13 @@ document.addEventListener('DOMContentLoaded', () => {
         markCompleteBtn.addEventListener('click', async () => {
             if (!currentFilename) return alert('Please load a file first.');
 
-            const confirmed = confirm(
-                'Mark this movie as Complete?\n\n' +
-                'This will lock editing until it is reopened with the password.'
-            );
+            const confirmed = await window.confirmWithModal({
+                title: 'Mark Movie Complete?',
+                message:
+                    'This will lock editing until it is reopened with the password.',
+                confirmText: 'Mark Complete',
+                cancelText: 'Cancel'
+            });
 
             if (!confirmed) return;
 

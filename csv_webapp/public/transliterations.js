@@ -82,11 +82,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         setStatus(message, '--success-color');
     }
 
-    function confirmDiscardChanges(actionLabel) {
+    async function confirmDiscardChanges(actionLabel) {
         if (!hasUnsavedChanges) return true;
-        return window.confirm(
-            `You have unsaved changes.\n\nIf you continue to ${actionLabel}, your current edits may be lost.\n\nDo you want to continue?`
-        );
+        return window.confirmWithModal({
+            title: 'Unsaved Changes',
+            message:
+                `You have unsaved changes.\n\n` +
+                `If you continue to ${actionLabel}, your current edits may be lost.`,
+            confirmText: 'Continue',
+            cancelText: 'Stay'
+        });
     }
 
     async function readJsonResponse(response) {
@@ -281,7 +286,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     reloadBtn.addEventListener('click', async () => {
-        if (!confirmDiscardChanges('reload the CSV')) return;
+        if (!await confirmDiscardChanges('reload the CSV')) return;
         await loadRows();
     });
 
@@ -292,9 +297,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     markCompleteBtn.addEventListener('click', async () => {
         if (!isLoaded) return;
 
-        const confirmed = window.confirm(
-            'Mark this transliterations CSV as Complete?\n\nThis will lock editing until it is reopened with the universal password.'
-        );
+        const confirmed = await window.confirmWithModal({
+            title: 'Mark Transliteration CSV Complete?',
+            message:
+                'This will lock editing until it is reopened with the universal password.',
+            confirmText: 'Mark Complete',
+            cancelText: 'Cancel'
+        });
         if (!confirmed) return;
 
         const originalText = markCompleteBtn.textContent;

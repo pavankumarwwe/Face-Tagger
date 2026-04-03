@@ -15,6 +15,7 @@
                 </div>
                 <div class="modal-body password-modal-body">
                     <p class="password-modal-message"></p>
+                    <p class="password-modal-feedback" aria-live="polite"></p>
                     <form class="password-modal-form">
                         <div class="password-input-group">
                             <input
@@ -55,6 +56,7 @@
         const modal = ensurePasswordModal();
         const titleEl = modal.querySelector('#password-modal-title');
         const messageEl = modal.querySelector('.password-modal-message');
+        const feedbackEl = modal.querySelector('.password-modal-feedback');
         const inputEl = modal.querySelector('#password-modal-input');
         const closeBtn = modal.querySelector('.password-modal-close');
         const cancelBtn = modal.querySelector('.password-cancel-btn');
@@ -64,6 +66,9 @@
 
         titleEl.textContent = options.title || 'Enter Password';
         messageEl.textContent = options.message || 'Please enter your password.';
+        feedbackEl.textContent = options.feedback || '';
+        feedbackEl.classList.toggle('is-visible', Boolean(options.feedback));
+        feedbackEl.classList.toggle('is-error', options.feedbackType === 'error');
         inputEl.value = options.defaultValue || '';
         inputEl.type = 'password';
         inputEl.placeholder = options.placeholder || 'Enter password';
@@ -138,6 +143,84 @@
                 inputEl.focus();
                 inputEl.select();
             }, 0);
+        });
+    };
+
+    window.confirmWithModal = function confirmWithModal(options = {}) {
+        const modal = ensurePasswordModal();
+        const titleEl = modal.querySelector('#password-modal-title');
+        const messageEl = modal.querySelector('.password-modal-message');
+        const feedbackEl = modal.querySelector('.password-modal-feedback');
+        const inputGroup = modal.querySelector('.password-input-group');
+        const inputEl = modal.querySelector('#password-modal-input');
+        const closeBtn = modal.querySelector('.password-modal-close');
+        const cancelBtn = modal.querySelector('.password-cancel-btn');
+        const submitBtn = modal.querySelector('.password-submit-btn');
+        const formEl = modal.querySelector('.password-modal-form');
+        const toggleBtn = modal.querySelector('.password-toggle-btn');
+
+        titleEl.textContent = options.title || 'Please Confirm';
+        messageEl.textContent = options.message || 'Are you sure you want to continue?';
+        feedbackEl.textContent = options.feedback || '';
+        feedbackEl.classList.toggle('is-visible', Boolean(options.feedback));
+        feedbackEl.classList.toggle('is-error', options.feedbackType === 'error');
+        inputGroup.style.display = 'none';
+        cancelBtn.textContent = options.cancelText || 'Cancel';
+        submitBtn.textContent = options.confirmText || 'Continue';
+        submitBtn.classList.toggle('btn-danger-outline', options.confirmStyle === 'danger');
+        submitBtn.classList.toggle('btn-warning', options.confirmStyle === 'warning');
+        modal.style.display = 'flex';
+
+        return new Promise((resolve) => {
+            let settled = false;
+
+            const cleanup = () => {
+                document.removeEventListener('keydown', handleKeydown);
+                modal.removeEventListener('click', handleBackdropClick);
+                closeBtn.removeEventListener('click', handleCancel);
+                cancelBtn.removeEventListener('click', handleCancel);
+                formEl.removeEventListener('submit', handleSubmit);
+                inputGroup.style.display = '';
+                cancelBtn.textContent = 'Cancel';
+                submitBtn.textContent = 'Continue';
+                submitBtn.classList.remove('btn-danger-outline', 'btn-warning');
+                modal.style.display = 'none';
+            };
+
+            const finish = (value) => {
+                if (settled) return;
+                settled = true;
+                cleanup();
+                resolve(value);
+            };
+
+            const handleCancel = () => finish(false);
+
+            const handleSubmit = (event) => {
+                event.preventDefault();
+                finish(true);
+            };
+
+            const handleBackdropClick = (event) => {
+                if (event.target === modal) {
+                    finish(false);
+                }
+            };
+
+            const handleKeydown = (event) => {
+                if (event.key === 'Escape') {
+                    event.preventDefault();
+                    finish(false);
+                }
+            };
+
+            document.addEventListener('keydown', handleKeydown);
+            modal.addEventListener('click', handleBackdropClick);
+            closeBtn.addEventListener('click', handleCancel);
+            cancelBtn.addEventListener('click', handleCancel);
+            formEl.addEventListener('submit', handleSubmit);
+
+            setTimeout(() => submitBtn.focus(), 0);
         });
     };
 })();

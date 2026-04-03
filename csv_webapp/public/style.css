@@ -884,6 +884,24 @@ select:focus {
     font-size: 0.96rem;
 }
 
+.password-modal-feedback {
+    display: none;
+    margin: -0.2rem 0 0;
+    font-size: 0.92rem;
+    line-height: 1.45;
+    color: var(--text-secondary);
+    white-space: pre-line;
+}
+
+.password-modal-feedback.is-visible {
+    display: block;
+}
+
+.password-modal-feedback.is-error {
+    color: var(--danger-color);
+    font-weight: 600;
+}
+
 .password-modal-form {
     display: flex;
     flex-direction: column;
