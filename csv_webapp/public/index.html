@@ -75,6 +75,26 @@
             opacity: 0;
         }
 
+        .movie-sections {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .movie-section {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .movie-section-title {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 800;
+            letter-spacing: 0.02em;
+            color: var(--text-main);
+        }
+
         .movie-card {
             background: var(--card-bg);
             border: 1px solid var(--card-border);
@@ -455,7 +475,7 @@
 
     <div class="container">
         <div id="loading" class="loader">Loading movie database...</div>
-        <div id="grid" class="grid"></div>
+        <div id="movie-sections" class="movie-sections"></div>
     </div>
 
     <script>
@@ -463,14 +483,13 @@
             fetch('/api/movies')
                 .then(res => res.json())
                 .then(data => {
-                    const grid = document.getElementById('grid');
+                    const sections = document.getElementById('movie-sections');
                     const loading = document.getElementById('loading');
                     
                     if (data.movies && data.movies.length > 0) {
                         loading.style.display = 'none';
-                        grid.innerHTML = data.movies.map((movie, i) => {
+                        const renderMovieCard = (movie, i) => {
                             const isComplete = movie.status === 'Complete';
-                            // Extract just the first word for CSS resolution: "Not", "In", "Complete"
                             const badgeClass = 'badge-' + movie.status.split(' ')[0];
                             const exportUrl = `/api/export?filename=${encodeURIComponent(movie.filename)}`;
                             
@@ -505,9 +524,38 @@
                                     </div>
                                 </a>
                             `;
-                        }).join('');
+                        };
 
-                        grid.querySelectorAll('.reopen-complete-btn').forEach(btn => {
+                        const activeMovies = data.movies.filter(movie => movie.status !== 'Complete');
+                        const completedMovies = data.movies.filter(movie => movie.status === 'Complete');
+
+                        const sectionMarkup = [];
+
+                        if (activeMovies.length > 0) {
+                            sectionMarkup.push(`
+                                <section class="movie-section">
+                                    <h2 class="movie-section-title">Movies In Progress</h2>
+                                    <div class="grid">
+                                        ${activeMovies.map((movie, i) => renderMovieCard(movie, i)).join('')}
+                                    </div>
+                                </section>
+                            `);
+                        }
+
+                        if (completedMovies.length > 0) {
+                            sectionMarkup.push(`
+                                <section class="movie-section">
+                                    <h2 class="movie-section-title">Completed Movies</h2>
+                                    <div class="grid">
+                                        ${completedMovies.map((movie, i) => renderMovieCard(movie, i)).join('')}
+                                    </div>
+                                </section>
+                            `);
+                        }
+
+                        sections.innerHTML = sectionMarkup.join('');
+
+                        sections.querySelectorAll('.reopen-complete-btn').forEach(btn => {
                             btn.addEventListener('click', async () => {
                                 const filename = btn.dataset.filename;
                                 const code = await window.promptForPassword({
