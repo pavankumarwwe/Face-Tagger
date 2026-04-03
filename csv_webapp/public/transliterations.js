@@ -1,5 +1,6 @@
 document.addEventListener('DOMContentLoaded', async () => {
-    const akashamPosterSrc = 'akasham-yerraga-undhi.jpeg';
+    const akashamPosterSrc = 'akasham-title-shot.jpg';
+    const akashamInputSrc = 'akasham-input-shot.jpg';
     const tableBody = document.getElementById('table-body');
     const saveStatus = document.getElementById('save-status');
     const saveSpinner = document.getElementById('save-spinner');
@@ -352,6 +353,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             message: 'Akasham Yerraga Undhi',
             mediaSrc: akashamPosterSrc,
             mediaAlt: 'Akasham Yerraga Undhi',
+            inputMediaSrc: akashamInputSrc,
+            inputMediaAlt: 'Akasham Yerraga Undhi',
             placeholder: 'Universal password',
             confirmText: 'Reopen'
         });
@@ -394,6 +397,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         message: 'Akasham Yerraga Undhi',
         mediaSrc: akashamPosterSrc,
         mediaAlt: 'Akasham Yerraga Undhi',
+        inputMediaSrc: akashamInputSrc,
+        inputMediaAlt: 'Akasham Yerraga Undhi',
         placeholder: 'Universal password',
         confirmText: 'Unlock'
     }) || '';

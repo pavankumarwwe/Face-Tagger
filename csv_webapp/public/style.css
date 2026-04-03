@@ -871,6 +871,7 @@ select:focus {
 
 .password-modal-content {
     max-width: 500px;
+    position: relative;
 }
 
 .password-modal-content .modal-header {
@@ -890,7 +891,7 @@ select:focus {
     align-items: center;
     gap: 12px;
     justify-content: start;
-    padding-left: 0.35rem;
+    padding-left: 0;
 }
 
 .password-modal-message {
@@ -927,35 +928,76 @@ select:focus {
     box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
 }
 
-.password-modal-feedback {
+.password-modal-toast {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    max-width: 360px;
     display: none;
-    margin: -0.18rem 0 0;
-    font-size: 0.92rem;
-    line-height: 1.18;
-    color: var(--text-secondary);
-    white-space: pre-line;
+    align-items: flex-start;
+    gap: 0.55rem;
+    padding: 0.8rem 0.95rem;
+    border-radius: 12px;
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+    z-index: 10020;
 }
 
-.password-modal-feedback p {
+.password-modal-toast.is-visible {
+    display: flex;
+}
+
+.password-modal-toast-copy {
+    min-width: 0;
+    flex: 1;
+}
+
+.password-modal-toast-copy p {
     margin: 0;
+    font-size: 0.98rem;
+    line-height: 1.24;
+    color: var(--text-secondary);
 }
 
-.password-modal-feedback p + p {
-    margin-top: 0;
+.password-modal-toast-copy p + p {
+    margin-top: 0.1rem;
 }
 
-.password-modal-feedback.is-visible {
-    display: block;
-}
-
-.password-modal-feedback-primary.is-error {
+.password-modal-toast-primary.is-error {
     color: var(--danger-color);
-    font-weight: 600;
+    font-weight: 700;
+}
+
+.password-modal-toast-close {
+    border: none;
+    background: transparent;
+    color: #9a3412;
+    cursor: pointer;
+    font-size: 1.05rem;
+    line-height: 1;
+    width: 20px;
+    height: 20px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+}
+
+.password-modal-toast-close:hover {
+    background: rgba(154, 52, 18, 0.08);
 }
 
 @media (max-width: 560px) {
     .password-modal-content {
         max-width: 440px;
+    }
+
+    .password-modal-toast {
+        top: 0.75rem;
+        right: 0.75rem;
+        max-width: 300px;
     }
 
     .password-modal-intro {
@@ -967,12 +1009,45 @@ select:focus {
         width: min(100%, 180px);
         max-height: 96px;
     }
+
+    .password-input-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
 }
 
 .password-modal-form {
     display: flex;
     flex-direction: column;
     gap: 0.55rem;
+}
+
+.password-input-row {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding-left: 0;
+}
+
+.password-input-media-wrap {
+    display: none;
+    flex: 0 0 auto;
+}
+
+.password-input-media-wrap.is-visible {
+    display: flex;
+}
+
+.password-input-media {
+    display: block;
+    width: 84px;
+    max-width: 100%;
+    max-height: 44px;
+    object-fit: cover;
+    object-position: center;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
 }
 
 .password-modal-actions {
@@ -988,6 +1063,7 @@ select:focus {
 
 .password-input-group {
     position: relative;
+    flex: 1;
 }
 
 .password-modal-input {
@@ -1038,12 +1114,6 @@ select:focus {
 
 .password-toggle-btn.is-visible .password-icon-eye-off {
     display: block;
-}
-
-.password-modal-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 0.75rem;
 }
 
 .actors-list {

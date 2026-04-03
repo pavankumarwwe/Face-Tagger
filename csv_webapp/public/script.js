@@ -1,5 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const akashamPosterSrc = 'akasham-yerraga-undhi.jpeg';
+    const akashamPosterSrc = 'akasham-title-shot.jpg';
+    const akashamInputSrc = 'akasham-input-shot.jpg';
     const tableBody = document.getElementById('table-body');
     const saveStatus = document.getElementById('save-status');
     const saveSpinner = document.getElementById('save-spinner');
@@ -841,12 +842,14 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             while (true) {
                 const modalMovieTitle = filename.replace('.csv', '').replace('_transliterated', '');
-                code = await window.promptForPassword({
-                    title: modalMovieTitle,
-                    message: 'Akasham Yerraga Undhi',
-                    mediaSrc: akashamPosterSrc,
-                    mediaAlt: 'Akasham Yerraga Undhi',
-                    placeholder: 'Secret code',
+                    code = await window.promptForPassword({
+                        title: modalMovieTitle,
+                        message: 'Akasham Yerraga Undhi',
+                        mediaSrc: akashamPosterSrc,
+                        mediaAlt: 'Akasham Yerraga Undhi',
+                        inputMediaSrc: akashamInputSrc,
+                        inputMediaAlt: 'Akasham Yerraga Undhi',
+                        placeholder: 'Secret code',
                     confirmText: 'Load',
                     feedbackPrimary: modalFeedbackPrimary,
                     feedbackSecondary: modalFeedbackSecondary,
@@ -1316,6 +1319,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 message: 'Akasham Yerraga Undhi',
                 mediaSrc: akashamPosterSrc,
                 mediaAlt: 'Akasham Yerraga Undhi',
+                inputMediaSrc: akashamInputSrc,
+                inputMediaAlt: 'Akasham Yerraga Undhi',
                 placeholder: 'Password',
                 confirmText: 'Clear Tags'
             });
@@ -1436,6 +1441,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 message: 'Akasham Yerraga Undhi',
                 mediaSrc: akashamPosterSrc,
                 mediaAlt: 'Akasham Yerraga Undhi',
+                inputMediaSrc: akashamInputSrc,
+                inputMediaAlt: 'Akasham Yerraga Undhi',
                 placeholder: 'Universal password',
                 confirmText: 'Reopen'
             });
