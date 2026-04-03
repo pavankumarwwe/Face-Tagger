@@ -89,6 +89,7 @@
         const toggleBtn = modal.querySelector('.password-toggle-btn');
 
         titleEl.textContent = options.title || 'Enter Password';
+        modal.classList.remove('confirm-modal-mode');
         messageEl.textContent = options.message || 'Please enter your password.';
         mediaEl.src = options.mediaSrc || '';
         mediaEl.alt = options.mediaAlt || '';
@@ -205,6 +206,7 @@
         const toggleBtn = modal.querySelector('.password-toggle-btn');
 
         titleEl.textContent = options.title || 'Please Confirm';
+        modal.classList.add('confirm-modal-mode');
         messageEl.textContent = options.message || 'Are you sure you want to continue?';
         messageEl.classList.toggle('is-hidden', !options.message);
         mediaWrapEl.classList.remove('is-visible');
@@ -237,6 +239,7 @@
                 cancelBtn.textContent = 'Cancel';
                 submitBtn.textContent = 'Continue';
                 submitBtn.classList.remove('btn-danger-outline', 'btn-warning');
+                modal.classList.remove('confirm-modal-mode');
                 modal.style.display = 'none';
             };
 

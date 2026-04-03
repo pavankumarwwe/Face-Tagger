@@ -907,6 +907,32 @@ select:focus {
     display: none;
 }
 
+.confirm-modal-mode .password-modal-body {
+    gap: 1rem;
+}
+
+.confirm-modal-mode .password-modal-intro {
+    display: block;
+}
+
+.confirm-modal-mode .password-modal-message {
+    font-size: 1rem;
+    line-height: 1.45;
+    font-weight: 500;
+    text-align: left;
+    max-width: none;
+}
+
+.confirm-modal-mode .password-modal-media-wrap,
+.confirm-modal-mode .password-input-media-wrap,
+.confirm-modal-mode .password-modal-toast {
+    display: none !important;
+}
+
+.confirm-modal-mode .password-modal-form {
+    gap: 1rem;
+}
+
 .password-modal-media-wrap {
     display: none;
 }
