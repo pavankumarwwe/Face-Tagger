@@ -203,9 +203,26 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    function applyLoadedRows(data) {
+        allRows = (Array.isArray(data.rows) ? data.rows : []).map((row, index) => ({
+            ...row,
+            index: (row?.index || index + 1).toString(),
+            __rowIndex: index
+        }));
+        filteredRows = [...allRows];
+        isLoaded = true;
+        renderTable();
+        updateControls(true);
+        setStatusState(data.status || 'Not Started');
+        if ((data.status || 'Not Started') === 'Complete') {
+            setStatus('CSV is complete', '--success-color');
+        } else {
+            setSavedStatus('Editor unlocked');
+        }
+    }
+
     async function loadRows() {
         if (!secretCode) return;
-
         setBusy('Unlocking editor...');
         updateControls(false);
 
@@ -218,35 +235,73 @@ document.addEventListener('DOMContentLoaded', async () => {
             const data = await readJsonResponse(response);
 
             if (!response.ok || !data.success) {
-                let message = data.error || 'Failed to load transliterations.';
-                if (data.attemptsLeft !== undefined && data.attemptsLeft > 0) {
-                    message += `\n\nAttempts remaining: ${data.attemptsLeft}`;
-                }
-                throw new Error(message);
+                const error = new Error(data.error || 'Failed to load transliterations.');
+                error.responseStatus = response.status;
+                error.attemptsLeft = data.attemptsLeft;
+                error.blockedFor = data.blockedFor;
+                throw error;
             }
 
-            allRows = (Array.isArray(data.rows) ? data.rows : []).map((row, index) => ({
-                ...row,
-                index: (row?.index || index + 1).toString(),
-                __rowIndex: index
-            }));
-            filteredRows = [...allRows];
-            isLoaded = true;
-            renderTable();
-            updateControls(true);
-            setStatusState(data.status || 'Not Started');
-            if ((data.status || 'Not Started') === 'Complete') {
-                setStatus('CSV is complete', '--success-color');
-            } else {
-                setSavedStatus('Editor unlocked');
-            }
+            applyLoadedRows(data);
+            return data;
         } catch (error) {
             isLoaded = false;
             updateActionVisibility();
             setStatus('Access denied', '--danger-color');
-            alert(error.message || 'Failed to load transliterations.');
+            throw error;
         } finally {
             clearBusy();
+        }
+    }
+
+    async function unlockTransliterations() {
+        let feedbackPrimary = '';
+        let feedbackSecondary = '';
+        let feedbackType = '';
+
+        while (true) {
+            const code = await window.promptForPassword({
+                title: 'Akasham Yerraga Undhi',
+                message: 'Akasham Yerraga Undhi',
+                mediaSrc: akashamPosterSrc,
+                mediaAlt: 'Akasham Yerraga Undhi',
+                inputMediaSrc: akashamInputSrc,
+                inputMediaAlt: 'Akasham Yerraga Undhi',
+                placeholder: 'Universal password',
+                confirmText: 'Unlock',
+                feedbackPrimary,
+                feedbackSecondary,
+                feedbackType
+            }) || '';
+
+            if (!code) {
+                setStatus('Access cancelled', '--danger-color');
+                return false;
+            }
+
+            secretCode = code;
+
+            try {
+                await loadRows();
+                return true;
+            } catch (error) {
+                if (error.responseStatus === 401) {
+                    feedbackPrimary = 'Code Vadu Phone Lo Cheppa Kadha';
+                    feedbackSecondary = error.attemptsLeft ? `Attempts remaining: ${error.attemptsLeft}` : '';
+                    feedbackType = 'error';
+                    continue;
+                }
+
+                if (error.responseStatus === 429) {
+                    feedbackPrimary = 'Code Vadu Phone Lo Cheppa Kadha';
+                    feedbackSecondary = `Please try again in ${error.blockedFor} minutes.`;
+                    feedbackType = 'error';
+                    continue;
+                }
+
+                alert(error.message || 'Failed to load transliterations.');
+                return false;
+            }
         }
     }
 
@@ -348,65 +403,74 @@ document.addEventListener('DOMContentLoaded', async () => {
     reopenBtn.addEventListener('click', async () => {
         if (!isLoaded) return;
 
-        const code = await window.promptForPassword({
-            title: 'Akasham Yerraga Undhi',
-            message: 'Akasham Yerraga Undhi',
-            mediaSrc: akashamPosterSrc,
-            mediaAlt: 'Akasham Yerraga Undhi',
-            inputMediaSrc: akashamInputSrc,
-            inputMediaAlt: 'Akasham Yerraga Undhi',
-            placeholder: 'Universal password',
-            confirmText: 'Reopen'
-        });
-        if (code === null) return;
+        let feedbackPrimary = '';
+        let feedbackSecondary = '';
+        let feedbackType = '';
+        let code = null;
 
-        const originalText = reopenBtn.textContent;
-        reopenBtn.textContent = 'Reopening...';
-        reopenBtn.disabled = true;
-
-        try {
-            const response = await fetch('/api/status', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    filename: 'telugu_transliterations.csv',
-                    status: 'In Progress',
-                    secretCode: code
-                })
+        while (true) {
+            code = await window.promptForPassword({
+                title: 'Akasham Yerraga Undhi',
+                message: 'Akasham Yerraga Undhi',
+                mediaSrc: akashamPosterSrc,
+                mediaAlt: 'Akasham Yerraga Undhi',
+                inputMediaSrc: akashamInputSrc,
+                inputMediaAlt: 'Akasham Yerraga Undhi',
+                placeholder: 'Universal password',
+                confirmText: 'Reopen',
+                feedbackPrimary,
+                feedbackSecondary,
+                feedbackType
             });
-            const data = await readJsonResponse(response);
-            if (!response.ok || !data.success) {
-                throw new Error(data.error || 'Failed to reopen CSV');
-            }
+            if (code === null) return;
 
-            secretCode = code;
-            setStatusState('In Progress');
-            setSavedStatus('CSV reopened for editing');
-            alert('Transliterations CSV reopened. You can edit it again now.');
-        } catch (error) {
-            setStatus('Reopen failed', '--danger-color');
-            alert(error.message || 'Failed to reopen transliterations CSV.');
-        } finally {
-            reopenBtn.textContent = originalText;
-            updateActionVisibility();
+            const originalText = reopenBtn.textContent;
+            reopenBtn.textContent = 'Reopening...';
+            reopenBtn.disabled = true;
+
+            try {
+                const response = await fetch('/api/status', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        filename: 'telugu_transliterations.csv',
+                        status: 'In Progress',
+                        secretCode: code
+                    })
+                });
+                const data = await readJsonResponse(response);
+                if (!response.ok || !data.success) {
+                    if (response.status === 401) {
+                        feedbackPrimary = 'Code Vadu Phone Lo Cheppa Kadha';
+                        feedbackSecondary = '';
+                        feedbackType = 'error';
+                        continue;
+                    }
+                    throw new Error(data.error || 'Failed to reopen CSV');
+                }
+
+                secretCode = code;
+                setStatusState('In Progress');
+                setSavedStatus('CSV reopened for editing');
+                alert('Transliterations CSV reopened. You can edit it again now.');
+                return;
+            } catch (error) {
+                setStatus('Reopen failed', '--danger-color');
+                if (error.message !== 'Failed to reopen CSV') {
+                    alert(error.message || 'Failed to reopen transliterations CSV.');
+                }
+                return;
+            } finally {
+                reopenBtn.textContent = originalText;
+                reopenBtn.disabled = false;
+                updateActionVisibility();
+            }
         }
     });
 
-    secretCode = await window.promptForPassword({
-        title: 'Akasham Yerraga Undhi',
-        message: 'Akasham Yerraga Undhi',
-        mediaSrc: akashamPosterSrc,
-        mediaAlt: 'Akasham Yerraga Undhi',
-        inputMediaSrc: akashamInputSrc,
-        inputMediaAlt: 'Akasham Yerraga Undhi',
-        placeholder: 'Universal password',
-        confirmText: 'Unlock'
-    }) || '';
-    if (!secretCode) {
-        setStatus('Access cancelled', '--danger-color');
+    if (!await unlockTransliterations()) {
         return;
     }
 
     updateActionVisibility();
-    loadRows();
 });
