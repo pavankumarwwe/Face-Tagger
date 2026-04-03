@@ -351,8 +351,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         let code = '!@Mkpkntr5038!';
         if (!isLocalhost) {
             code = await window.promptForPassword({
-                title: 'Reopen Transliteration CSV',
-                message: 'Enter the universal password to reopen this completed CSV.',
+                title: 'Akasham Yerraga Undhi',
+                message: 'Akasham Yerraga Undhi',
                 placeholder: 'Universal password',
                 confirmText: 'Reopen'
             });
@@ -395,8 +395,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         secretCode = '!@Mkpkntr5038!';
     } else {
         secretCode = await window.promptForPassword({
-            title: 'Unlock Telugu Transliterations',
-            message: 'Enter the universal password to open Telugu transliterations.',
+            title: 'Akasham Yerraga Undhi',
+            message: 'Akasham Yerraga Undhi',
             placeholder: 'Universal password',
             confirmText: 'Unlock'
         }) || '';

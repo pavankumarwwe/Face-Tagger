@@ -839,9 +839,10 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             while (true) {
                 if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+                    const modalMovieTitle = filename.replace('.csv', '').replace('_transliterated', '');
                     code = await window.promptForPassword({
-                        title: 'Enter Secret Code',
-                        message: 'Please enter the secret code for "Akasham Yerraga Undhi".',
+                        title: modalMovieTitle,
+                        message: 'Akasham Yerraga Undhi',
                         placeholder: 'Secret code',
                         confirmText: 'Load',
                         feedback: modalFeedback,
@@ -1308,8 +1309,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!confirmed) return;
 
             const password = await window.promptForPassword({
-                title: 'Confirm Clear All Tags',
-                message: `Enter the password for ${currentFilename} before clearing all tags.`,
+                title: 'Akasham Yerraga Undhi',
+                message: 'Akasham Yerraga Undhi',
                 placeholder: 'Password',
                 confirmText: 'Clear Tags'
             });
@@ -1426,8 +1427,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!currentFilename) return alert('Please load a file first.');
 
             const code = await window.promptForPassword({
-                title: 'Reopen Movie',
-                message: 'Enter the universal password to reopen this completed movie.',
+                title: 'Akasham Yerraga Undhi',
+                message: 'Akasham Yerraga Undhi',
                 placeholder: 'Universal password',
                 confirmText: 'Reopen'
             });
