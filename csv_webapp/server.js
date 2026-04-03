@@ -173,11 +173,9 @@ function readCastRows() {
 }
 
 function getMovieStatuses() {
-    return readMergedCsvRows(
+    return readCsvRowsFromFile(
         STORAGE_STATUS_FILE,
-        STATUS_FILE,
-        (row) => row,
-        (row) => row.filename
+        (row) => row
     ).then((rows) => {
         const statuses = {};
         rows.forEach((row) => {
