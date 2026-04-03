@@ -247,22 +247,31 @@ function verifySecret(filename, code) {
 
         let valid = false;
         let foundMovie = false;
-        const targetFilename = filename.toLowerCase().replace('_tagged', '').trim();
+        const safeFilename = path.basename((filename || '').toString()).trim();
+        const normalizedBase = safeFilename
+            .toLowerCase()
+            .replace(/\.csv$/i, '')
+            .replace(/_tagged$/i, '')
+            .replace(/_transliterated$/i, '')
+            .trim();
 
         fs.createReadStream(secretsPath)
             .pipe(csvParser())
             .on('data', (row) => {
-                if (row.filename && row.filename.toLowerCase().trim() === targetFilename) {
+                const rowBase = path.basename((row.filename || '').toString())
+                    .toLowerCase()
+                    .replace(/\.csv$/i, '')
+                    .replace(/_tagged$/i, '')
+                    .replace(/_transliterated$/i, '')
+                    .trim();
+
+                if (rowBase === normalizedBase) {
                     foundMovie = true;
                     if (row.secret_code === code) valid = true;
                 }
             })
             .on('end', () => {
-                if (foundMovie) {
-                    resolve(valid);
-                } else {
-                    resolve(code === 'pavanKPK5038');
-                }
+                resolve(foundMovie && valid);
             })
             .on('error', () => resolve(false));
     });
@@ -563,12 +572,9 @@ app.post('/api/status', async (req, res) => {
     const currentStatus = currentStatusRow?.status || 'Not Started';
 
     if (currentStatus === 'Complete' && status === 'In Progress') {
-        const isLocal = req.hostname === 'localhost' || req.hostname === '127.0.0.1';
-        if (!isLocal) {
-            const isAuthorized = await verifySecret(safeFilename, secretCode);
-            if (!isAuthorized) {
-                return res.status(401).json({ error: 'Password required to reopen a completed movie.' });
-            }
+        const isAuthorized = await verifySecret(safeFilename, secretCode);
+        if (!isAuthorized) {
+            return res.status(401).json({ error: 'Password required to reopen a completed movie.' });
         }
     }
 
@@ -580,35 +586,31 @@ app.post('/api/load', async (req, res) => {
     const { filename, secretCode } = req.body;
     const clientIp = req.ip || req.connection.remoteAddress;
 
-    const isLocal = req.hostname === 'localhost' || req.hostname === '127.0.0.1';
-    if (!isLocal) {
-        // Check if IP is blocked for this specific movie
-        if (isBlocked(clientIp, filename)) {
-            const minutesRemaining = getBlockedTimeRemaining(clientIp, filename);
-            return res.status(429).json({
-                error: `Too many failed attempts for "${filename}". Please try again in ${minutesRemaining} minutes.`,
-                blockedFor: minutesRemaining
-            });
-        }
-
-        const isAuthorized = await verifySecret(filename, secretCode);
-        if (!isAuthorized) {
-            recordFailedAttempt(clientIp, filename);
-            const key = getRateLimitKey(clientIp, filename);
-            const attempt = failedAttempts.get(key);
-            const attemptsLeft = MAX_ATTEMPTS - attempt.count;
-
-            console.log(`❌ Failed attempt from ${clientIp} for "${filename}". Attempts left: ${attemptsLeft}`);
-
-            return res.status(401).json({
-                error: 'Incorrect or missing secret code.',
-                attemptsLeft: attemptsLeft > 0 ? attemptsLeft : 0
-            });
-        }
-
-        // Reset attempts on successful login for this movie
-        resetAttempts(clientIp, filename);
+    if (isBlocked(clientIp, filename)) {
+        const minutesRemaining = getBlockedTimeRemaining(clientIp, filename);
+        return res.status(429).json({
+            error: `Too many failed attempts for "${filename}". Please try again in ${minutesRemaining} minutes.`,
+            blockedFor: minutesRemaining
+        });
     }
+
+    const isAuthorized = await verifySecret(filename, secretCode);
+    if (!isAuthorized) {
+        recordFailedAttempt(clientIp, filename);
+        const key = getRateLimitKey(clientIp, filename);
+        const attempt = failedAttempts.get(key);
+        const attemptsLeft = MAX_ATTEMPTS - attempt.count;
+
+        console.log(`❌ Failed attempt from ${clientIp} for "${filename}". Attempts left: ${attemptsLeft}`);
+
+        return res.status(401).json({
+            error: 'Incorrect or missing secret code.',
+            attemptsLeft: attemptsLeft > 0 ? attemptsLeft : 0
+        });
+    }
+
+    // Reset attempts on successful login for this movie
+    resetAttempts(clientIp, filename);
 
     const statuses = await getMovieStatuses();
     if (statuses[path.basename(filename)] && statuses[path.basename(filename)].status === 'Complete') {
@@ -672,11 +674,8 @@ app.post('/api/update', async (req, res) => {
         return res.status(403).json({ error: 'Cannot edit: Movie marked as Complete.' });
     }
 
-    const isLocal = req.hostname === 'localhost' || req.hostname === '127.0.0.1';
-    if (!isLocal) {
-        const isAuthorized = await verifySecret(filename, secretCode);
-        if (!isAuthorized) return res.status(401).json({ error: 'Unauthorized save attempt.' });
-    }
+    const isAuthorized = await verifySecret(filename, secretCode);
+    if (!isAuthorized) return res.status(401).json({ error: 'Unauthorized save attempt.' });
 
     // Cloud stateless fallback: If memory was wiped, reload the file
     if ((rows.length === 0 || currentFile !== filename) && filename) {
@@ -779,41 +778,35 @@ app.post('/api/push-cast', async (req, res) => {
         return res.status(400).json({ error: 'Movie name or filename is required for authentication' });
     }
 
-    // Check password (skip for localhost)
-    const isLocal = req.hostname === 'localhost' || req.hostname === '127.0.0.1';
-    if (!isLocal) {
-        const clientIp = req.ip || req.connection.remoteAddress;
+    const clientIp = req.ip || req.connection.remoteAddress;
 
-        // Prefer the exact filename, because movie secrets are stored against the raw file name.
-        const authFilename = filename || `${movieName}.csv`;
+    // Prefer the exact filename, because movie secrets are stored against the raw file name.
+    const authFilename = filename || `${movieName}.csv`;
 
-        // Check if IP is blocked for this movie
-        if (isBlocked(clientIp, authFilename)) {
-            const minutesRemaining = getBlockedTimeRemaining(clientIp, authFilename);
-            return res.status(429).json({
-                error: `Too many failed attempts. Please try again in ${minutesRemaining} minutes.`,
-                blockedFor: minutesRemaining
-            });
-        }
-
-        const isAuthorized = await verifySecret(authFilename, secretCode);
-        if (!isAuthorized) {
-            recordFailedAttempt(clientIp, authFilename);
-            const key = getRateLimitKey(clientIp, authFilename);
-            const attempt = failedAttempts.get(key);
-            const attemptsLeft = MAX_ATTEMPTS - (attempt?.count || 0);
-
-            console.log(`❌ Failed push attempt from ${clientIp} for "${movieName}". Attempts left: ${attemptsLeft}`);
-
-            return res.status(401).json({
-                error: 'Incorrect or missing secret code.',
-                attemptsLeft: attemptsLeft > 0 ? attemptsLeft : 0
-            });
-        }
-
-        // Reset attempts on successful authentication
-        resetAttempts(clientIp, authFilename);
+    if (isBlocked(clientIp, authFilename)) {
+        const minutesRemaining = getBlockedTimeRemaining(clientIp, authFilename);
+        return res.status(429).json({
+            error: `Too many failed attempts. Please try again in ${minutesRemaining} minutes.`,
+            blockedFor: minutesRemaining
+        });
     }
+
+    const isAuthorizedForPush = await verifySecret(authFilename, secretCode);
+    if (!isAuthorizedForPush) {
+        recordFailedAttempt(clientIp, authFilename);
+        const key = getRateLimitKey(clientIp, authFilename);
+        const attempt = failedAttempts.get(key);
+        const attemptsLeft = MAX_ATTEMPTS - (attempt?.count || 0);
+
+        console.log(`❌ Failed push attempt from ${clientIp} for "${movieName}". Attempts left: ${attemptsLeft}`);
+
+        return res.status(401).json({
+            error: 'Incorrect or missing secret code.',
+            attemptsLeft: attemptsLeft > 0 ? attemptsLeft : 0
+        });
+    }
+
+    resetAttempts(clientIp, authFilename);
 
     try {
         // First, apply all pending changes to the CSV file
@@ -875,11 +868,8 @@ app.post('/api/push-cast', async (req, res) => {
 app.post('/api/add-to-cast', async (req, res) => {
     const { movieName, actorName, secretCode, filename } = req.body;
 
-    const isLocal = req.hostname === 'localhost' || req.hostname === '127.0.0.1';
-    if (!isLocal) {
-        const isAuthorized = await verifySecret(filename, secretCode);
-        if (!isAuthorized) return res.status(401).json({ error: 'Unauthorized' });
-    }
+    const isAuthorized = await verifySecret(filename, secretCode);
+    if (!isAuthorized) return res.status(401).json({ error: 'Unauthorized' });
 
     if (!movieName || !actorName) {
         return res.status(400).json({ error: 'Movie name and actor name required' });
@@ -913,11 +903,8 @@ app.post('/api/push', async (req, res) => {
     const { filename, secretCode, rows: clientRows } = req.body;
     if (!filename) return res.status(400).json({ error: 'No filename provided' });
 
-    const isLocal = req.hostname === 'localhost' || req.hostname === '127.0.0.1';
-    if (!isLocal) {
-        const isAuthorized = await verifySecret(filename, secretCode);
-        if (!isAuthorized) return res.status(401).json({ error: 'Unauthorized push attempt.' });
-    }
+    const isAuthorized = await verifySecret(filename, secretCode);
+    if (!isAuthorized) return res.status(401).json({ error: 'Unauthorized push attempt.' });
 
     try {
         let rowsToSave = rows;

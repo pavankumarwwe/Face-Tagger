@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
+    const akashamPosterSrc = 'akasham-yerraga-undhi.jpeg';
     const tableBody = document.getElementById('table-body');
     const saveStatus = document.getElementById('save-status');
     const saveSpinner = document.getElementById('save-spinner');
@@ -830,7 +831,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         let code = 'pavanKPK5038';
-        let modalFeedback = '';
+        let modalFeedbackPrimary = '';
+        let modalFeedbackSecondary = '';
         let feedbackType = '';
 
         loadBtn.textContent = 'Loading...';
@@ -838,20 +840,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             while (true) {
-                if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-                    const modalMovieTitle = filename.replace('.csv', '').replace('_transliterated', '');
-                    code = await window.promptForPassword({
-                        title: modalMovieTitle,
-                        message: 'Akasham Yerraga Undhi',
-                        placeholder: 'Secret code',
-                        confirmText: 'Load',
-                        feedback: modalFeedback,
-                        feedbackType
-                    });
+                const modalMovieTitle = filename.replace('.csv', '').replace('_transliterated', '');
+                code = await window.promptForPassword({
+                    title: modalMovieTitle,
+                    message: 'Akasham Yerraga Undhi',
+                    mediaSrc: akashamPosterSrc,
+                    mediaAlt: 'Akasham Yerraga Undhi',
+                    placeholder: 'Secret code',
+                    confirmText: 'Load',
+                    feedbackPrimary: modalFeedbackPrimary,
+                    feedbackSecondary: modalFeedbackSecondary,
+                    feedbackType
+                });
 
-                    if (code === null) {
-                        return;
-                    }
+                if (code === null) {
+                    return;
                 }
 
                 const response = await fetch('/api/load', {
@@ -866,15 +869,15 @@ document.addEventListener('DOMContentLoaded', () => {
                         const attemptsMessage = data.attemptsLeft !== undefined
                             ? `Attempts remaining: ${data.attemptsLeft}`
                             : '';
-                        modalFeedback = attemptsMessage
-                            ? `Code Vadu Phone Lo Cheppanu Kadha\n${attemptsMessage}`
-                            : 'Code Vadu Phone Lo Cheppanu Kadha';
+                        modalFeedbackPrimary = 'Code Vadu Phone Lo Cheppa Kadha';
+                        modalFeedbackSecondary = attemptsMessage;
                         feedbackType = 'error';
                         continue;
                     }
 
                     if (response.status === 429) {
-                        modalFeedback = `Code Vadu Phone Lo Cheppanu Kadha\nPlease try again in ${data.blockedFor} minutes.`;
+                        modalFeedbackPrimary = 'Code Vadu Phone Lo Cheppa Kadha';
+                        modalFeedbackSecondary = `Please try again in ${data.blockedFor} minutes.`;
                         feedbackType = 'error';
                         continue;
                     }
@@ -1311,6 +1314,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const password = await window.promptForPassword({
                 title: 'Akasham Yerraga Undhi',
                 message: 'Akasham Yerraga Undhi',
+                mediaSrc: akashamPosterSrc,
+                mediaAlt: 'Akasham Yerraga Undhi',
                 placeholder: 'Password',
                 confirmText: 'Clear Tags'
             });
@@ -1429,6 +1434,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const code = await window.promptForPassword({
                 title: 'Akasham Yerraga Undhi',
                 message: 'Akasham Yerraga Undhi',
+                mediaSrc: akashamPosterSrc,
+                mediaAlt: 'Akasham Yerraga Undhi',
                 placeholder: 'Universal password',
                 confirmText: 'Reopen'
             });

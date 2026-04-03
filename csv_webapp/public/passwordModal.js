@@ -14,8 +14,16 @@
                     <button class="modal-close password-modal-close" type="button" aria-label="Close password dialog">&times;</button>
                 </div>
                 <div class="modal-body password-modal-body">
-                    <p class="password-modal-message"></p>
-                    <p class="password-modal-feedback" aria-live="polite"></p>
+                    <div class="password-modal-intro">
+                        <div class="password-modal-media-wrap">
+                            <img class="password-modal-media" alt="">
+                        </div>
+                        <p class="password-modal-message"></p>
+                    </div>
+                    <div class="password-modal-feedback" aria-live="polite">
+                        <p class="password-modal-feedback-primary"></p>
+                        <p class="password-modal-feedback-secondary"></p>
+                    </div>
                     <form class="password-modal-form">
                         <div class="password-input-group">
                             <input
@@ -56,7 +64,11 @@
         const modal = ensurePasswordModal();
         const titleEl = modal.querySelector('#password-modal-title');
         const messageEl = modal.querySelector('.password-modal-message');
+        const mediaWrapEl = modal.querySelector('.password-modal-media-wrap');
+        const mediaEl = modal.querySelector('.password-modal-media');
         const feedbackEl = modal.querySelector('.password-modal-feedback');
+        const feedbackPrimaryEl = modal.querySelector('.password-modal-feedback-primary');
+        const feedbackSecondaryEl = modal.querySelector('.password-modal-feedback-secondary');
         const inputEl = modal.querySelector('#password-modal-input');
         const closeBtn = modal.querySelector('.password-modal-close');
         const cancelBtn = modal.querySelector('.password-cancel-btn');
@@ -66,9 +78,17 @@
 
         titleEl.textContent = options.title || 'Enter Password';
         messageEl.textContent = options.message || 'Please enter your password.';
-        feedbackEl.textContent = options.feedback || '';
-        feedbackEl.classList.toggle('is-visible', Boolean(options.feedback));
-        feedbackEl.classList.toggle('is-error', options.feedbackType === 'error');
+        mediaEl.src = options.mediaSrc || '';
+        mediaEl.alt = options.mediaAlt || '';
+        mediaWrapEl.classList.toggle('is-visible', Boolean(options.mediaSrc));
+        messageEl.classList.toggle('is-hidden', !options.message);
+        feedbackPrimaryEl.textContent = options.feedbackPrimary || options.feedback || '';
+        feedbackSecondaryEl.textContent = options.feedbackSecondary || '';
+        feedbackPrimaryEl.classList.toggle('is-error', options.feedbackType === 'error');
+        feedbackEl.classList.toggle(
+            'is-visible',
+            Boolean((options.feedbackPrimary || options.feedback || '').trim() || (options.feedbackSecondary || '').trim())
+        );
         inputEl.value = options.defaultValue || '';
         inputEl.type = 'password';
         inputEl.placeholder = options.placeholder || 'Enter password';
@@ -150,7 +170,10 @@
         const modal = ensurePasswordModal();
         const titleEl = modal.querySelector('#password-modal-title');
         const messageEl = modal.querySelector('.password-modal-message');
+        const mediaWrapEl = modal.querySelector('.password-modal-media-wrap');
         const feedbackEl = modal.querySelector('.password-modal-feedback');
+        const feedbackPrimaryEl = modal.querySelector('.password-modal-feedback-primary');
+        const feedbackSecondaryEl = modal.querySelector('.password-modal-feedback-secondary');
         const inputGroup = modal.querySelector('.password-input-group');
         const inputEl = modal.querySelector('#password-modal-input');
         const closeBtn = modal.querySelector('.password-modal-close');
@@ -161,9 +184,15 @@
 
         titleEl.textContent = options.title || 'Please Confirm';
         messageEl.textContent = options.message || 'Are you sure you want to continue?';
-        feedbackEl.textContent = options.feedback || '';
-        feedbackEl.classList.toggle('is-visible', Boolean(options.feedback));
-        feedbackEl.classList.toggle('is-error', options.feedbackType === 'error');
+        messageEl.classList.toggle('is-hidden', !options.message);
+        mediaWrapEl.classList.remove('is-visible');
+        feedbackPrimaryEl.textContent = options.feedbackPrimary || options.feedback || '';
+        feedbackSecondaryEl.textContent = options.feedbackSecondary || '';
+        feedbackPrimaryEl.classList.toggle('is-error', options.feedbackType === 'error');
+        feedbackEl.classList.toggle(
+            'is-visible',
+            Boolean((options.feedbackPrimary || options.feedback || '').trim() || (options.feedbackSecondary || '').trim())
+        );
         inputGroup.style.display = 'none';
         cancelBtn.textContent = options.cancelText || 'Cancel';
         submitBtn.textContent = options.confirmText || 'Continue';

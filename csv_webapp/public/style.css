@@ -48,7 +48,7 @@ header {
     flex-direction: column;
     align-items: stretch;
     gap: 1rem;
-    padding: 1rem 1.25rem;
+    padding: 1rem 1.25rem 0.45rem;
 }
 
 .editor-header-top {
@@ -115,7 +115,8 @@ header {
     align-items: center;
     justify-content: center;
     position: relative;
-    padding-top: 0.25rem;
+    padding: 0;
+    height: 50px;
     border-top: 1px solid rgba(226, 232, 240, 0.8);
 }
 
@@ -869,43 +870,120 @@ select:focus {
 }
 
 .password-modal-content {
-    max-width: 440px;
+    max-width: 500px;
+}
+
+.password-modal-content .modal-header {
+    padding: 1rem 1.15rem;
 }
 
 .password-modal-body {
+    padding: 1rem 1.15rem 0.95rem;
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 0.35rem;
+}
+
+.password-modal-intro {
+    display: grid;
+    grid-template-columns: 84px auto;
+    align-items: center;
+    gap: 12px;
+    justify-content: start;
+    padding-left: 0.35rem;
 }
 
 .password-modal-message {
     margin: 0;
     color: var(--text-secondary);
-    font-size: 0.96rem;
+    font-size: 1.12rem;
+    line-height: 1.25;
+    font-weight: 500;
+    text-align: left;
+}
+
+.password-modal-message.is-hidden {
+    display: none;
+}
+
+.password-modal-media-wrap {
+    display: none;
+}
+
+.password-modal-media-wrap.is-visible {
+    display: flex;
+    width: 84px;
+}
+
+.password-modal-media {
+    display: block;
+    width: 84px;
+    max-width: 100%;
+    max-height: 44px;
+    object-fit: cover;
+    object-position: center;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
 }
 
 .password-modal-feedback {
     display: none;
-    margin: -0.2rem 0 0;
+    margin: -0.18rem 0 0;
     font-size: 0.92rem;
-    line-height: 1.45;
+    line-height: 1.18;
     color: var(--text-secondary);
     white-space: pre-line;
+}
+
+.password-modal-feedback p {
+    margin: 0;
+}
+
+.password-modal-feedback p + p {
+    margin-top: 0;
 }
 
 .password-modal-feedback.is-visible {
     display: block;
 }
 
-.password-modal-feedback.is-error {
+.password-modal-feedback-primary.is-error {
     color: var(--danger-color);
     font-weight: 600;
+}
+
+@media (max-width: 560px) {
+    .password-modal-content {
+        max-width: 440px;
+    }
+
+    .password-modal-intro {
+        grid-template-columns: 1fr;
+        justify-items: center;
+    }
+
+    .password-modal-media {
+        width: min(100%, 180px);
+        max-height: 96px;
+    }
 }
 
 .password-modal-form {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 0.55rem;
+}
+
+.password-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.password-modal-actions .btn {
+    min-width: 126px;
 }
 
 .password-input-group {

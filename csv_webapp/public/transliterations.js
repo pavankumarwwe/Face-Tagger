@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', async () => {
+    const akashamPosterSrc = 'akasham-yerraga-undhi.jpeg';
     const tableBody = document.getElementById('table-body');
     const saveStatus = document.getElementById('save-status');
     const saveSpinner = document.getElementById('save-spinner');
@@ -15,8 +16,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     let hasUnsavedChanges = false;
     let currentStatus = 'Not Started';
     let isLoaded = false;
-    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-
     function setStatus(message, colorVar = '--text-secondary') {
         saveStatus.textContent = message;
         saveStatus.style.color = `var(${colorVar})`;
@@ -348,16 +347,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     reopenBtn.addEventListener('click', async () => {
         if (!isLoaded) return;
 
-        let code = '!@Mkpkntr5038!';
-        if (!isLocalhost) {
-            code = await window.promptForPassword({
-                title: 'Akasham Yerraga Undhi',
-                message: 'Akasham Yerraga Undhi',
-                placeholder: 'Universal password',
-                confirmText: 'Reopen'
-            });
-            if (code === null) return;
-        }
+        const code = await window.promptForPassword({
+            title: 'Akasham Yerraga Undhi',
+            message: 'Akasham Yerraga Undhi',
+            mediaSrc: akashamPosterSrc,
+            mediaAlt: 'Akasham Yerraga Undhi',
+            placeholder: 'Universal password',
+            confirmText: 'Reopen'
+        });
+        if (code === null) return;
 
         const originalText = reopenBtn.textContent;
         reopenBtn.textContent = 'Reopening...';
@@ -391,19 +389,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    if (isLocalhost) {
-        secretCode = '!@Mkpkntr5038!';
-    } else {
-        secretCode = await window.promptForPassword({
-            title: 'Akasham Yerraga Undhi',
-            message: 'Akasham Yerraga Undhi',
-            placeholder: 'Universal password',
-            confirmText: 'Unlock'
-        }) || '';
-        if (!secretCode) {
-            setStatus('Access cancelled', '--danger-color');
-            return;
-        }
+    secretCode = await window.promptForPassword({
+        title: 'Akasham Yerraga Undhi',
+        message: 'Akasham Yerraga Undhi',
+        mediaSrc: akashamPosterSrc,
+        mediaAlt: 'Akasham Yerraga Undhi',
+        placeholder: 'Universal password',
+        confirmText: 'Unlock'
+    }) || '';
+    if (!secretCode) {
+        setStatus('Access cancelled', '--danger-color');
+        return;
     }
 
     updateActionVisibility();
